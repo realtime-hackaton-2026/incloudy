@@ -36,6 +36,10 @@ const TEMPLATE_WIRE = {
         id: 'voz_alumno',
         texto: 'Escuchar al alumno',
         contenido: { evidencia: 'Alex explica lo que necesita.' },
+      }, {
+        id: 'contextos',
+        texto: 'Observar otros contextos',
+        contenido: { evidencia: 'Alex cambia según el contexto.' },
       }],
     },
     {
@@ -242,6 +246,30 @@ describe('CaseForm — stations open as popups on the map, not as a list below i
     const panel = await screen.findByTestId('station-explorar')
     expect(within(panel).getByText(/completada/i)).toBeInTheDocument()
     expect(within(panel).getByLabelText(/escuchar al alumno/i)).toBeChecked()
+  })
+
+  it('replaces the previous choice with one decision when editing a completed station', async () => {
+    const fetchMock = routedFetch({
+      'GET /cases/case-1': () => jsonResponse(caseWire()),
+      'GET /journeys/templates/tmpl-1': () => jsonResponse(TEMPLATE_WIRE),
+      'POST /portal/sessions/case-1': () => jsonResponse({ detail: 'Portal no configurado' }, 503),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const user = userEvent.setup()
+    render(
+      <CaseForm token="tok" caseId="case-1" ownerId="u-1" onBack={() => {}} onDeleted={() => {}} />,
+    )
+    await screen.findByTestId('case-form')
+    await user.click(screen.getByRole('button', { name: /explorar en la selva/i }))
+    const panel = await screen.findByTestId('station-explorar')
+
+    expect(within(panel).getByLabelText(/escuchar al alumno/i)).toBeDisabled()
+    await user.click(within(panel).getByRole('button', { name: /editar decisión/i }))
+    await user.click(within(panel).getByLabelText(/observar otros contextos/i))
+
+    expect(within(panel).getByLabelText(/observar otros contextos/i)).toBeChecked()
+    expect(within(panel).getByLabelText(/escuchar al alumno/i)).not.toBeChecked()
   })
 
   it('saves a station answer through the map popup and reflects the server response', async () => {

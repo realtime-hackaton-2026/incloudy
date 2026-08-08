@@ -31,7 +31,7 @@ from app.schemas import (
     UnexpectedEventResponseRequest,
 )
 from app.services.cases import get_editable_case
-from app.services.seeds import ensure_seed_content
+from app.services.seeds import ensure_alex_case_for_user, ensure_seed_content
 from app.services.webhooks import process_portal_webhook
 
 
@@ -215,6 +215,7 @@ async def test_alex_content_and_case_are_seeded_idempotently() -> None:
 
     await ensure_seed_content()
     await ensure_seed_content()
+    await ensure_alex_case_for_user(professor)
 
     template = await JourneyTemplate.find_one(JourneyTemplate.activa == True)  # noqa: E712
     scenario = await CaseScenario.find_one(CaseScenario.slug == "caso-alex")
@@ -296,3 +297,8 @@ async def test_alex_content_and_case_are_seeded_idempotently() -> None:
     assert not completed_case.resumen_final.generado_por_ia
     report = await cases_router.download_case_report(str(cases[0].id), professor)
     assert report.body.startswith(b"%PDF")
+
+    await completed_case.delete()
+    await ensure_seed_content()
+    recreated = await Case.find(Case.profesor_id == str(professor.id)).to_list()
+    assert recreated == []

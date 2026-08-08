@@ -269,7 +269,13 @@ function RoomChannel({
     if (!text || !unlocked || !sessionActive || !canPublish) return
     setSending(true)
     try {
-      await send({ content: { body: text } })
+      await send({
+        content: {
+          body: text,
+          authorUserId: me?.id,
+          authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+        },
+      })
       setDraft('')
     } finally {
       setSending(false)
@@ -352,7 +358,14 @@ function RoomChannel({
     setAskingAi(true)
     setAiError(null)
     try {
-      await send({ content: { type: 'ai_question', body: question } })
+      await send({
+        content: {
+          type: 'ai_question',
+          body: question,
+          authorUserId: me?.id,
+          authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+        },
+      })
       const answer = await askAssistant(token, question, caseId)
       await send({ content: { type: 'ai_answer', body: answer } })
     } catch (cause) {
@@ -541,11 +554,24 @@ function messageAuthorLabel(
   if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
   if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
   if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
+  if (typeof content !== 'string' && content.authorName) return `Docente · ${content.authorName}`
   const verifiedMeName = typeof meName === 'string' ? meName : undefined
-  const teacherName = participantNames[message.sender.id] ?? (meId && message.sender.id === meId
+  const appAuthorId = typeof content !== 'string' ? content.authorUserId : undefined
+  const teacherName = resolveParticipantName(participantNames, appAuthorId ?? message.sender.id) ?? (meId && message.sender.id === meId
     ? verifiedMeName ?? message.sender.username
     : message.sender.username)
   return teacherName ? `Docente · ${teacherName}` : `Docente · ${message.sender.id.slice(-4)}`
+}
+
+function resolveParticipantName(participantNames: Record<string, string>, portalId: string | undefined) {
+  if (!portalId) return undefined
+  if (participantNames[portalId]) return participantNames[portalId]
+  // Older Portal history may expose only an abbreviated/stale form of the
+  // app user id. A unique suffix among this room's (maximum five) teachers is
+  // safe to resolve and turns e.g. `175d` back into `Ana`.
+  const suffix = portalId.slice(-4).toLowerCase()
+  const matches = Object.entries(participantNames).filter(([userId]) => userId.toLowerCase().endsWith(suffix))
+  return matches.length === 1 ? matches[0][1] : undefined
 }
 
 function formatTime(timestamp: number) {

@@ -1,7 +1,12 @@
 /*
- * frontend/src/cases/useCases.ts // the signed-in teacher's case list, own
- * and shared. Loads on mount and exposes create/remove so the list screen
- * never talks to the API directly, matching auth/useSession.ts.
+ * frontend/src/cases/useCases.ts // the signed-in teacher's case list, own and
+ * shared. Revalidates when the tab comes back rather than on a timer, so an
+ * idle or hidden tab costs the API nothing.
+ *
+ * Portal is per-case (`case-{id}`, a token minted for one channel), so it can
+ * never announce a case you have not opened yet — which is exactly how a
+ * shared case or a join code arrives. That is why this list still refetches
+ * instead of subscribing: the two solve different problems.
  */
 
 import { useCallback, useEffect, useState } from 'react'
@@ -57,10 +62,27 @@ export function useCases(token: string): CasesState {
         })
     }
     load()
-    const refreshTimer = setInterval(load, 5_000)
+
+    /*
+     * Revalidate on the way back in, not every five seconds.
+     *
+     * A blind timer kept hitting /cases while the tab was hidden or the
+     * teacher was on another screen. The list only has to be right when
+     * someone is looking at it, and there are exactly three ways to arrive
+     * at that: the tab regains focus, it becomes visible again, or this hook
+     * mounts — and it remounts on every trip to the list, since App unmounts
+     * CaseList when the route changes.
+     */
+    const revalidate = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    window.addEventListener('focus', revalidate)
+    document.addEventListener('visibilitychange', revalidate)
+
     return () => {
       active = false
-      clearInterval(refreshTimer)
+      window.removeEventListener('focus', revalidate)
+      document.removeEventListener('visibilitychange', revalidate)
     }
   }, [token])
 

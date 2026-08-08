@@ -1,0 +1,71 @@
+/* Assistant prose. Reads as a short briefing, not a wall of text. */
+
+.rich {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paragraph {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* The model emits h3/h4 for section titles; they need to read as labels,
+   not as page headings competing with the panel's own title. */
+.heading {
+  margin: 2px 0 0;
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--river-hi);
+}
+
+.rich > .heading:first-child {
+  margin-top: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  counter-reset: rich;
+}
+
+.list li {
+  position: relative;
+  padding-left: 16px;
+  line-height: 1.5;
+}
+
+ul.list li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: var(--river-hi);
+}
+
+ol.list li {
+  counter-increment: rich;
+}
+
+ol.list li::before {
+  content: counter(rich) '.';
+  position: absolute;
+  left: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  color: var(--river-hi);
+}
+
+.rule {
+  height: 0;
+  margin: 2px 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}

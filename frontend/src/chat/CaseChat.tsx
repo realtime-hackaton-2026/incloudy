@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useChat } from './useChat'
+import { RichText } from './RichText'
 import styles from './CaseChat.module.css'
 
 export interface CaseChatProps {
@@ -42,9 +43,13 @@ export function CaseChat({ token, caseId }: CaseChatProps) {
         {turns.map((turn) => (
           <li
             key={turn.id}
-            className={turn.role === 'profesor' ? styles.turnProfesor : styles.turnAsistente}
+            className={`${styles.turn} ${
+              turn.role === 'profesor' ? styles.turnProfesor : styles.turnAsistente
+            }`}
           >
-            {turn.text}
+            {/* A teacher's own question is plain text; only the model's
+                reply carries Markdown worth structuring. */}
+            {turn.role === 'asistente' ? <RichText text={turn.text} /> : turn.text}
           </li>
         ))}
         {status === 'asking' && <li className={styles.asking}>Pensando…</li>}

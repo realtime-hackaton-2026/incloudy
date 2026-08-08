@@ -56,10 +56,12 @@
   font-size: 14px;
   line-height: 1.5;
   border-radius: 10px;
-  white-space: pre-wrap;
 }
 
+/* Only the teacher's own message keeps its raw line breaks. The reply is
+   structured by RichText, so pre-wrap here would double every gap. */
 .turnProfesor {
+  white-space: pre-wrap;
   align-self: flex-end;
   color: var(--text);
   background: rgb(59 144 157 / 16%);

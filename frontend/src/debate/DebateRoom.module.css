@@ -215,6 +215,131 @@
   color: var(--danger);
 }
 
+/* --- Audience vote ---------------------------------------------------- */
+
+.vote {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.voteHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.voteTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.voteCount,
+.voteFoot {
+  font-family: var(--label);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.voteFoot {
+  margin: 0;
+}
+
+.voteOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .voteOptions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.voteOption {
+  display: grid;
+  /* Name, bar, tally — the bar takes the slack so both cards align. */
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  /* 44px: the minimum touch target this project holds itself to. */
+  min-height: 44px;
+  padding: 8px 11px;
+  font: inherit;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--micro) var(--ease),
+    background-color var(--micro) var(--ease);
+}
+
+.voteOption:hover {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.voteBurix[data-chosen='true'] {
+  border-color: var(--parchment);
+  background: rgb(232 201 120 / 12%);
+}
+
+.voteTero[data-chosen='true'] {
+  border-color: var(--map-blue);
+  background: rgb(60 145 182 / 14%);
+}
+
+.voteName {
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.voteBar {
+  height: 6px;
+  min-width: 40px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
+}
+
+.voteFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width var(--medium) var(--ease);
+}
+
+.voteBurix .voteFill {
+  background: var(--parchment);
+}
+
+.voteTero .voteFill {
+  background: var(--map-blue);
+}
+
+.voteTally {
+  font-family: var(--label);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+}
+
 /* --- State ----------------------------------------------------------- */
 
 .actions {

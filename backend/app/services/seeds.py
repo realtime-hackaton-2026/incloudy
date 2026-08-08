@@ -755,7 +755,7 @@ async def ensure_alex_case_for_user(
 
 async def ensure_seed_content() -> None:
     template = await ensure_default_journey()
-    scenario = await ensure_alex_scenario(template)
-    users = await User.find_all().to_list()
-    for user in users:
-        await ensure_alex_case_for_user(user, template, scenario)
+    # Alex remains a reusable scenario/template, not a user-owned case.
+    # User cases must only be created explicitly; otherwise deleting Alex
+    # would be undone on the next registration or backend restart.
+    await ensure_alex_scenario(template)

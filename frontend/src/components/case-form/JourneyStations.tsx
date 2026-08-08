@@ -178,9 +178,16 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(Boolean(answer?.completado))
+  const [editingAnswer, setEditingAnswer] = useState(false)
   const [finishState, setFinishState] = useState<'idle' | 'saving' | 'error'>('idle')
 
   function toggle(optionId: string) {
+    // When correcting an already completed station, a new choice replaces
+    // the previous decision instead of accumulating extra selections.
+    if (editingAnswer) {
+      setSelected([optionId])
+      return
+    }
     if (station.tipo === ('unica' as QuestionType)) {
       setSelected([optionId])
       return
@@ -200,6 +207,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
       await onAnswer(station.orden, { opcionesSeleccionadas: selected, comentario })
       setSaveState('saved')
       setShowResult(true)
+      setEditingAnswer(false)
     } catch (cause) {
       setSaveState('error')
       setSaveError(cause instanceof ApiError ? cause.message : 'No se pudo guardar la estación.')
@@ -261,7 +269,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
               type={station.tipo === 'multiple' ? 'checkbox' : 'radio'}
               name={`station-${station.id}`}
               checked={selected.includes(option.id)}
-              disabled={!editable}
+              disabled={!editable || showResult}
               onChange={() => toggle(option.id)}
             />
             <span>
@@ -281,7 +289,9 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
             <textarea
               className={styles.textarea}
               value={comentario}
-              disabled={!editable}
+              // Both sides of the merge matter here: the comment waits for a
+              // choice (§8), and it locks once the station is answered.
+              disabled={!editable || showResult}
               onChange={(event) => setComentario(event.target.value)}
             />
           </label>
@@ -299,6 +309,19 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
             {station.id === 'compartir' && 'Caso compartido con el equipo.'}
           </strong>
           {station.id === 'orientar' && <p>Aún no sabes si se sostendrá cuando lleguen los resultados.</p>}
+          {editable && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setEditingAnswer(true)
+                setShowResult(false)
+                setSaveState('idle')
+              }}
+            >
+              Editar decisión
+            </button>
+          )}
           {editable && station.id === 'compartir' && onFinish ? (
             <button
               type="button"
@@ -330,8 +353,28 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
             className="btn-secondary"
             disabled={saveState === 'saving' || (station.obligatoria && selected.length === 0)}
           >
-            {saveState === 'saving' ? 'Guardando…' : station.id === 'explorar' ? 'Dar el caso por explorado' : 'Continuar'}
+            {saveState === 'saving'
+              ? 'Guardando…'
+              : editingAnswer
+                ? 'Guardar cambios'
+                : station.id === 'explorar'
+                  ? 'Dar el caso por explorado'
+                  : 'Continuar'}
           </button>
+          {editingAnswer && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setSelected(answer?.opcionesSeleccionadas ?? [])
+                setComentario(answer?.comentario ?? '')
+                setEditingAnswer(false)
+                setShowResult(true)
+              }}
+            >
+              Cancelar
+            </button>
+          )}
           {saveState === 'saved' && <span className={styles.stationCardSaved}>Guardado</span>}
         </div>
       )}

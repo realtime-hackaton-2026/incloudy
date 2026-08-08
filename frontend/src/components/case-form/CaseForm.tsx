@@ -18,6 +18,7 @@ import { CaseChat } from '../../chat'
 import { AvatarPicker, useAvatar } from '../../avatar'
 import { OwlTip } from '../../guide'
 import { OwlDoor } from '../../owl'
+import { XpCounter } from '../../reward'
 import { ConfirmDialog } from '../confirm-dialog'
 import { StationCard } from './JourneyStations'
 import styles from './CaseForm.module.css'
@@ -328,7 +329,9 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           <div className={styles.mapOnlyStats}>
             <span>⏳ {current.estadoInteractivo.diasRestantes} días</span>
             <span>🤝 {current.estadoInteractivo.confianzaEquipo}%</span>
-            <span>✦ {current.estadoInteractivo.xpTotal} XP</span>
+            {/* Answering a station returns a new total; the counter turns that
+                into a gain the child can see arrive. */}
+            <XpCounter value={current.estadoInteractivo.xpTotal} />
           </div>
         </div>
         <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />

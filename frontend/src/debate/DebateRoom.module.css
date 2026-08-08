@@ -349,6 +349,44 @@
   gap: 10px;
 }
 
+/*
+ * Deliberately quieter than "siguiente ronda", and pushed to the far end:
+ * starting over is a recovery action, not the thing to reach for next. Still
+ * a real 44px target — it is destructive for the whole room, so it must not
+ * be a cramped one.
+ */
+.restart {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-family: var(--label);
+  font-size: 12px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.restart:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--hairline-strong);
+}
+
+.restart:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .restart {
+    margin-left: 0;
+  }
+}
+
 .thinking {
   font-family: var(--label);
   font-size: 11px;

@@ -9,7 +9,8 @@ import { getPortalClient } from '../portal/client'
 import { ConnectionStatus } from '../portal/ConnectionStatus'
 import type { PortalConnectionStatus } from '../portal/connectionNotice'
 import { usePortalSession } from '../portal/usePortalSession'
-import { DEBATE_TURN_EVENT, useDebate } from './useDebate'
+import { ConfirmDialog } from '../components/confirm-dialog'
+import { DEBATE_RESET_EVENT, DEBATE_TURN_EVENT, useDebate } from './useDebate'
 import { DEBATE_VOTE_EVENT, sharePercent, tallyVotes } from './votes'
 import type { Ballot, Tally } from './votes'
 import type { AgentId, DebateAgent, DebateTurn } from './api'
@@ -93,6 +94,12 @@ function LiveDebate({
     [send],
   )
 
+  // The marker every client reads to know the previous debate is over.
+  const announceRestart = useCallback(
+    () => send({ content: { at: Date.now() }, type: DEBATE_RESET_EVENT }),
+    [send],
+  )
+
   /*
    * Turns and ballots are *derived* from the channel, never copied into
    * state by an effect. That is what lets a teacher who did not run the
@@ -100,9 +107,23 @@ function LiveDebate({
    * second source of truth to keep in sync.
    */
   const { channelTurns, ballots } = useMemo(() => {
+    /*
+     * Only what came after the most recent restart counts. Votes are cut at
+     * the same point on purpose: a ballot judged the debate that was
+     * argued, so carrying it into a fresh one would tally an opinion about
+     * arguments nobody in the room can still read.
+     */
+    let start = 0
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].type === DEBATE_RESET_EVENT) {
+        start = index + 1
+        break
+      }
+    }
+
     const turns: DebateTurn[] = []
     const votes: Ballot[] = []
-    for (const message of messages) {
+    for (const message of messages.slice(start)) {
       const content = message.content as Record<string, unknown> | undefined
       if (!content) continue
       if (message.type === DEBATE_TURN_EVENT) {
@@ -125,6 +146,7 @@ function LiveDebate({
       live
       connection={status}
       publish={publish}
+      announceRestart={announceRestart}
       channelTurns={channelTurns}
       tally={tallyVotes(ballots, me?.id)}
       onVote={castVote}
@@ -140,6 +162,7 @@ function DebateBody({
   live,
   connection,
   publish,
+  announceRestart,
   channelTurns = [],
   tally,
   onVote,
@@ -150,15 +173,19 @@ function DebateBody({
   /** Portal's channel status; absent when the debate runs offline. */
   connection?: PortalConnectionStatus
   publish?: (turn: DebateTurn) => Promise<unknown>
+  /** Publishes the restart marker. Absent offline: there is no room to tell. */
+  announceRestart?: () => Promise<unknown>
   channelTurns?: readonly DebateTurn[]
   tally?: Tally
   onVote?: (agente: AgentId) => Promise<unknown>
 }) {
-  const { turns, agents, status, error, maxRounds, commentsRead, runRound } = useDebate({
+  const { turns, agents, status, error, maxRounds, commentsRead, runRound, reset } = useDebate({
     token,
     caseId,
     publish,
   })
+  const [confirmingRestart, setConfirmingRestart] = useState(false)
+  const [restarting, setRestarting] = useState(false)
 
   const stances = agents.length ? agents : STANCES
   const nameOf = useMemo(() => {
@@ -186,6 +213,26 @@ function DebateBody({
 
   const finished = round >= maxRounds
   const busy = status === 'thinking'
+
+  async function restart() {
+    setRestarting(true)
+    try {
+      // Tell the room first: if this fails, the debate is still standing for
+      // everyone, and clearing our own view would be a lie about that.
+      await announceRestart?.()
+      reset()
+      setConfirmingRestart(false)
+    } finally {
+      setRestarting(false)
+    }
+  }
+
+  function requestRestart() {
+    // Offline the debate is only on this screen, so there is nothing to warn
+    // about. Live, it discards a debate the whole room watched.
+    if (live) setConfirmingRestart(true)
+    else void restart()
+  }
 
   return (
     <section className={styles.debate} data-testid="debate-room" data-state={status}>
@@ -271,23 +318,56 @@ function DebateBody({
         <AudienceVote stances={stances} tally={tally} onVote={onVote} live={live} />
       )}
 
-      {finished ? (
-        <p className={styles.closed}>
-          El debate se cierra aquí. Ninguno de los dos decide: la lectura del caso es
-          del equipo.
-        </p>
-      ) : (
-        <div className={styles.actions}>
-          <button type="button" className="btn-secondary" onClick={runRound} disabled={busy}>
-            {busy
-              ? 'Pensando…'
-              : visibleTurns.length === 0
-                ? 'Abrir el debate'
-                : `Siguiente ronda (${round + 1}/${maxRounds})`}
+      <div className={styles.actions}>
+        {finished ? (
+          <p className={styles.closed}>
+            El debate se cierra aquí. Ninguno de los dos decide: la lectura del caso es
+            del equipo.
+          </p>
+        ) : (
+          <>
+            {/* The merged view is the real history: a spectator's own turns
+                are empty, so passing it is what keeps the round number right. */}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => void runRound(visibleTurns)}
+              disabled={busy || restarting}
+            >
+              {busy
+                ? 'Pensando…'
+                : visibleTurns.length === 0
+                  ? 'Abrir el debate'
+                  : `Siguiente ronda (${round + 1}/${maxRounds})`}
+            </button>
+            {busy && <span className={styles.thinking}>Búrix y Tero preparan su turno…</span>}
+          </>
+        )}
+
+        {/* Only offered once there is a debate to discard — including after
+            the last round, which is exactly when starting over is wanted. */}
+        {visibleTurns.length > 0 && (
+          <button
+            type="button"
+            className={styles.restart}
+            onClick={requestRestart}
+            disabled={busy || restarting}
+          >
+            {restarting ? 'Reiniciando…' : '↺ Reiniciar debate'}
           </button>
-          {busy && <span className={styles.thinking}>Búrix y Tero preparan su turno…</span>}
-        </div>
-      )}
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={confirmingRestart}
+        title="¿Reiniciar el debate?"
+        description="Se borran los turnos y los votos para toda la sala. Búrix y Tero empezarán de cero."
+        confirmLabel="Reiniciar"
+        tone="danger"
+        pending={restarting}
+        onConfirm={() => void restart()}
+        onCancel={() => setConfirmingRestart(false)}
+      />
     </section>
   )
 }

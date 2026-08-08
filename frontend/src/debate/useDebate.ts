@@ -11,6 +11,17 @@ import type { DebateAgent, DebateTurn } from './api'
 /** Portal message type. Keeps agent turns distinct from human comments. */
 export const DEBATE_TURN_EVENT = 'debate.turn'
 
+/**
+ * Marks "everything before this no longer counts".
+ *
+ * A restart cannot be local-only: live turns are derived from channel
+ * history, so clearing one client's state would leave the debate on screen
+ * for everyone else — and back on screen for that client after any
+ * re-render. Publishing the restart is what makes it true for the room.
+ * Same shape as the session control messages in `portal/CaseRoom.tsx`.
+ */
+export const DEBATE_RESET_EVENT = 'debate.reset'
+
 export type DebateStatus = 'idle' | 'thinking' | 'error'
 
 export interface DebateState {
@@ -23,7 +34,9 @@ export interface DebateState {
   commentsRead: number
   /** Accepts a turn that arrived over Portal rather than from our request. */
   receiveTurn: (turn: DebateTurn) => void
-  runRound: () => Promise<void>
+  /** Pass the merged view in a live room; defaults to this hook's own turns. */
+  runRound: (history?: readonly DebateTurn[]) => Promise<void>
+  /** Clears local round state. The channel marker is the caller's job. */
   reset: () => void
 }
 
@@ -61,12 +74,18 @@ export function useDebate({ token, caseId, publish }: UseDebateOptions): DebateS
     )
   }, [])
 
-  const runRound = useCallback(async () => {
+  /*
+   * `history` is the caller's authoritative view of the debate so far — in a
+   * live room that is the channel's turns merged with ours, not just ours.
+   * Without it a spectator (whose local `turns` is empty) would ask for
+   * round 1 again and argue a round the room already heard.
+   */
+  const runRound = useCallback(async (history: readonly DebateTurn[] = turns) => {
     setStatus('thinking')
     setError(null)
     try {
-      const nextRound = turns.length === 0 ? 1 : Math.floor(turns.length / 2) + 1
-      const result = await requestDebateRound(token, caseId, nextRound, turns)
+      const nextRound = history.length === 0 ? 1 : Math.floor(history.length / 2) + 1
+      const result = await requestDebateRound(token, caseId, nextRound, history)
       setAgents(result.agentes)
       setMaxRounds(result.rondasMaximas)
       setCommentsRead(result.comentariosAnalizados)
@@ -87,6 +106,10 @@ export function useDebate({ token, caseId, publish }: UseDebateOptions): DebateS
     setTurns([])
     setStatus('idle')
     setError(null)
+    // Describes the round that was just discarded, so it goes with it.
+    // `agents` and `maxRounds` are template configuration, not round state:
+    // keeping them avoids the stances flickering back to the defaults.
+    setCommentsRead(0)
   }, [])
 
   const round = Math.floor(turns.length / 2)

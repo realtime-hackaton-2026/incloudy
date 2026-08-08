@@ -39,7 +39,9 @@ export async function requestDebateRound(
   token: string,
   caseId: string,
   ronda: number,
-  historial: DebateTurn[],
+  // Readonly: callers pass a derived, shared view of the debate so far; this
+  // only serialises it and must not be able to mutate the caller's array.
+  historial: readonly DebateTurn[],
 ): Promise<DebateRound> {
   const response = await apiFetch(`/cases/${encodeURIComponent(caseId)}/debate`, {
     method: 'POST',

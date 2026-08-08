@@ -6,7 +6,7 @@
  * level of the product is.
  */
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import logo from '../../assets/images/logo.webp'
 import type { ProfileUpdate } from '../../auth'
 import styles from './AppHeader.module.css'
@@ -44,9 +44,13 @@ export function AppHeader({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    setProfile((current) => ({ ...current, nombre, email, seccion: seccion ?? '' }))
-  }, [nombre, email, seccion])
+  // The draft is seeded when the dialog opens, not synced from props — an
+  // effect would either clobber what the teacher is typing or fight the
+  // linter; neither is worth it.
+  function openSettings() {
+    setProfile({ nombre, email, seccion: seccion ?? '', currentPassword: '', newPassword: '' })
+    setSettingsOpen(true)
+  }
 
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault()
@@ -97,7 +101,7 @@ export function AppHeader({
           Docente: <strong>{nombre}</strong>
         </span>
         <button type="button" className={styles.settingsButton} aria-label="Abrir ajustes del perfil"
-          title="Ajustes" onClick={() => setSettingsOpen(true)}>⚙</button>
+          title="Ajustes" onClick={openSettings}>⚙</button>
         <button type="button" className={styles.signOut} onClick={onSignOut}>
           Salir
         </button>

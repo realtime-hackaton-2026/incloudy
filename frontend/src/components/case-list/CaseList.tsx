@@ -23,7 +23,7 @@ export interface CaseListProps {
 }
 
 export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
-  const { cases, status, error, create, remove } = useCases(token)
+  const { cases, status, error, create, remove, leave } = useCases(token)
   const [creating, setCreating] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [newStudent, setNewStudent] = useState({ nombre: '', edad: '', curso: '', descripcion: '' })
@@ -31,6 +31,9 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [pendingLeave, setPendingLeave] = useState<Case | null>(null)
+  const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
   const [joinOpen, setJoinOpen] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -83,6 +86,20 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
       setDeleteError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la aventura.')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  async function handleConfirmLeave() {
+    if (!pendingLeave) return
+    setLeaving(true)
+    setLeaveError(null)
+    try {
+      await leave(pendingLeave.id)
+      setPendingLeave(null)
+    } catch (cause) {
+      setLeaveError(cause instanceof ApiError ? cause.message : 'No se pudo quitar la aventura de tu lista.')
+    } finally {
+      setLeaving(false)
     }
   }
 
@@ -268,13 +285,27 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
                   >
                     {shared ? 'Compartido contigo' : CASE_STATUS_LABELS[item.status]}
                   </span>
-                  <button
-                    type="button"
-                    className={styles.cardContinue}
-                    onClick={() => onOpen(item.id)}
-                  >
-                    Continuar →
-                  </button>
+                  <span className={styles.cardActions}>
+                    {shared && (
+                      <button
+                        type="button"
+                        className={styles.cardLeave}
+                        onClick={() => {
+                          setLeaveError(null)
+                          setPendingLeave(item)
+                        }}
+                      >
+                        Quitar de mi lista
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.cardContinue}
+                      onClick={() => onOpen(item.id)}
+                    >
+                      Continuar →
+                    </button>
+                  </span>
                 </div>
 
                 {/* Deleting is the owner's call: shared cases belong to
@@ -310,6 +341,19 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
         onCancel={() => {
           setDeleteError(null)
           setPendingDelete(null)
+        }}
+      />
+      <ConfirmDialog
+        open={pendingLeave !== null}
+        title={`¿Quitar de tu lista la aventura de ${pendingLeave?.alumno.nombre ?? ''}?`}
+        description="El caso sigue visible para su propietario; solo deja de aparecer en tu lista."
+        confirmLabel="Quitar"
+        pending={leaving}
+        error={leaveError}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => {
+          setLeaveError(null)
+          setPendingLeave(null)
         }}
       />
     </div>

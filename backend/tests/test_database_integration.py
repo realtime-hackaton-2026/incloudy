@@ -255,6 +255,80 @@ async def test_notify_case_participants_also_pushes_portal_inbox(monkeypatch) ->
 
 
 @pytest.mark.asyncio
+async def test_collaborator_leaving_drops_case_from_own_list_only() -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_leave,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+            TeacherNote,
+        ],
+    )
+    owner = User(nombre="María", email="maria3@example.com", hashed_password="hash")
+    editor = User(nombre="Luis", email="luis3@example.com", hashed_password="hash")
+    await owner.insert()
+    await editor.insert()
+    case = Case(
+        profesor_id=str(owner.id),
+        colaboradores=[
+            Collaborator(user_id=str(editor.id), role=CollaboratorRole.editor)
+        ],
+        alumno=Student(nombre="Caso A"),
+    )
+    await case.insert()
+
+    await cases_router.leave_case(str(case.id), editor)
+
+    stored = await Case.get(case.id)
+    assert stored is not None
+    assert [item.user_id for item in stored.colaboradores] == []
+
+    owner_notices = await Notification.find(
+        Notification.user_id == str(owner.id)
+    ).to_list()
+    assert [item.tipo for item in owner_notices] == ["colaborador_abandono"]
+
+    with pytest.raises(HTTPException) as excinfo:
+        await cases_router.leave_case(str(case.id), editor)
+    assert excinfo.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_owner_cannot_leave_own_case() -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_leave_owner,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+            TeacherNote,
+        ],
+    )
+    owner = User(nombre="María", email="maria4@example.com", hashed_password="hash")
+    await owner.insert()
+    case = Case(profesor_id=str(owner.id), alumno=Student(nombre="Caso A"))
+    await case.insert()
+
+    with pytest.raises(HTTPException) as excinfo:
+        await cases_router.leave_case(str(case.id), owner)
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail == "No puedes salir de tu propio caso"
+
+
+@pytest.mark.asyncio
 async def test_alex_content_and_case_are_seeded_idempotently() -> None:
     client = AsyncMongoMockClient()
     await init_beanie(

@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../lib/http'
-import { createCase, deleteCase, listCases } from './api'
+import { createCase, deleteCase, leaveCase, listCases } from './api'
 import type { Case, CaseDraft } from './api'
 
 export type CasesStatus = 'loading' | 'ready' | 'error'
@@ -23,6 +23,7 @@ export interface CasesState {
   refresh: () => Promise<void>
   create: (draft: CaseDraft) => Promise<Case>
   remove: (caseId: string) => Promise<void>
+  leave: (caseId: string) => Promise<void>
 }
 
 export function useCases(token: string): CasesState {
@@ -103,5 +104,13 @@ export function useCases(token: string): CasesState {
     [token],
   )
 
-  return { cases, status, error, refresh, create, remove }
+  const leave = useCallback(
+    async (caseId: string) => {
+      await leaveCase(token, caseId)
+      setCases((current) => current.filter((item) => item.id !== caseId))
+    },
+    [token],
+  )
+
+  return { cases, status, error, refresh, create, remove, leave }
 }

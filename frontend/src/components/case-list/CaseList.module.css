@@ -394,6 +394,12 @@
   background: rgb(12 25 35 / 40%);
 }
 
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .cardStatus {
   font-family: var(--label);
   font-size: 10px;
@@ -416,6 +422,22 @@
   border: none;
   cursor: pointer;
   transition: transform var(--micro) var(--ease);
+}
+
+.cardLeave {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--micro) var(--ease);
+}
+
+.cardLeave:hover {
+  color: var(--danger);
 }
 
 .card:hover .cardContinue {

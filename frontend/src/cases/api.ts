@@ -332,6 +332,14 @@ export async function deleteCase(token: string, caseId: string): Promise<void> {
   await apiFetch(`/cases/${caseId}`, { method: 'DELETE', headers: authHeaders(token) })
 }
 
+/** Drop a shared case from my list; the case and its owner stay untouched. */
+export async function leaveCase(token: string, caseId: string): Promise<void> {
+  await apiFetch(`/cases/${caseId}/leave`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  })
+}
+
 export async function addCollaborator(
   token: string,
   caseId: string,

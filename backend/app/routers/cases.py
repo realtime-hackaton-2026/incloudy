@@ -623,6 +623,45 @@ async def add_collaborator(
     )
 
 
+async def _remove_collaborator(
+    case: Case,
+    collaborator_id: str,
+    actor: User,
+    notify_owner: bool = False,
+) -> None:
+    case.colaboradores = [
+        item for item in case.colaboradores if item.user_id != collaborator_id
+    ]
+    if collaborator_id in case.colaboradores_ids:
+        case.colaboradores_ids.remove(collaborator_id)
+    case.updated_at = utcnow()
+    await case.save()
+    if notify_owner:
+        await create_notification(
+            case.profesor_id,
+            "colaborador_abandono",
+            "Un colaborador salió",
+            f"{actor.nombre} dejó el caso de {case.alumno.nombre}.",
+            str(case.id),
+        )
+    else:
+        await create_notification(
+            collaborator_id,
+            "acceso_retirado",
+            "Acceso retirado",
+            f"Tu acceso al caso de {case.alumno.nombre} fue retirado.",
+            str(case.id),
+        )
+    if is_portal_configured():
+        await remove_case_member(case, collaborator_id)
+    await record_event(
+        case,
+        str(actor.id),
+        "colaborador_eliminado",
+        {"user_id": collaborator_id},
+    )
+
+
 @router.delete("/{case_id}/collaborators/{collaborator_id}", status_code=204)
 async def remove_collaborator(
     case_id: str,
@@ -635,27 +674,27 @@ async def remove_collaborator(
     ) or collaborator_id in case.colaboradores_ids
     if not was_collaborator:
         return
-    case.colaboradores = [
-        item for item in case.colaboradores if item.user_id != collaborator_id
-    ]
-    if collaborator_id in case.colaboradores_ids:
-        case.colaboradores_ids.remove(collaborator_id)
-    case.updated_at = utcnow()
-    await case.save()
-    await create_notification(
-        collaborator_id,
-        "acceso_retirado",
-        "Acceso retirado",
-        f"Tu acceso al caso de {case.alumno.nombre} fue retirado.",
-        str(case.id),
-    )
-    if is_portal_configured():
-        await remove_case_member(case, collaborator_id)
-    await record_event(
+    await _remove_collaborator(case, collaborator_id, current_user)
+
+
+@router.post("/{case_id}/leave", status_code=204)
+async def leave_case(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> None:
+    """A collaborator drops a shared case from their own list. The case
+    itself, and the owner's copy of it, stay untouched."""
+    case = await get_accessible_case(case_id, current_user)
+    if case.profesor_id == str(current_user.id):
+        raise HTTPException(
+            status_code=400,
+            detail="No puedes salir de tu propio caso",
+        )
+    await _remove_collaborator(
         case,
         str(current_user.id),
-        "colaborador_eliminado",
-        {"user_id": collaborator_id},
+        current_user,
+        notify_owner=True,
     )
 
 

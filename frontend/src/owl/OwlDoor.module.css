@@ -552,6 +552,24 @@
   gap: 3px;
 }
 
+.roomDockHeader > .roomHeaderActions {
+  display: flex;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.endRoom {
+  min-height: 34px;
+  padding: 7px 10px;
+  color: var(--danger);
+  font: 700 var(--text-xs)/1 var(--label);
+  background: var(--danger-bg);
+  border: 1px solid rgb(240 120 92 / 35%);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .roomDockHeader strong {
   font-family: var(--display);
   font-size: 15px;
@@ -629,6 +647,26 @@
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--hairline);
+}
+
+.lobbyInvite {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+
+.historyButton {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  color: var(--parchment-hi);
+  font: 700 var(--text-xs)/1.2 var(--label);
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .inviteToggle {

@@ -33,6 +33,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   })
   const [sessionActive, setSessionActive] = useState(false)
   const [startSessionNonce, setStartSessionNonce] = useState(0)
+  const [closeSessionNonce, setCloseSessionNonce] = useState(0)
   const [forixCases, setForixCases] = useState<Case[]>([])
   const station = stationFor(stage)
   const portalReady = presence.status === 'ready'
@@ -121,15 +122,18 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
       {/* Portal presence and the session-control channel remain mounted even
           when no panel is visible. That is what makes 1 → 2 realtime and lets
           a colleague start the experience for everyone. */}
-      <aside className={`${styles.roomDock} ${roomOpen && sessionActive ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room">
-        {sessionActive && (
+      <aside className={`${styles.roomDock} ${roomOpen ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room">
+        {roomOpen && (
           <>
             <div className={styles.roomDockHeader}>
               <div>
                 <span className="eyebrow">Búrix · guía de la sala</span>
                 <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
-              <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Cerrar sala">✕</button>
+              <div className={styles.roomHeaderActions}>
+                {sessionActive && <button type="button" className={styles.endRoom} onClick={() => setCloseSessionNonce((current) => current + 1)}>Cerrar mesa</button>}
+                <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Ocultar sala">✕</button>
+              </div>
             </div>
 
             <div className={styles.roomPeopleBar}>
@@ -165,6 +169,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
           minimumParticipants={2}
           hideUi={!roomOpen}
           startSessionNonce={startSessionNonce}
+          closeSessionNonce={closeSessionNonce}
           onSessionActiveChange={handleSessionActiveChange}
           onPresenceChange={handlePresenceChange}
         />
@@ -323,6 +328,28 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
               </div>
             </div>
 
+            <div className={styles.lobbyInvite}>
+              <button type="button" className={styles.inviteToggle} onClick={() => setInviteOpen((current) => !current)}>
+                {inviteOpen ? 'Ocultar invitación' : 'Invitar docentes a este caso'}
+              </button>
+              {inviteOpen && (
+                <div className={styles.inviteForm}>
+                  <p className={styles.inviteHint}>Invita por correo antes de comenzar la mesa.</p>
+                  <div className={styles.inviteRow}>
+                    <input className={styles.inviteInput} type="email" value={email} placeholder="correo@colegio.edu" onChange={(event) => setEmail(event.target.value)} />
+                    <select className={styles.inviteSelect} value={role} onChange={(event) => setRole(event.target.value as CollaboratorRole)}>
+                      <option value="comentarista">Comentarista</option>
+                      <option value="editor">Editor</option>
+                      <option value="lector">Lector</option>
+                    </select>
+                    <button type="button" className="btn-secondary" disabled={!email.trim() || inviteState === 'sending'} onClick={() => void handleInvite()}>{inviteState === 'sending' ? 'Invitando…' : 'Invitar'}</button>
+                  </div>
+                  {inviteState === 'sent' && <p className={styles.inviteSuccess}>Invitación enviada y acceso concedido.</p>}
+                  {inviteState === 'error' && <p className={styles.inviteError}>{inviteError}</p>}
+                </div>
+              )}
+            </div>
+
             <div className={styles.lobbyActions}>
               <button
                 type="button"
@@ -334,6 +361,10 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
               </button>
               <button type="button" className={styles.backButton} onClick={backToMap}>Volver al mapa</button>
             </div>
+
+            <button type="button" className={styles.historyButton} onClick={() => { setLobbyOpen(false); setRoomOpen(true) }}>
+              Ver historial anterior del caso
+            </button>
 
             <p className={styles.lobbyFootnote}>Al comenzar, todos volveréis al mapa con la conversación colaborativa abierta.</p>
           </div>

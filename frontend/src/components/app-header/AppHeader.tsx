@@ -6,7 +6,8 @@
  * level of the product is.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import logo from '../../assets/images/logo.webp'
 import type { ProfileUpdate } from '../../auth'
 import styles from './AppHeader.module.css'
@@ -51,6 +52,20 @@ export function AppHeader({
     setProfile({ nombre, email, seccion: seccion ?? '', currentPassword: '', newPassword: '' })
     setSettingsOpen(true)
   }
+
+  useEffect(() => {
+    if (!settingsOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSettingsOpen(false)
+    }
+    window.addEventListener('keydown', closeWithEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeWithEscape)
+    }
+  }, [settingsOpen])
 
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault()
@@ -107,7 +122,7 @@ export function AppHeader({
         </button>
       </div>
 
-      {settingsOpen && (
+      {settingsOpen && createPortal(
         <div className={styles.settingsBackdrop} role="presentation" onMouseDown={() => setSettingsOpen(false)}>
           <section className={styles.settingsPanel} role="dialog" aria-modal="true" aria-labelledby="settings-title"
             onMouseDown={(event) => event.stopPropagation()}>
@@ -116,7 +131,7 @@ export function AppHeader({
               <button type="button" onClick={() => setSettingsOpen(false)} aria-label="Cerrar ajustes">×</button>
             </div>
             <form className={styles.settingsForm} onSubmit={saveProfile}>
-              <label>Nombre del docente<input required value={profile.nombre} onChange={(e) => setProfile({ ...profile, nombre: e.target.value })} /></label>
+              <label>Nombre del docente<input required autoComplete="name" value={profile.nombre} onChange={(e) => setProfile({ ...profile, nombre: e.target.value })} /></label>
               <label>Sección o tutoría<input value={profile.seccion} placeholder="Ej. Tutor de 3.º B" onChange={(e) => setProfile({ ...profile, seccion: e.target.value })} /></label>
               <label>Correo actual<input required type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} /></label>
               <div className={styles.passwordGrid}>
@@ -129,7 +144,7 @@ export function AppHeader({
             </form>
           </section>
         </div>
-      )}
+      , document.body)}
     </header>
   )
 }

@@ -1,6 +1,6 @@
 .wrapper {
   position: fixed;
-  right: 24px;
+  right: max(24px, calc((100vw - 1180px) / 2 + 28px));
   bottom: 24px;
   z-index: 80;
   display: flex;
@@ -713,10 +713,22 @@
 
 @media (max-width: 700px) {
   .wrapper {
-    right: 12px;
+    right: auto;
+    left: 50%;
     bottom: 12px;
     width: calc(100vw - 24px);
+    align-items: center;
+    transform: translateX(-50%);
   }
+
+  .whisper,
+  .actions { width: 100%; }
+
+  .door { justify-content: center; }
+
+  .label { flex: 0 1 auto; }
+
+  .actionRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .activeBanner {
     top: 58px;
@@ -746,7 +758,13 @@
   }
 
   .roomDock {
-    width: min(100vw, 360px);
+    inset: auto 0 0;
+    width: 100%;
+    height: min(78dvh, 680px);
+    padding: 18px max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    border-top: 1px solid rgb(230 201 149 / 24%);
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
   }
 }
 

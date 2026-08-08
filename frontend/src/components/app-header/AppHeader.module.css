@@ -179,14 +179,14 @@
   z-index: 100;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: clamp(12px, 3vw, 28px);
   background: rgb(5 15 21 / 72%);
   backdrop-filter: blur(8px);
 }
 
 .settingsPanel {
-  width: min(620px, 100%);
-  max-height: calc(100dvh - 40px);
+  width: min(620px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
   overflow: auto;
   padding: clamp(22px, 4vw, 36px);
   color: var(--text);
@@ -282,6 +282,21 @@
   }
 
   .passwordGrid { grid-template-columns: 1fr; }
+
+  .settingsBackdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .settingsPanel {
+    width: 100%;
+    max-height: 92dvh;
+    padding: 22px 18px max(22px, env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+  }
+
+  .settingsHeading h2 { font-size: 25px; }
+  .settingsForm { gap: 13px; }
 
   .navItem {
     padding: 8px 10px 10px;

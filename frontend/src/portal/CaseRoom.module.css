@@ -198,7 +198,7 @@
   color: var(--text-soft);
 }
 
-.message p {
+.messageBody {
   font-size: var(--text-md);
   line-height: 1.42;
   color: var(--text);

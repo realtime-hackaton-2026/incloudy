@@ -8,6 +8,7 @@ import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
 import { askAssistant } from '../chat/api'
+import { RichText } from '../chat/RichText'
 import { BurixPanel } from './BurixPanel'
 import logo from '../assets/images/logo.webp'
 import styles from './CaseRoom.module.css'
@@ -19,6 +20,8 @@ export interface CaseRoomProps {
   token: string
   caseId: string
   minimumParticipants?: number
+  /** Last confirmed room count, retained while a background tab reconnects. */
+  persistentPresenceCount?: number
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
   /** Keeps the Portal channel mounted while the visual room/lobby is elsewhere. */
   hideUi?: boolean
@@ -41,6 +44,7 @@ export function CaseRoom({
   token,
   caseId,
   minimumParticipants = 2,
+  persistentPresenceCount = 0,
   hideUi = false,
   startSessionNonce = 0,
   closeSessionNonce = 0,
@@ -87,6 +91,7 @@ export function CaseRoom({
         caseId={caseId}
         channelId={session.channelId}
         minimumParticipants={minimumParticipants}
+        persistentPresenceCount={persistentPresenceCount}
         hideUi={hideUi}
         startSessionNonce={startSessionNonce}
         closeSessionNonce={closeSessionNonce}
@@ -102,6 +107,7 @@ function RoomChannel({
   caseId,
   channelId,
   minimumParticipants,
+  persistentPresenceCount,
   hideUi,
   startSessionNonce,
   closeSessionNonce,
@@ -112,6 +118,7 @@ function RoomChannel({
   caseId: string
   channelId: string
   minimumParticipants: number
+  persistentPresenceCount: number
   hideUi: boolean
   startSessionNonce: number
   closeSessionNonce: number
@@ -167,7 +174,8 @@ function RoomChannel({
   // never pushed through presence metadata — the roster falls back to
   // "Docente · id" until names are joined app-side.
   const canPublish = me?.claims?.canPublish === true
-  const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
+  const realtimeCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
+  const onlineCount = Math.max(realtimeCount, persistentPresenceCount)
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,
     participants,
@@ -415,8 +423,8 @@ function RoomChannel({
           <ul className={styles.historyMessages}>
             {previousMessages.map((message) => (
               <li key={message.id}>
-                <strong>{messageAuthorLabel(message, me?.id)}</strong>
-                <span>{messageBody(message.content)}</span>
+                <strong>{messageAuthorLabel(message, me?.id, me?.claims?.username)}</strong>
+                <RichText text={messageBody(message.content)} />
                 <time>{formatTime(message.timestamp)}</time>
               </li>
             ))}
@@ -432,11 +440,11 @@ function RoomChannel({
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
                 <span className={styles.messageAuthor}>
-                  {messageAuthorLabel(message, me?.id)}
+                  {messageAuthorLabel(message, me?.id, me?.claims?.username)}
                 </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
-                <p>{messageBody(message.content)}</p>
+                <div className={styles.messageBody}><RichText text={messageBody(message.content)} /></div>
               </li>
             ))}
           </ul>
@@ -506,13 +514,20 @@ function messageBody(content: ChatMessage | string) {
   return content.body
 }
 
-function messageAuthorLabel(message: { content: ChatMessage | string; sender: { id: string; username?: string } }, meId?: string) {
+function messageAuthorLabel(
+  message: { content: ChatMessage | string; sender: { id: string; username?: string } },
+  meId?: string,
+  meName?: unknown,
+) {
   const content = message.content
   if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
   if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
   if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
-  if (meId && message.sender.id === meId) return 'Tú'
-  return message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`
+  const verifiedMeName = typeof meName === 'string' ? meName : undefined
+  const teacherName = meId && message.sender.id === meId
+    ? verifiedMeName ?? message.sender.username
+    : message.sender.username
+  return teacherName ? `Docente · ${teacherName}` : `Docente · ${message.sender.id.slice(-4)}`
 }
 
 function formatTime(timestamp: number) {

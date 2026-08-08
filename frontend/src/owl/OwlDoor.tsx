@@ -188,6 +188,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
           token={token}
           caseId={caseId}
           minimumParticipants={2}
+          persistentPresenceCount={presence.count}
           hideUi={!roomOpen}
           startSessionNonce={startSessionNonce}
           closeSessionNonce={closeSessionNonce}

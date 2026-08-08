@@ -354,7 +354,6 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
             <XpCounter value={current.estadoInteractivo.xpTotal} />
           </div>
         </div>
-        <AvatarPicker avatarId={avatarId} onSelect={selectAvatar} />
         <OwlTip tipId="map-guide" />
         {/* The owl in the moment: it answers a locked tap, and otherwise says
             how much of the recorrido is left. Both are read off state that

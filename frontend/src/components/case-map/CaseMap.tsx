@@ -11,6 +11,7 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import mapArt from '../../assets/images/mapa-completo.webp'
+import { ProgressJourney } from '../progress-journey'
 import styles from './CaseMap.module.css'
 import { MAP_ASPECT_RATIO, STATIONS, stationFor, stationIndex } from './stations'
 import type { CaseStage, Station } from './stations'
@@ -380,6 +381,12 @@ export function CaseMap({
           {focused ? 'Cierra para alejar' : 'Toca un lugar del mapa'}
         </span>
       </div>
+
+      <ProgressJourney
+        nodes={STATIONS.map((station) => ({ id: station.stage, label: station.label }))}
+        activeIndex={activeIndex}
+        onSelect={interactive ? (id) => focus(id as CaseStage) : undefined}
+      />
     </div>
   )
 }

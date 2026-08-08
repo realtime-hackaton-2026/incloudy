@@ -116,17 +116,22 @@
  */
 .trailBase {
   fill: none;
-  stroke: rgb(255 255 255 / 22%);
-  stroke-width: 1.4;
-  stroke-dasharray: 2 1.5;
+  stroke: rgb(207 225 218 / 42%);
+  stroke-width: 2px;
+  stroke-dasharray: 5 7;
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
 }
 
 /* The road already travelled, arriving at the pin. */
 .trailTraveled {
   fill: none;
-  stroke: var(--parchment);
-  stroke-width: 1.4;
-  filter: drop-shadow(0 0 4px rgb(230 201 149 / 45%));
+  stroke: rgb(230 201 149 / 72%);
+  stroke-width: 2px;
+  stroke-dasharray: 5 5;
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px rgb(230 201 149 / 24%));
 }
 
 /*

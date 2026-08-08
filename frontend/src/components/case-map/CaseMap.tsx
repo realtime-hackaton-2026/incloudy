@@ -49,6 +49,12 @@ export interface CaseMapProps {
   highlightStage?: CaseStage | null
   /** Reports the station under the pointer, so a case list can light up in turn. */
   onHoverStage?: (stage: CaseStage | null) => void
+  /**
+   * Someone tapped a station they have not reached yet. Carries the station
+   * that must be finished first, so the guide can name it instead of saying
+   * a bare "bloqueada".
+   */
+  onLockedAttempt?: (station: Station, mustFinishFirst: Station | null) => void
   className?: string
   /**
    * Lets the map break out of the app's reading-width shell. The map is the
@@ -71,6 +77,7 @@ export function CaseMap({
   onSelectStage,
   highlightStage = null,
   onHoverStage,
+  onLockedAttempt,
   className,
   wide = false,
   renderStationPanel,
@@ -177,11 +184,23 @@ export function CaseMap({
               <button
                 key={station.stage}
                 type="button"
-                // Locked is disabled rather than merely styled: it must not be
-                // reachable by keyboard either, and `disabled` is what stops a
-                // click opening a form the server will reject.
-                disabled={!interactive || locked}
-                onClick={() => focus(focused === station.stage ? null : station.stage)}
+                /*
+                 * `aria-disabled`, not `disabled`. A locked station still has
+                 * to answer when a child taps it — "you have to finish the
+                 * previous one" is the whole lesson, and a truly disabled
+                 * button emits no event to say it with. It stays focusable
+                 * and keeps "· bloqueada" in its name; the handler is what
+                 * refuses to open the form.
+                 */
+                disabled={!interactive}
+                aria-disabled={locked || undefined}
+                onClick={() => {
+                  if (locked) {
+                    onLockedAttempt?.(station, STATIONS[index - 1] ?? null)
+                    return
+                  }
+                  focus(focused === station.stage ? null : station.stage)
+                }}
                 onMouseEnter={() => onHoverStage?.(station.stage)}
                 onMouseLeave={() => onHoverStage?.(focused)}
                 className={classes.join(' ')}

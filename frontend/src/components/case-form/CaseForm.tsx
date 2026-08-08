@@ -16,7 +16,8 @@ import { CaseMap, stationIndex, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
 import { CaseChat } from '../../chat'
 import { AvatarPicker, useAvatar } from '../../avatar'
-import { OwlTip } from '../../guide'
+import { OwlSays, OwlTip, journeyProgress, lockedStation } from '../../guide'
+import type { Guidance } from '../../guide'
 import { OwlDoor } from '../../owl'
 import { XpCounter } from '../../reward'
 import { ConfirmDialog } from '../confirm-dialog'
@@ -88,6 +89,9 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [pendingRegenerate, setPendingRegenerate] = useState(false)
   const [sharingWithForix, setSharingWithForix] = useState(false)
   const [forixShareError, setForixShareError] = useState<string | null>(null)
+  // A locked tap is the loudest thing the owl has to say, so it outranks the
+  // standing "how far is left" message until it expires.
+  const [lockedNotice, setLockedNotice] = useState<Guidance | null>(null)
 
   if (loadStatus === 'loading') return <p className={styles.state}>Cargando caso…</p>
 
@@ -116,6 +120,17 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     current.progreso.porcentaje === 100 &&
     (current.status === 'borrador' || current.status === 'en_progreso')
   const canPublish = isOwner && current.status === 'completado'
+  /*
+   * What the owl is saying right now. Derived, never stored: a locked tap
+   * takes precedence while it lives, and otherwise the owl reports how much
+   * of the recorrido is left — straight off the server's own progress.
+   */
+  const stationsLeft = Math.max(
+    0,
+    current.progreso.total - current.progreso.completadas,
+  )
+  const guidance: Guidance | null = lockedNotice ?? journeyProgress(stationsLeft)
+
   const showSummary =
     current.status === 'completado' ||
     current.status === 'publicado' ||
@@ -336,11 +351,18 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         </div>
         <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
         <OwlTip tipId="map-guide" />
+        {/* The owl in the moment: it answers a locked tap, and otherwise says
+            how much of the recorrido is left. Both are read off state that
+            already exists — it never decides anything itself. */}
+        <OwlSays guidance={guidance} />
         {/* On its own route the map is the game, so it escapes the shell's
             reading width. Inside a case it stays one section among many. */}
         <CaseMap
           stage={stage}
           wide
+          onLockedAttempt={(blocked, mustFinishFirst) =>
+            setLockedNotice(lockedStation(blocked.label, mustFinishFirst?.label ?? null))
+          }
           renderStationPanel={template ? renderStationPanel : undefined}
         />
         <OwlDoor token={token} caseId={caseId} joinCode={current.joinCode} stage={stage} />

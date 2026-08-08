@@ -5,7 +5,7 @@
   padding: 12px;
   border: 1px solid var(--hairline);
   border-radius: 13px;
-  background: rgb(255 255 255 / 2%);
+  background: #151b25;
 }
 
 .roomHeader {
@@ -29,7 +29,7 @@
   margin-top: 3px;
   font-size: 11px;
   line-height: 1.35;
-  color: var(--text-soft);
+  color: #c4ccd7;
 }
 
 .presence {
@@ -39,7 +39,7 @@
   font-size: 9px;
   letter-spacing: 0.08em;
   color: var(--text-soft);
-  background: rgb(255 255 255 / 5%);
+  background: #1d2532;
   border: 1px solid var(--hairline);
   border-radius: 999px;
 }
@@ -59,8 +59,8 @@
 }
 
 .waiting {
-  background: rgb(230 201 149 / 7%);
-  border: 1px solid rgb(230 201 149 / 15%);
+  background: rgb(230 201 149 / 9%);
+  border: 1px solid rgb(230 201 149 / 28%);
 }
 
 .waitingIcon {
@@ -81,8 +81,8 @@
 
 .liveStrip {
   align-items: center;
-  background: rgb(110 231 168 / 6%);
-  border: 1px solid rgb(110 231 168 / 14%);
+  background: rgb(110 231 168 / 8%);
+  border: 1px solid rgb(110 231 168 / 25%);
   color: var(--success);
   font-size: 11px;
 }
@@ -112,8 +112,8 @@
 
 .message {
   padding: 9px 10px;
-  background: rgb(255 255 255 / 4%);
-  border: 1px solid rgb(255 255 255 / 4%);
+  background: #1b2330;
+  border: 1px solid rgb(255 255 255 / 9%);
   border-radius: 10px;
 }
 
@@ -130,13 +130,13 @@
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: #9da8b8;
 }
 
 .message p {
   font-size: 13px;
   line-height: 1.42;
-  color: var(--text);
+  color: #f1f3f6;
   overflow-wrap: anywhere;
 }
 
@@ -144,8 +144,9 @@
   padding: 10px;
   font-size: 11px;
   line-height: 1.45;
-  color: var(--muted);
-  border: 1px dashed var(--hairline);
+  color: #c0c8d4;
+  background: #121822;
+  border: 1px dashed rgb(255 255 255 / 16%);
   border-radius: 9px;
 }
 
@@ -154,7 +155,7 @@
   margin: 0;
   font-size: 10px;
   font-style: italic;
-  color: var(--muted);
+  color: #aeb8c6;
 }
 
 .composer {
@@ -168,19 +169,27 @@
   padding: 9px 10px;
   font-family: var(--sans);
   font-size: 13px;
-  color: var(--text);
-  background: rgb(9 12 17 / 85%);
-  border: 1px solid var(--hairline);
+  color: #f3f5f8;
+  background: #0d131c;
+  border: 1px solid rgb(255 255 255 / 16%);
   border-radius: 9px;
 }
 
 .composer input:focus {
-  border-color: rgb(230 201 149 / 46%);
+  border-color: rgb(230 201 149 / 72%);
+  box-shadow: 0 0 0 3px rgb(230 201 149 / 10%);
 }
 
 .composer button {
   padding: 9px 12px;
   font-size: 12px;
+  color: #17130d;
+  background: linear-gradient(180deg, #f1d8a6 0%, #d7b878 100%);
+  border-color: #f4dda9;
+}
+
+.composer button:hover:not(:disabled) {
+  background: #f1d8a6;
 }
 
 .state {

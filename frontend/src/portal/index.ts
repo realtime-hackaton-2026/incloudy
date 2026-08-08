@@ -1,5 +1,5 @@
-export { CaseRoom } from './CaseRoom'
-export type { CaseRoomProps } from './CaseRoom'
+export { CaseRoom, CaseRoomPresence } from './CaseRoom'
+export type { CaseRoomProps, CaseRoomPresenceProps, CaseRoomPresenceState } from './CaseRoom'
 export { getPortalClient } from './client'
 export { createPortalSession } from './api'
 export type { PortalSession } from './api'

@@ -204,6 +204,62 @@ describe('CaseRoom', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
+  it('publishes the shared session-start event when requested with two teachers', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    const send = vi.fn(() => Promise.resolve({ id: 'system-1', timestamp: Date.now() }))
+    useChannelMock.mockReturnValue({
+      messages: [],
+      send,
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" hideUi startSessionNonce={1} />)
+
+    await waitFor(() => expect(send).toHaveBeenCalledWith({
+      content: { type: 'session_started', body: 'La experiencia colaborativa ha comenzado.' },
+    }))
+  })
+
+  it('recognizes the shared session-start event and hides it from chat', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started', body: 'La experiencia colaborativa ha comenzado.' }, sender: { id: 'u-2', anon: false } },
+        { id: 'm1', content: { body: 'Vamos con la primera estación.' }, sender: { id: 'u-2', anon: false }, timestamp: Date.now() },
+      ],
+      send: vi.fn(),
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    expect(await screen.findByTestId('case-room')).toHaveAttribute('data-session-active', 'true')
+    expect(screen.getByText('Vamos con la primera estación.')).toBeInTheDocument()
+    expect(screen.queryByText('La experiencia colaborativa ha comenzado.')).not.toBeInTheDocument()
+  })
+
   it('announces when a teammate is typing', async () => {
     mockFetch(() =>
       jsonResponse({

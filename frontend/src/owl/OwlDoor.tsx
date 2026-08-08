@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { addCollaborator } from '../cases/api'
 import type { CollaboratorRole } from '../cases/api'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
-import { CaseRoom } from '../portal'
+import { CaseRoom, CaseRoomPresence } from '../portal'
+import type { CaseRoomPresenceState } from '../portal'
 import { OwlSprite } from './OwlSprite'
 import styles from './OwlDoor.module.css'
 
@@ -14,13 +15,40 @@ export interface OwlDoorProps {
 }
 
 export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
-  const [open, setOpen] = useState(false)
+  const [lobbyOpen, setLobbyOpen] = useState(false)
+  const [roomOpen, setRoomOpen] = useState(false)
+  const [rosterOpen, setRosterOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<CollaboratorRole>('comentarista')
   const [inviteState, setInviteState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [presence, setPresence] = useState<CaseRoomPresenceState>({
+    count: 0,
+    participants: [],
+    detailed: false,
+    status: 'loading',
+  })
+  const [sessionActive, setSessionActive] = useState(false)
+  const [startSessionNonce, setStartSessionNonce] = useState(0)
   const station = stationFor(stage)
+  const canOpen = presence.count >= 2
+
+  const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
+    setPresence(next)
+  }, [])
+
+  const handleSessionActiveChange = useCallback((active: boolean) => {
+    setSessionActive(active)
+  }, [])
+
+  // Once any teacher starts the shared experience, everyone returns to the
+  // map and the live room becomes available from the top banner / owl dock.
+  useEffect(() => {
+    if (!sessionActive) return
+    if (lobbyOpen) setLobbyOpen(false)
+    setRoomOpen(true)
+  }, [sessionActive])
 
   async function handleInvite() {
     const value = email.trim()
@@ -37,93 +65,243 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
     }
   }
 
+  function enterLobby() {
+    setRosterOpen(false)
+    setInviteOpen(false)
+    setLobbyOpen(true)
+    setRoomOpen(false)
+  }
+
+  function startExperience() {
+    if (!canOpen || sessionActive) return
+    setStartSessionNonce((current) => current + 1)
+  }
+
+  function backToMap() {
+    setLobbyOpen(false)
+    setRoomOpen(false)
+    setRosterOpen(false)
+  }
+
   return (
-    <aside className={styles.wrapper} data-testid="owl-door" data-state={open ? 'open' : 'closed'}>
-      {!open && (
-        <div className={styles.whisper} role="status">
-          <strong>¿Nos reunimos?</strong>
-          <span>Estoy aquí para que los docentes comentemos este caso juntos.</span>
-        </div>
-      )}
+    <>
+      {/* Portal presence and the session-control channel remain mounted even
+          when no panel is visible. That is what makes 1 → 2 realtime and lets
+          a colleague start the experience for everyone. */}
+      <CaseRoomPresence token={token} caseId={caseId} onPresenceChange={handlePresenceChange} />
+      <aside className={`${styles.roomDock} ${roomOpen && sessionActive ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room">
+        {sessionActive && (
+          <>
+            <div className={styles.roomDockHeader}>
+              <div>
+                <span className="eyebrow">Búrix · guía de la sala</span>
+                <strong>{presence.count}/5 docentes</strong>
+              </div>
+              <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Cerrar sala">✕</button>
+            </div>
 
-      <button
-        type="button"
-        className={styles.door}
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        aria-controls="owl-door-room"
-      >
-        <span className={styles.owlHalo} aria-hidden="true">
-          <OwlSprite className={styles.owl} />
-        </span>
-        <span className={styles.label}>
-          <span className={styles.title}>{open ? 'Cerrar sala docente' : 'Reunir al equipo'}</span>
-          <span className={styles.subtitle}>Búho · {station.label}</span>
-        </span>
-        <span className={styles.statusDot} aria-hidden="true" />
-      </button>
+            <div className={styles.roomPeopleBar}>
+              <span className={styles.roomPeopleDot} />
+              <strong>{presence.count} {presence.count === 1 ? 'docente' : 'docentes'} presentes</strong>
+              <button type="button" onClick={() => setRosterOpen((current) => !current)}>
+                {rosterOpen ? 'Ocultar' : 'Ver usuarios'}
+              </button>
+            </div>
 
-      {open && (
-        <div id="owl-door-room" className={styles.room}>
-          <div className={styles.roomIntro}>
-            <span className="eyebrow">Sala docente · tiempo real</span>
-            <h2>Un mismo mapa, varias miradas.</h2>
-            <p>
-              Recorred el caso y dejad comentarios, hipótesis y observaciones sin salir del mapa.
-            </p>
-          </div>
+            {rosterOpen && (
+              <div className={styles.inlineRoster}>
+                {presence.detailed && presence.participants.length > 0 ? (
+                  <ul className={styles.participants}>
+                    {presence.participants.map((participant) => (
+                      <li key={participant.id}>
+                        <span className={styles.participantDot} />
+                        <span>{participant.username ?? `Docente · ${participant.id.slice(-4)}`}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className={styles.rosterHint}>Portal informa de {presence.count} docentes conectados en esta sala.</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
-          <CaseRoom token={token} caseId={caseId} minimumParticipants={2} />
+        <CaseRoom
+          token={token}
+          caseId={caseId}
+          minimumParticipants={2}
+          hideUi={!roomOpen}
+          startSessionNonce={startSessionNonce}
+          onSessionActiveChange={handleSessionActiveChange}
+        />
 
+        {sessionActive && (
           <div className={styles.inviteBlock}>
-            <button
-              type="button"
-              className={styles.inviteToggle}
-              onClick={() => setInviteOpen((current) => !current)}
-            >
+            <button type="button" className={styles.inviteToggle} onClick={() => setInviteOpen((current) => !current)}>
               {inviteOpen ? 'Cerrar invitación' : 'Invitar a otro docente'}
             </button>
-
             {inviteOpen && (
               <div className={styles.inviteForm}>
-                <p className={styles.inviteHint}>
-                  La conversación se habilita cuando haya al menos dos docentes conectados al caso.
-                </p>
+                <p className={styles.inviteHint}>La invitación añade al docente al caso; al entrar aparecerá en presencia en tiempo real.</p>
                 <div className={styles.inviteRow}>
-                  <input
-                    className={styles.inviteInput}
-                    type="email"
-                    value={email}
-                    placeholder="correo@colegio.edu"
-                    onChange={(event) => setEmail(event.target.value)}
-                  />
-                  <select
-                    className={styles.inviteSelect}
-                    value={role}
-                    onChange={(event) => setRole(event.target.value as CollaboratorRole)}
-                  >
+                  <input className={styles.inviteInput} type="email" value={email} placeholder="correo@colegio.edu" onChange={(event) => setEmail(event.target.value)} />
+                  <select className={styles.inviteSelect} value={role} onChange={(event) => setRole(event.target.value as CollaboratorRole)}>
                     <option value="comentarista">Comentarista</option>
                     <option value="editor">Editor</option>
                     <option value="lector">Lector</option>
                   </select>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    disabled={!email.trim() || inviteState === 'sending'}
-                    onClick={() => void handleInvite()}
-                  >
+                  <button type="button" className="btn-secondary" disabled={!email.trim() || inviteState === 'sending'} onClick={() => void handleInvite()}>
                     {inviteState === 'sending' ? 'Invitando…' : 'Invitar'}
                   </button>
                 </div>
-                {inviteState === 'sent' && (
-                  <p className={styles.inviteSuccess}>Acceso concedido. Ya puede entrar en esta sala.</p>
-                )}
+                {inviteState === 'sent' && <p className={styles.inviteSuccess}>Acceso concedido. Ya puede entrar en este caso.</p>}
                 {inviteState === 'error' && <p className={styles.inviteError}>{inviteError}</p>}
               </div>
             )}
           </div>
+        )}
+      </aside>
+
+      {sessionActive && !roomOpen && (
+        <div className={styles.activeBanner} role="status">
+          <span className={styles.activeBannerDot} />
+          <div className={styles.activeBannerCopy}>
+            <strong>Sala de trabajo activa</strong>
+            <span>{presence.count}/5 docentes · Búrix facilita la conversación en tiempo real</span>
+          </div>
+          <button type="button" className={styles.bannerButton} onClick={() => setRoomOpen(true)}>
+            Ver sala
+          </button>
         </div>
       )}
-    </aside>
+
+      {!lobbyOpen && !roomOpen && (
+        <aside className={styles.wrapper} data-testid="owl-door" data-state="closed">
+          <div className={styles.whisper} role="status">
+            <strong>{sessionActive ? 'La sala sigue con vosotros.' : canOpen ? 'Ya podéis reuniros.' : '¿Nos reunimos?'}</strong>
+            <span>
+              {sessionActive
+                ? 'Seguid recorriendo el mapa y compartid aquí vuestras observaciones.'
+                : presence.count === 0
+                  ? 'Estoy buscando a los docentes de este caso…'
+                  : presence.count === 1
+                    ? 'Hay 1 docente conectado. Cuando seáis dos, podréis comenzar juntos.'
+                    : `Hay ${presence.count} docentes conectados. La sala está lista para comenzar.`}
+            </span>
+          </div>
+
+          <div className={styles.actions}>
+            <button type="button" className={styles.door} onClick={sessionActive ? () => setRoomOpen(true) : enterLobby}>
+              <span className={styles.owlHalo} aria-hidden="true">
+                <OwlSprite className={styles.owl} />
+              </span>
+              <span className={styles.label}>
+                <span className={styles.title}>Búrix · sala docente</span>
+                <span className={styles.subtitle}>{station.label} · {sessionActive ? 'conversación activa' : 'colaboración en vivo'}</span>
+              </span>
+              <span className={`${styles.statusDot} ${canOpen || sessionActive ? styles.statusReady : ''}`} aria-hidden="true" />
+            </button>
+
+            <div className={styles.actionRow}>
+              <button
+                type="button"
+                className={styles.viewButton}
+                onClick={() => {
+                  if (sessionActive) setRoomOpen(true)
+                  else setLobbyOpen(true)
+                  setRosterOpen(true)
+                }}
+              >
+                Ver sala · {presence.count}
+              </button>
+              {!sessionActive && (
+                <button
+                  type="button"
+                  className={`${styles.openButton} ${canOpen ? styles.openButtonReady : ''}`}
+                  disabled={!canOpen}
+                  onClick={enterLobby}
+                  title={canOpen ? 'Abrir la sala de trabajo' : 'Necesitáis al menos dos docentes conectados'}
+                >
+                  Abrir sala
+                </button>
+              )}
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {lobbyOpen && !sessionActive && (
+        <div className={styles.lobbyOverlay} role="dialog" aria-modal="true" aria-labelledby="owl-lobby-title">
+          <div className={styles.lobbyCard}>
+            <div className={styles.lobbyKicker}>BRÚIX · COLABORACIÓN</div>
+            <h2 id="owl-lobby-title">Sala de trabajo de Búrix</h2>
+            <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {caseId.slice(-6).toUpperCase()}</p>
+
+            <section className={styles.lobbyPanel} aria-label="Docentes presentes">
+              <div className={styles.lobbyPanelTop}>
+                <div>
+                  <strong>Búrix · sala de trabajo</strong>
+                  <span>En tiempo real</span>
+                </div>
+                <strong>{presence.count} / 5</strong>
+              </div>
+              <div className={styles.lobbyPanelTitle}>
+                <span>DOCENTES PRESENTES</span>
+                <small>Se actualiza automáticamente</small>
+              </div>
+              {presence.detailed && presence.participants.length > 0 ? (
+                <ul className={styles.lobbyParticipants}>
+                  {presence.participants.slice(0, 5).map((participant) => (
+                    <li key={participant.id}>
+                      <span className={styles.participantDot} />
+                      <span>{participant.username ?? `Docente · ${participant.id.slice(-4)}`}</span>
+                      <small>PRESENTE</small>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className={styles.aggregatePresence}>
+                  <span className={styles.participantDot} />
+                  <span>{presence.count === 1 ? 'Docente conectado' : `${presence.count} docentes conectados`}</span>
+                </div>
+              )}
+            </section>
+
+            <div className={`${styles.lobbyStatus} ${canOpen ? styles.lobbyStatusReady : ''}`}>
+              <span className={styles.lobbyStatusDot} />
+              <div>
+                <strong>{canOpen ? 'Equipo listo' : 'Esperando al equipo'}</strong>
+                <span>{canOpen ? 'Dos o más docentes pueden comenzar la sesión.' : 'Necesitamos al menos 2 docentes para empezar.'}</span>
+              </div>
+            </div>
+
+            <div className={styles.lobbyActions}>
+              <button
+                type="button"
+                className={`${styles.startButton} ${canOpen ? styles.startButtonReady : ''}`}
+                disabled={!canOpen}
+                onClick={startExperience}
+              >
+                {canOpen ? 'Comenzar experiencia' : 'Esperando docentes…'}
+              </button>
+              <button type="button" className={styles.backButton} onClick={backToMap}>Volver al mapa</button>
+            </div>
+
+            <p className={styles.lobbyFootnote}>Al comenzar, todos volveréis al mapa con la conversación colaborativa abierta.</p>
+          </div>
+
+          <div className={styles.lobbyGuide}>
+            <OwlSprite className={styles.lobbyGuideOwl} />
+            <div>
+              <strong>{canOpen ? 'Perfecto. Ya somos dos.' : 'Estoy esperando al equipo.'}</strong>
+              <span>{canOpen ? 'Podéis comenzar juntos y comentar cada paso del caso.' : 'Cuando llegue otro docente, os avisaré y podréis comenzar.'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+    </>
   )
 }

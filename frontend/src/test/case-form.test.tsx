@@ -290,6 +290,42 @@ describe('CaseForm — stations open as popups on the map, not as a list below i
     })
   })
 
+  /*
+   * §8 — a station opens as a question, not as a form. The comment box and
+   * the way forward are consequences of choosing, so they must not be on
+   * screen before a choice exists.
+   */
+  it('asks one thing at a time: the comment and the way forward wait for a choice', async () => {
+    const fetchMock = routedFetch({
+      'GET /cases/case-1': () => jsonResponse(caseWire()),
+      'GET /journeys/templates/tmpl-1': () => jsonResponse(TEMPLATE_WIRE),
+      'POST /portal/sessions/case-1': () => jsonResponse({ detail: 'Portal no configurado' }, 503),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const user = userEvent.setup()
+    render(
+      <CaseForm token="tok" caseId="case-1" ownerId="u-1" onBack={() => {}} onDeleted={() => {}} />,
+    )
+
+    await screen.findByTestId('case-form')
+    await user.click(screen.getByRole('button', { name: /orientar en la montaña/i }))
+
+    const panel = await screen.findByTestId('station-orientar')
+    expect(panel).toHaveAttribute('data-step', 'choosing')
+    // The question and its options are there; nothing downstream of the
+    // decision is.
+    expect(within(panel).getByLabelText(/necesita más reto/i)).toBeInTheDocument()
+    expect(within(panel).queryByLabelText(/comentario/i)).toBeNull()
+    expect(within(panel).queryByRole('button', { name: /^continuar$/i })).toBeNull()
+
+    await user.click(within(panel).getByLabelText(/necesita más reto/i))
+
+    expect(panel).toHaveAttribute('data-step', 'answering')
+    expect(within(panel).getByLabelText(/comentario/i)).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: /^continuar$/i })).toBeInTheDocument()
+  })
+
   it('shows a locked-station rejection from the server as a themed warning, verbatim', async () => {
     const fetchMock = routedFetch({
       'GET /cases/case-1': () => jsonResponse(caseWire()),

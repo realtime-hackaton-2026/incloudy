@@ -330,6 +330,36 @@
   cursor: pointer;
 }
 
+/*
+ * Everything downstream of the decision (§8). It arrives as a consequence of
+ * choosing, so it fades in rather than being there all along — the movement
+ * is what tells the child their choice did something.
+ */
+.stationFollowUp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: followUpIn var(--small) var(--ease) both;
+}
+
+@keyframes followUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stationFollowUp {
+    animation: none;
+  }
+}
+
 .stationCardFooter {
   display: flex;
   align-items: center;

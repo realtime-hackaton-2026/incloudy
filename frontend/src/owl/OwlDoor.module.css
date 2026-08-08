@@ -611,6 +611,7 @@
   background: transparent;
   border: 0;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .caseLink span {
@@ -1031,11 +1032,17 @@
     border-top: 1px solid rgb(230 201 149 / 24%);
     border-left: 0;
     border-radius: 18px 18px 0 0;
+    overflow-y: hidden;
   }
 
   .roomDockHeader { align-items: flex-start; }
   .roomHeaderActions { flex-wrap: wrap; justify-content: flex-end; }
   .endRoom { min-height: 38px; padding: 8px 10px; }
+
+  .roomDock > :global([data-testid="case-room"]) {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .roomDockClosed {
@@ -1130,4 +1137,21 @@
   .roomDock :global(.eyebrow) { font-size: 12px; }
   .roomPeopleBar { gap: 12px; padding: 13px 0; }
   .roomPeopleBar strong { line-height: 1.4; }
+
+  .roomDockHeader {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .roomDockHeader > .roomHeaderActions {
+    display: grid;
+    grid-template-columns: auto 28px;
+    align-items: start;
+  }
+
+  .endRoom {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 11px;
+  }
 }

@@ -392,10 +392,28 @@
 .composer button { min-height: 44px; font-size: 14px; }
 
 @media (max-width: 520px) {
-  .roomBody { padding: 16px; }
+  .roomBody {
+    gap: 11px;
+    min-height: 0;
+    padding: 14px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .roomBody::-webkit-scrollbar { display: none; }
   .roomHeader { flex-direction: column; align-items: stretch; }
   .headerActions { width: 100%; justify-content: flex-start; }
   .headerActions > * { flex: 1 1 auto; text-align: center; }
   .roomHint { line-height: 1.55; }
   .waiting { padding: 14px; }
+  .burixStrip { gap: 8px; }
+  .burixOwl { width: 42px; height: 42px; }
+  .composer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding-top: 7px;
+    background: var(--surface);
+  }
 }

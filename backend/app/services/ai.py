@@ -99,27 +99,44 @@ async def ask_gemini(
     template: Optional[JourneyTemplate] = None,
 ) -> str:
     if not settings.gemini_api_key:
-        if case is None:
-            return (
-                "El asistente local está disponible. Selecciona un caso para recibir "
-                "orientación basada en el recorrido guardado."
-            )
-        state = case.estado_interactivo
-        return (
-            f"Estado actual de {case.alumno.nombre}: progreso "
-            f"{case.progreso.porcentaje}%, {state.dias_restantes} días restantes y "
-            f"{state.confianza_equipo}% de confianza. Hipótesis: "
-            f"{state.hipotesis_sostenida or 'todavía sin definir'}. "
-            "Revisa las evidencias y completa la siguiente estación antes de cerrar "
-            "el análisis."
-        )
+        return _local_chat_response(case)
     prompt = (
         "Eres un asistente pedagógico. Analiza únicamente el caso ficticio o "
         "anonimizado proporcionado. Responde en español, evita diagnósticos médicos "
         "y ofrece recomendaciones educativas prudentes.\n\n"
         + build_prompt(message, case, template)
     )
-    return await _generate(prompt)
+    try:
+        return await _generate(prompt)
+    except HTTPException as error:
+        if error.status_code != 502:
+            raise
+        logger.warning("Gemini no está disponible; se usará la orientación local")
+        return _local_chat_response(case, provider_unavailable=True)
+
+
+def _local_chat_response(
+    case: Optional[Case], *, provider_unavailable: bool = False
+) -> str:
+    notice = (
+        "Búrix está usando temporalmente la orientación local. "
+        if provider_unavailable
+        else ""
+    )
+    if case is None:
+        return notice + (
+            "Selecciona un caso para recibir orientación basada en el recorrido guardado."
+        )
+    state = case.estado_interactivo
+    return (
+        notice
+        + f"Estado actual de {case.alumno.nombre}: progreso "
+        f"{case.progreso.porcentaje}%, {state.dias_restantes} días restantes y "
+        f"{state.confianza_equipo}% de confianza. Hipótesis: "
+        f"{state.hipotesis_sostenida or 'todavía sin definir'}. "
+        "Revisa las evidencias y completa la siguiente estación antes de cerrar "
+        "el análisis."
+    )
 
 
 def build_comments_context(comments: list[PortalComment]) -> str:

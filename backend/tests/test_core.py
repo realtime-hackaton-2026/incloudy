@@ -226,6 +226,72 @@ def test_portal_webhook_signature_is_verified(monkeypatch) -> None:
     verify_portal_signature(body, f"t={timestamp},v1={signature}")
 
 
+def test_create_user_session_mints_token_without_channel_grants(monkeypatch) -> None:
+    requests: list[tuple[str, dict]] = []
+
+    async def fake_portal_post(path: str, payload: dict) -> dict:
+        requests.append((path, payload))
+        return {"token": "portal-jwt", "expiresAt": "2026-08-08T00:00:00Z"}
+
+    monkeypatch.setattr(portal_service, "portal_post", fake_portal_post)
+    monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "pk_test")
+    user = SimpleNamespace(id="user-1", email="ana@example.com", nombre="Ana")
+
+    session = asyncio.run(portal_service.create_user_session(user))
+
+    assert requests == [
+        (
+            "/v1/tokens",
+            {
+                "userId": "user-1",
+                "claims": {"email": "ana@example.com", "username": "Ana"},
+                "ttl": portal_service.settings.portal_token_ttl,
+            },
+        )
+    ]
+    assert session.token == "portal-jwt"
+    assert session.channel_id == ""
+
+
+def test_send_user_notification_pushes_portal_inbox_item(monkeypatch) -> None:
+    requests: list[tuple[str, dict]] = []
+
+    async def fake_portal_post(path: str, payload: dict) -> dict:
+        requests.append((path, payload))
+        return {"id": "ntf_abc"}
+
+    monkeypatch.setattr(portal_service, "portal_post", fake_portal_post)
+    monkeypatch.setattr(portal_service.settings, "portal_secret_key", "sk_test")
+    monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "pk_test")
+
+    asyncio.run(
+        portal_service.send_user_notification(
+            "user-1",
+            "recorrido_actualizado",
+            "Recorrido actualizado",
+            {"caseId": "case-1", "mensaje": "Alex pasó de Explorar a Orientar."},
+        )
+    )
+
+    assert requests[0][0] == "/v1/users/user-1/notifications"
+    assert requests[0][1] == {
+        "type": "recorrido_actualizado",
+        "title": "Recorrido actualizado",
+        "data": {"caseId": "case-1", "mensaje": "Alex pasó de Explorar a Orientar."},
+    }
+
+
+def test_send_user_notification_is_silent_without_portal_config(monkeypatch) -> None:
+    async def should_not_be_called(*_args, **_kwargs) -> dict:  # pragma: no cover
+        raise AssertionError("portal_post no debería llamarse sin configuración")
+
+    monkeypatch.setattr(portal_service, "portal_post", should_not_be_called)
+    monkeypatch.setattr(portal_service.settings, "portal_secret_key", "")
+    monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "")
+
+    asyncio.run(portal_service.send_user_notification("user-1", "tipo", "Título"))
+
+
 def test_interactive_state_calculates_days_confidence_xp_and_unlock() -> None:
     template = SimpleNamespace(
         estaciones=build_stations(),

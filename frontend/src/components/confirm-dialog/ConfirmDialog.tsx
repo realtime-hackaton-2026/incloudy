@@ -18,6 +18,8 @@ export interface ConfirmDialogProps {
   tone?: 'default' | 'danger'
   /** The confirmed action is in flight: both buttons lock. */
   pending?: boolean
+  /** Last confirmation failed: show why instead of closing silently. */
+  error?: string | null
   onConfirm: () => void
   onCancel: () => void
 }
@@ -30,6 +32,7 @@ export function ConfirmDialog({
   cancelLabel = 'Cancelar',
   tone = 'default',
   pending = false,
+  error = null,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -59,6 +62,11 @@ export function ConfirmDialog({
           {title}
         </h2>
         {description && <div className={styles.description}>{description}</div>}
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
         <div className={styles.actions}>
           <button type="button" className="btn-secondary" onClick={onCancel} disabled={pending}>
             {cancelLabel}

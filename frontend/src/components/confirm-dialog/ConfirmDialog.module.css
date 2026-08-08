@@ -59,6 +59,13 @@
   color: var(--text-soft);
 }
 
+.error {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

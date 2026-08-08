@@ -139,3 +139,47 @@ async def remove_case_member(case: Case, user_id: str) -> None:
     channel_id = quote(case_channel_id(case), safe="")
     member_id = quote(user_id, safe="")
     await portal_delete(f"/v1/channels/{channel_id}/members/{member_id}")
+
+
+async def create_user_session(user: User) -> PortalSessionResponse:
+    """User-scoped Portal token for the inbox socket: identity, no channel
+    grants — the inbox is per-user, and case channels stay case-scoped."""
+    token_data = await portal_post(
+        "/v1/tokens",
+        {
+            "userId": str(user.id),
+            "claims": {"email": str(user.email), "username": user.nombre},
+            "ttl": settings.portal_token_ttl,
+        },
+    )
+    try:
+        return PortalSessionResponse(
+            token=token_data["token"],
+            expires_at=token_data["expiresAt"],
+            publishable_key=settings.portal_publishable_key,
+        )
+    except (KeyError, TypeError) as error:
+        logger.exception("Portal devolvió una respuesta inesperada")
+        raise HTTPException(
+            status_code=502,
+            detail="Portal devolvió una respuesta inválida",
+        ) from error
+
+
+async def send_user_notification(
+    user_id: str,
+    item_type: str,
+    title: str,
+    data: dict[str, Any] | None = None,
+) -> None:
+    """Best-effort push to the recipient's Portal inbox — a delivery failure
+    must never break the case flow that produced the notification."""
+    if not is_portal_configured():
+        return
+    try:
+        await portal_post(
+            f"/v1/users/{quote(user_id, safe='')}/notifications",
+            {"type": item_type, "title": title, "data": data or {}},
+        )
+    except HTTPException:
+        logger.exception("No se pudo entregar la notificación a %s por Portal", user_id)

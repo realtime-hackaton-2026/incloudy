@@ -30,6 +30,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   const [newAvatarId, setNewAvatarId] = useState(DEFAULT_AVATAR_ID)
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [joinOpen, setJoinOpen] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -74,9 +75,12 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   async function handleConfirmDelete() {
     if (!pendingDelete) return
     setDeleting(true)
+    setDeleteError(null)
     try {
       await remove(pendingDelete.id)
       setPendingDelete(null)
+    } catch (cause) {
+      setDeleteError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la aventura.')
     } finally {
       setDeleting(false)
     }
@@ -273,14 +277,21 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  className={styles.cardDelete}
-                  onClick={() => setPendingDelete(item)}
-                  aria-label={`Eliminar la aventura de ${item.alumno.nombre}`}
-                >
-                  ✕
-                </button>
+                {/* Deleting is the owner's call: shared cases belong to
+                    another teacher and the backend refuses them (404). */}
+                {!shared && (
+                  <button
+                    type="button"
+                    className={styles.cardDelete}
+                    onClick={() => {
+                      setDeleteError(null)
+                      setPendingDelete(item)
+                    }}
+                    aria-label={`Eliminar la aventura de ${item.alumno.nombre}`}
+                  >
+                    ✕
+                  </button>
+                )}
               </li>
             )
           })}
@@ -294,8 +305,12 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
         confirmLabel="Eliminar"
         tone="danger"
         pending={deleting}
+        error={deleteError}
         onConfirm={handleConfirmDelete}
-        onCancel={() => setPendingDelete(null)}
+        onCancel={() => {
+          setDeleteError(null)
+          setPendingDelete(null)
+        }}
       />
     </div>
   )

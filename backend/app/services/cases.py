@@ -287,6 +287,9 @@ async def notify_case_participants(
     participant_ids = {case.profesor_id}
     participant_ids.update(item.user_id for item in case.colaboradores)
     participant_ids.update(case.colaboradores_ids)
+    # Deferred import: services.portal imports `user_role` from this module,
+    # so a module-level import here would be the cycle portal→cases→portal.
+    from ..services.portal import send_user_notification  # noqa: PLC0415
     for user_id in participant_ids - {actor_id}:
         await create_notification(
             user_id=user_id,
@@ -294,4 +297,10 @@ async def notify_case_participants(
             titulo=titulo,
             mensaje=mensaje,
             case_id=str(case.id),
+        )
+        await send_user_notification(
+            user_id,
+            tipo,
+            titulo,
+            {"caseId": str(case.id), "mensaje": mensaje},
         )

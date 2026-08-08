@@ -171,5 +171,7 @@ class TeacherNoteCreateRequest(BaseModel):
 class PortalSessionResponse(BaseModel):
     token: str
     expires_at: str
-    channel_id: str
+    # Empty for user-scoped sessions (inbox): a channel id only makes sense
+    # when the token grants access to one case channel.
+    channel_id: str = ""
     publishable_key: str

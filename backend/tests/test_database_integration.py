@@ -191,6 +191,70 @@ async def test_complete_collaborative_case_flow_persists(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_notify_case_participants_also_pushes_portal_inbox(monkeypatch) -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_incloudy,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+            TeacherNote,
+        ],
+    )
+    owner = User(nombre="María", email="maria2@example.com", hashed_password="hash")
+    editor = User(nombre="Luis", email="luis2@example.com", hashed_password="hash")
+    await owner.insert()
+    await editor.insert()
+    case = Case(
+        profesor_id=str(owner.id),
+        colaboradores=[Collaborator(user_id=str(editor.id), role=CollaboratorRole.editor)],
+        alumno=Student(nombre="Caso A"),
+        progreso={"completadas": 0, "total": 1, "porcentaje": 0},
+    )
+    await case.insert()
+
+    pushed: list[tuple[str, str, str, dict]] = []
+
+    async def fake_send(
+        user_id: str,
+        item_type: str,
+        title: str,
+        data: dict,
+    ) -> None:
+        pushed.append((user_id, item_type, title, data))
+
+    # notify_case_participants imports send_user_notification lazily, so the
+    # patch has to land on the module it imports from, not on app.services.cases.
+    monkeypatch.setattr(
+        "app.services.portal.send_user_notification", fake_send
+    )
+
+    from app.services.cases import notify_case_participants
+    await notify_case_participants(
+        case,
+        str(owner.id),
+        "recorrido_actualizado",
+        "Recorrido actualizado",
+        "Alex pasó a Orientar.",
+    )
+
+    assert pushed == [
+        (
+            str(editor.id),
+            "recorrido_actualizado",
+            "Recorrido actualizado",
+            {"caseId": str(case.id), "mensaje": "Alex pasó a Orientar."},
+        )
+    ]
+
+
+@pytest.mark.asyncio
 async def test_alex_content_and_case_are_seeded_idempotently() -> None:
     client = AsyncMongoMockClient()
     await init_beanie(

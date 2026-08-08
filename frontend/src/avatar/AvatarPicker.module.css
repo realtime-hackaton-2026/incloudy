@@ -1,0 +1,82 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.strip {
+  display: flex;
+  gap: 10px;
+  padding: 2px;
+  margin: 0;
+  overflow-x: auto;
+  list-style: none;
+  /* A horizontally scrolling strip is exactly the kind of wide content the
+     page body must never be the one to scroll — this container owns it. */
+  scrollbar-width: thin;
+}
+
+.option {
+  flex: none;
+}
+
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 50%;
+  border: 2px solid var(--hairline-strong);
+  background: #05070a;
+  transition:
+    border-color var(--micro) var(--ease),
+    transform var(--micro) var(--ease);
+}
+
+.button:hover .thumb {
+  transform: translateY(-2px);
+  border-color: rgb(230 201 149 / 55%);
+}
+
+.button[data-state='selected'] .thumb {
+  border-color: var(--parchment);
+  box-shadow: 0 0 0 3px rgb(230 201 149 / 22%);
+}
+
+.name {
+  font-family: var(--label);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.button[data-state='selected'] .name {
+  color: var(--parchment);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:hover .thumb {
+    transform: none;
+  }
+}

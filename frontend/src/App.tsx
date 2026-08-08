@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSession } from './auth'
 import type { Credentials } from './auth'
+import { AvatarPicker, useAvatar } from './avatar'
 import { useCases } from './cases'
+import { OwlTip } from './guide'
 import { AppHeader } from './components/app-header'
 import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
@@ -202,6 +204,7 @@ function App() {
  */
 function MapOverview({ token }: { token: string }) {
   const { cases, status } = useCases(token)
+  const { avatarId, setAvatarId } = useAvatar()
 
   if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
   if (cases.length === 0) {
@@ -209,7 +212,13 @@ function MapOverview({ token }: { token: string }) {
   }
 
   const latest = cases[0]
-  return <CaseMap stage={toCaseStage(latest.estadoInteractivo.estacionActual)} />
+  return (
+    <>
+      <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
+      <OwlTip tipId="map-guide" />
+      <CaseMap stage={toCaseStage(latest.estadoInteractivo.estacionActual)} />
+    </>
+  )
 }
 
 export default App

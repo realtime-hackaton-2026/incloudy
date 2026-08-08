@@ -1,0 +1,45 @@
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgb(230 201 149 / 22%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 3%);
+}
+
+.icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+.bubble {
+  flex: 1;
+  margin: 0;
+  padding-top: 3px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.dismiss {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.dismiss:hover {
+  color: var(--text);
+  border-color: rgb(255 255 255 / 26%);
+}

@@ -16,6 +16,8 @@ import { CaseMap, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
 import { CaseRoom } from '../../portal'
 import { CaseChat } from '../../chat'
+import { AvatarPicker, useAvatar } from '../../avatar'
+import { OwlTip } from '../../guide'
 import { ConfirmDialog } from '../confirm-dialog'
 import { StationCard } from './JourneyStations'
 import styles from './CaseForm.module.css'
@@ -57,6 +59,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
     status: templateStatus,
     error: templateError,
   } = useJourneyTemplate(token, item?.templateId ?? null)
+
+  const { avatarId, setAvatarId } = useAvatar()
 
   const [collaboratorEmail, setCollaboratorEmail] = useState('')
   const [collaboratorRole, setCollaboratorRole] = useState<CollaboratorRole>('comentarista')
@@ -296,6 +300,10 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
           <h3 className={styles.sectionTitle}>Recorrido</h3>
           <span className={styles.percent}>{current.progreso.porcentaje}% completado</span>
         </div>
+
+        <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
+
+        <OwlTip tipId="map-guide" />
 
         <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
 

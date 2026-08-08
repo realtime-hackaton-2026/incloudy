@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useSession } from './auth'
 import type { Credentials } from './auth'
+import { useCases } from './cases'
 import { AppHeader } from './components/app-header'
 import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
 import { CaseList } from './components/case-list'
-import { CaseMap } from './components/case-map'
-import type { CaseStage } from './components/case-map'
+import { CaseMap, toCaseStage } from './components/case-map'
 import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
 import { Registro } from './components/registro'
@@ -79,11 +79,6 @@ function App() {
     const timer = setTimeout(() => setEntering(false), ENTRANCE_MS)
     return () => clearTimeout(timer)
   }, [entering])
-
-  // Demo only: the map has no real case wired in yet. The five fixed stages
-  // here and the backend's freeform `estaciones` checklist are two
-  // unreconciled data models — see docs/memoria.md for why this waits.
-  const [demoStage, setDemoStage] = useState<CaseStage>('explorar')
 
   /**
    * Only a fresh sign-in plays the entrance; restoring a token must not.
@@ -194,12 +189,27 @@ function App() {
             }}
           />
         )}
-        {view.name === 'map-demo' && (
-          <CaseMap stage={demoStage} onSelectStage={setDemoStage} />
-        )}
+        {view.name === 'map-demo' && <MapOverview token={session.token} />}
       </main>
     </>
   )
+}
+
+/**
+ * The map isn't a case editor — it just shows where the most recently
+ * touched case stands. Its own hooks so they only run while this route is
+ * actually mounted, instead of every route paying for a second case fetch.
+ */
+function MapOverview({ token }: { token: string }) {
+  const { cases, status } = useCases(token)
+
+  if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
+  if (cases.length === 0) {
+    return <p className="app-restoring">Crea tu primera aventura para ver el mapa.</p>
+  }
+
+  const latest = cases[0]
+  return <CaseMap stage={toCaseStage(latest.estadoInteractivo.estacionActual)} />
 }
 
 export default App

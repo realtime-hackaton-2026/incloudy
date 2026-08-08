@@ -96,3 +96,14 @@ export function stationFor(stage: CaseStage): Station {
 export function stationIndex(stage: CaseStage): number {
   return STATIONS.findIndex((station) => station.stage === stage)
 }
+
+/**
+ * Reads the backend's `estado_interactivo.estacion_actual`. It carries the
+ * same five ids as `CaseStage`, plus `"completado"` once every station is
+ * answered — which has nowhere to stand on a five-station map, so a
+ * completed case rests at the last one instead of the map throwing.
+ */
+export function toCaseStage(estacionActual: string): CaseStage {
+  const match = STATIONS.find((station) => station.stage === estacionActual)
+  return match ? match.stage : STATIONS[STATIONS.length - 1].stage
+}

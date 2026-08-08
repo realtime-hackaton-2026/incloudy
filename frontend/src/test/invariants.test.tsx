@@ -187,10 +187,10 @@ describe('Invariants 2, 3 & 9 — session lifecycle', () => {
       'fetch',
       vi.fn(() =>
         Promise.resolve(
-          new Response(JSON.stringify({ email: 'qa@incloudy.dev' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({ id: 'qa-1', nombre: 'QA', email: 'qa@incloudy.dev' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
         ),
       ),
     )
@@ -255,19 +255,20 @@ describe('Invariants 2, 3 & 9 — session lifecycle', () => {
 
 describe('Invariant 10 — state leads, animation follows', () => {
   it('reports sign-in success synchronously, without waiting on any animation', async () => {
-    const token = `${btoa(JSON.stringify({ alg: 'none' }))}.${btoa(
-      JSON.stringify({ sub: 'u1' }),
-    )}.sig`
     vi.stubGlobal(
       'fetch',
-      vi.fn(() =>
-        Promise.resolve(
-          new Response(JSON.stringify({ access_token: token, token_type: 'bearer' }), {
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input)
+        const body = url.includes('/auth/me')
+          ? { id: 'u1', nombre: 'QA', email: 'a@b.dev' }
+          : { access_token: 'tok', token_type: 'bearer' }
+        return Promise.resolve(
+          new Response(JSON.stringify(body), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           }),
-        ),
-      ),
+        )
+      }),
     )
     const { result } = renderHook(() => useSession())
     let ok: boolean | undefined

@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@portalsdk/core": "^0.1.5",
+    "@portalsdk/react": "^0.1.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

@@ -8,6 +8,16 @@
  */
 
 :root {
+  /*
+   * `body { overflow-x: hidden }` alone isn't enough: `Scene` is
+   * `position: fixed; inset: 0`, sized against the initial containing
+   * block (the html element), not body — if something downstream ever
+   * overflows again, html's own scrollWidth grows and drags Scene wider
+   * than the viewport with it. Clamping it here is what actually stops
+   * that class of bug, not just its symptom.
+   */
+  overflow-x: hidden;
+
   /* --- Environment ---------------------------------------------------- */
   --bg: #10131a;
   --surface-deep: #151922;

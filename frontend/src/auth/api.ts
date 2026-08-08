@@ -43,11 +43,16 @@ export async function registerAccount({ email, password }: Credentials): Promise
   return readAccessToken(response)
 }
 
-/** The email behind a token. Also the cheapest way to know a stored token still works. */
-export async function fetchCurrentUser(token: string): Promise<string> {
+export interface CurrentUser {
+  id: string
+  nombre: string
+  email: string
+}
+
+/** Who the token belongs to. Also the cheapest way to know a stored token still works. */
+export async function fetchCurrentUser(token: string): Promise<CurrentUser> {
   const response = await apiFetch('/auth/me', { headers: authHeaders(token) })
-  const user = (await response.json()) as { email: string }
-  return user.email
+  return (await response.json()) as CurrentUser
 }
 
 async function readAccessToken(response: Response): Promise<string> {

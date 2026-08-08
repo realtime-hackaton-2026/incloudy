@@ -301,12 +301,52 @@
   transform-origin: left center;
 }
 
+.hudHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .hudTitle {
   font-family: var(--display);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
+}
+
+.hudCloseCorner {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-soft);
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.hudCloseCorner:hover {
+  color: var(--text);
+  border-color: rgb(255 255 255 / 26%);
+}
+
+/* --- Panel mode: a real form instead of the "Explorar →" preview -------- */
+
+.hudPanel {
+  width: min(360px, 84vw);
+  max-height: min(520px, 72vh);
+  overflow-y: auto;
+}
+
+.hudPanelBody {
+  margin-top: 12px;
 }
 
 .hudPlace {
@@ -434,6 +474,8 @@
     inset: auto 0 0 0;
     z-index: 40;
     width: 100%;
+    max-height: 84vh;
+    overflow-y: auto;
     border-radius: 16px 16px 0 0;
     /* Anchoring to a map coordinate is meaningless once it spans the
        screen, so the connector goes away with it. */
@@ -443,6 +485,13 @@
 
   .hud::before {
     display: none;
+  }
+
+  /* Already full-width and scrollable via .hud above; only the size cap
+     needs to change for a form's worth of content. */
+  .hudPanel {
+    width: 100%;
+    max-height: 84vh;
   }
 
   @keyframes sheetIn {

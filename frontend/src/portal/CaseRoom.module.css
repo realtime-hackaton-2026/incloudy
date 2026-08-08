@@ -1,0 +1,118 @@
+.room {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.roomHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomTitle {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.presence {
+  font-family: var(--label);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.message {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--text);
+  background: rgb(255 255 255 / 4%);
+  border-radius: 9px;
+}
+
+.messageAuthor {
+  margin-right: 6px;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.empty {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.typing {
+  min-height: 14px;
+  margin: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+}
+
+.composer input {
+  flex: 1;
+  /* Inputs have an implicit min-width: auto that fights flex shrinking —
+     without this a long placeholder can push the button off narrow screens. */
+  min-width: 0;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  background: rgb(9 12 17 / 70%);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+}
+
+.composer input:focus {
+  /* No `outline: none` here — the global :focus-visible rule in styles.css
+     still needs to draw its ring for keyboard focus. This only adds the
+     border highlight on top, for every focus method. */
+  border-color: rgb(230 201 149 / 46%);
+}
+
+.state {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stateError {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--danger);
+}

@@ -1,7 +1,7 @@
-/**
- * The signed-in teacher's case list — own and shared. Loads on mount and
- * exposes `create`/`remove` so the list screen never talks to the API
- * directly, matching the pattern in `auth/useSession.ts`.
+/*
+ * frontend/src/cases/useCases.ts // the signed-in teacher's case list, own
+ * and shared. Loads on mount and exposes create/remove so the list screen
+ * never talks to the API directly, matching auth/useSession.ts.
  */
 
 import { useCallback, useEffect, useState } from 'react'

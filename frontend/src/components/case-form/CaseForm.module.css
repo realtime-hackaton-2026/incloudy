@@ -157,7 +157,9 @@
 .input:focus,
 .textarea:focus,
 .stationTitle:focus {
-  outline: none;
+  /* No `outline: none` — the global :focus-visible rule in styles.css still
+     needs to draw its ring for keyboard focus; this only layers the border
+     and background highlight on top, for every focus method. */
   border-color: rgb(230 201 149 / 46%);
   background: rgb(12 16 22 / 88%);
 }
@@ -202,57 +204,160 @@
   transition: width var(--medium) var(--ease);
 }
 
-/* --- Stations ---------------------------------------------------------- */
+/* --- Stats row ----------------------------------------------------------- */
 
-.stations {
+.statsRow {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 0;
-  list-style: none;
 }
 
-.station {
+.stat {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 12px;
+  background: rgb(255 255 255 / 4%);
+  border-radius: 9px;
+}
+
+.statLabel {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.statValue {
+  margin: 4px 0 0;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* --- Journey stations ---------------------------------------------------- */
+
+.stationCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+.stationCard[data-state='completed'] {
+  border-color: rgb(230 201 149 / 35%);
+}
+
+.stationCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stationCardBadge {
+  flex: none;
+  padding: 3px 8px;
+  font-family: var(--label);
+  font-size: 10px;
+  color: var(--parchment);
+  background: rgb(230 201 149 / 12%);
+  border-radius: 999px;
+}
+
+.stationCardTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--text);
+}
+
+.stationCardSubtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.stationCardDone {
+  margin-left: auto;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.stationCardBody {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.stationOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stationOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.stationOption input {
+  accent-color: var(--parchment);
+  cursor: pointer;
+}
+
+.stationCardFooter {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.station input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--parchment);
-  cursor: pointer;
-}
-
-.stationTitle {
-  flex: 1;
-}
-
-.stationRemove {
-  flex: none;
-  width: 30px;
-  height: 30px;
-  font-size: 15px;
-  line-height: 1;
+.stationCardSaved {
+  font-family: var(--label);
+  font-size: 11px;
   color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    color var(--micro) var(--ease),
-    border-color var(--micro) var(--ease);
 }
 
-.stationRemove:hover {
+/* A locked-station attempt or any other save failure — the backend's own
+   Spanish message, framed so it reads as a real notice rather than a
+   stray line of red text at the bottom of the form. */
+.stationCardWarning {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13.5px;
   color: var(--danger);
-  border-color: rgb(255 107 107 / 45%);
+  background: var(--danger-bg);
+  border: 1px solid rgb(255 107 107 / 35%);
+  border-radius: 9px;
 }
 
-.addStation {
-  align-self: flex-start;
+/* --- Summary -------------------------------------------------------------- */
+
+.summaryBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  white-space: pre-wrap;
+}
+
+.summaryActions {
+  display: flex;
+  gap: 8px;
 }
 
 /* --- Collaborators ----------------------------------------------------- */
@@ -298,11 +403,13 @@
 
 .inviteForm {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .inviteForm .input {
   flex: 1;
+  min-width: 160px;
 }
 
 /* --- Footer ------------------------------------------------------------ */

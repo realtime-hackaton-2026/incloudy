@@ -1,15 +1,13 @@
-/**
- * Who is signed in, for the whole app.
- *
- * The token lives in localStorage so a reload does not throw the teacher back
- * to the login screen mid-case. It is trusted only after /auth/me confirms it,
+/*
+ * frontend/src/auth/useSession.ts // who is signed in, for the whole app. The
+ * token lives in localStorage so a reload does not throw the teacher back to
+ * the login screen mid-case; it's trusted only after /auth/me confirms it,
  * which also covers the token expiring while the tab was closed.
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import { registerAccount, fetchCurrentUser, requestToken } from './api'
 import type { Credentials } from './api'
-import { decodeUserId } from './jwt'
 import { ApiError } from '../lib/http'
 
 const TOKEN_KEY = 'incloudy.token'
@@ -17,8 +15,7 @@ const TOKEN_KEY = 'incloudy.token'
 export interface Session {
   token: string
   email: string
-  /** From the token's `sub` claim. Null only if a token ever fails to decode. */
-  userId: string | null
+  userId: string
 }
 
 export type SessionStatus =
@@ -62,9 +59,9 @@ export function useSession(): SessionState {
     // first pass from writing state after the second one already did.
     let active = true
     fetchCurrentUser(token)
-      .then((email) => {
+      .then((user) => {
         if (!active) return
-        setSession({ token, email, userId: decodeUserId(token) })
+        setSession({ token, email: user.email, userId: user.id })
         setStatus('active')
       })
       .catch(() => {
@@ -85,8 +82,9 @@ export function useSession(): SessionState {
     setError(null)
     try {
       const token = await requestToken(credentials)
+      const user = await fetchCurrentUser(token)
       storeToken(token)
-      setSession({ token, email: credentials.email, userId: decodeUserId(token) })
+      setSession({ token, email: user.email, userId: user.id })
       setStatus('active')
       return true
     } catch (cause) {
@@ -101,8 +99,9 @@ export function useSession(): SessionState {
     setError(null)
     try {
       const token = await registerAccount(credentials)
+      const user = await fetchCurrentUser(token)
       storeToken(token)
-      setSession({ token, email: credentials.email, userId: decodeUserId(token) })
+      setSession({ token, email: user.email, userId: user.id })
       setStatus('active')
       return true
     } catch (cause) {

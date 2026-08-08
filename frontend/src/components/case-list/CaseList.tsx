@@ -7,10 +7,9 @@
  */
 
 import { useState } from 'react'
-import { useCases } from '../../cases'
+import { CASE_STATUS_LABELS, useCases } from '../../cases'
 import type { Case } from '../../cases'
-import { STATIONS } from '../case-map'
-import type { CaseStage } from '../case-map'
+import { STATIONS, toCaseStage } from '../case-map'
 import { ConfirmDialog } from '../confirm-dialog'
 import styles from './CaseList.module.css'
 
@@ -31,7 +30,6 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
     try {
       const created = await create({
         alumno: { nombre: 'Nuevo alumno', descripcion: '' },
-        estaciones: [],
       })
       onOpen(created.id)
     } finally {
@@ -103,10 +101,11 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
       {cases.length > 0 && (
         <ul className={styles.list}>
           {cases.map((item) => {
-            const done = item.estaciones.filter((station) => station.completado).length
-            const total = item.estaciones.length
-            const percent = total ? Math.round((done / total) * 100) : 0
-            const station = STATIONS.find((entry) => entry.stage === stageOf(item))
+            const { completadas: done, total } = item.progreso
+            const percent = item.progreso.porcentaje
+            const station = STATIONS.find(
+              (entry) => entry.stage === toCaseStage(item.estadoInteractivo.estacionActual),
+            )
             const shared = ownerId !== null && item.profesorId !== ownerId
 
             return (
@@ -140,11 +139,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
                   <span
                     className={`${styles.cardStatus} ${shared ? styles.cardShared : ''}`}
                   >
-                    {shared
-                      ? 'Compartido contigo'
-                      : item.status === 'publicado'
-                        ? 'Publicado'
-                        : 'Borrador'}
+                    {shared ? 'Compartido contigo' : CASE_STATUS_LABELS[item.status]}
                   </span>
                   <button
                     type="button"
@@ -181,22 +176,4 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
       />
     </div>
   )
-}
-
-/**
- * Which station a case is standing on.
- *
- * PROVISIONAL — derived from the checklist's completion, because the current
- * backend has no link between a case and the five map stages: `estaciones`
- * is a freeform list the teacher writes, and the stages are fixed artwork.
- * The `features/cases` branch adds `estado_interactivo.estacion_actual`,
- * which carries exactly these five ids; when that lands this whole function
- * collapses to reading that field. Kept in one place for that reason.
- */
-function stageOf(item: Case): CaseStage {
-  const total = item.estaciones.length
-  if (total === 0) return STATIONS[0].stage
-  const done = item.estaciones.filter((station) => station.completado).length
-  const index = Math.min(STATIONS.length - 1, Math.floor((done / total) * STATIONS.length))
-  return STATIONS[index].stage
 }

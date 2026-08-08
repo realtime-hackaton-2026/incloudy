@@ -1,21 +1,26 @@
-/**
- * A single case, editable with autosave.
- *
- * Edits update local state immediately and are pushed to the backend after a
- * short pause in typing, so the form never needs a save button — the header
- * just says "saving…" / "guardado".
+/*
+ * frontend/src/cases/useCase.ts // one case, editable with autosave on the
+ * student record; every other change (a station answer, completing,
+ * publishing, the summary) is a discrete, awaited action instead, since each
+ * has its own server-side validation and shouldn't be debounced.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '../lib/http'
 import {
   addCollaborator,
+  answerStation as answerStationRequest,
+  completeCase as completeCaseRequest,
   deleteCase,
+  generateSummary as generateSummaryRequest,
   getCase,
+  publishCase as publishCaseRequest,
   removeCollaborator,
-  updateCase,
+  resetCase as resetCaseRequest,
+  updateStudent,
+  updateSummary as updateSummaryRequest,
 } from './api'
-import type { Case, CaseDraft, CollaboratorRecord, StationRecord, Student } from './api'
+import type { Case, CollaboratorRecord, CollaboratorRole, Student } from './api'
 
 const AUTOSAVE_DELAY_MS = 800
 
@@ -29,10 +34,17 @@ export interface CaseState {
   saveStatus: SaveStatus
   saveError: string | null
   setAlumno: (alumno: Student) => void
-  setEstaciones: (estaciones: StationRecord[]) => void
-  publish: () => Promise<void>
+  answerStation: (
+    orden: number,
+    input: { opcionesSeleccionadas: string[]; comentario?: string },
+  ) => Promise<void>
+  completeCase: () => Promise<void>
+  publishCase: () => Promise<void>
+  resetCase: () => Promise<void>
+  generateSummary: (overwriteManual?: boolean) => Promise<void>
+  updateSummary: (contenido: string) => Promise<void>
   remove: () => Promise<void>
-  inviteCollaborator: (email: string) => Promise<CollaboratorRecord>
+  inviteCollaborator: (email: string, role?: CollaboratorRole) => Promise<CollaboratorRecord>
   dropCollaborator: (collaboratorId: string) => Promise<void>
 }
 
@@ -45,10 +57,6 @@ export function useCase(token: string, caseId: string): CaseState {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    // No synchronous setLoadStatus('loading') here — `loadStatus` already
-    // starts at 'loading', and the caller remounts this hook per case (see
-    // `key={caseId}` on <CaseForm> in App.tsx) instead of reusing it across
-    // cases, so there's no later point where it would need resetting.
     let active = true
     getCase(token, caseId)
       .then((loaded) => {
@@ -67,12 +75,13 @@ export function useCase(token: string, caseId: string): CaseState {
     }
   }, [token, caseId])
 
-  const scheduleSave = useCallback(
-    (draft: CaseDraft) => {
+  const setAlumno = useCallback(
+    (alumno: Student) => {
+      setItem((current) => (current ? { ...current, alumno } : current))
       if (timer.current) clearTimeout(timer.current)
       setSaveStatus('saving')
       timer.current = setTimeout(() => {
-        updateCase(token, caseId, draft)
+        updateStudent(token, caseId, alumno)
           .then((saved) => {
             setItem(saved)
             setSaveStatus('saved')
@@ -87,43 +96,62 @@ export function useCase(token: string, caseId: string): CaseState {
     [token, caseId],
   )
 
-  const setAlumno = useCallback(
-    (alumno: Student) => {
-      setItem((current) => {
-        if (!current) return current
-        return { ...current, alumno }
-      })
-      scheduleSave({ alumno, estaciones: item?.estaciones ?? [] })
+  const answerStation = useCallback(
+    async (orden: number, input: { opcionesSeleccionadas: string[]; comentario?: string }) => {
+      const saved = await answerStationRequest(token, caseId, orden, input)
+      setItem(saved)
     },
-    [item, scheduleSave],
+    [token, caseId],
   )
 
-  const setEstaciones = useCallback(
-    (estaciones: StationRecord[]) => {
-      setItem((current) => {
-        if (!current) return current
-        return { ...current, estaciones }
-      })
-      scheduleSave({ alumno: item?.alumno ?? { nombre: '', descripcion: '' }, estaciones })
-    },
-    [item, scheduleSave],
-  )
-
-  const publish = useCallback(async () => {
-    const saved = await updateCase(token, caseId, { status: 'publicado' })
+  const completeCase = useCallback(async () => {
+    const saved = await completeCaseRequest(token, caseId)
     setItem(saved)
   }, [token, caseId])
+
+  const publishCase = useCallback(async () => {
+    const saved = await publishCaseRequest(token, caseId)
+    setItem(saved)
+  }, [token, caseId])
+
+  const resetCase = useCallback(async () => {
+    const saved = await resetCaseRequest(token, caseId)
+    setItem(saved)
+  }, [token, caseId])
+
+  const generateSummary = useCallback(
+    async (overwriteManual = false) => {
+      const saved = await generateSummaryRequest(token, caseId, overwriteManual)
+      setItem(saved)
+    },
+    [token, caseId],
+  )
+
+  const updateSummary = useCallback(
+    async (contenido: string) => {
+      const saved = await updateSummaryRequest(token, caseId, contenido)
+      setItem(saved)
+    },
+    [token, caseId],
+  )
 
   const remove = useCallback(async () => {
     await deleteCase(token, caseId)
   }, [token, caseId])
 
   const inviteCollaborator = useCallback(
-    async (email: string) => {
-      const collaborator = await addCollaborator(token, caseId, email)
+    async (email: string, role: CollaboratorRole = 'comentarista') => {
+      const collaborator = await addCollaborator(token, caseId, email, role)
       setItem((current) =>
         current
-          ? { ...current, colaboradoresIds: [...current.colaboradoresIds, collaborator.user_id] }
+          ? {
+              ...current,
+              colaboradores: [
+                ...current.colaboradores,
+                { userId: collaborator.userId, role: collaborator.role },
+              ],
+              colaboradoresIds: [...current.colaboradoresIds, collaborator.userId],
+            }
           : current,
       )
       return collaborator
@@ -138,6 +166,9 @@ export function useCase(token: string, caseId: string): CaseState {
         current
           ? {
               ...current,
+              colaboradores: current.colaboradores.filter(
+                (item) => item.userId !== collaboratorId,
+              ),
               colaboradoresIds: current.colaboradoresIds.filter((id) => id !== collaboratorId),
             }
           : current,
@@ -153,8 +184,12 @@ export function useCase(token: string, caseId: string): CaseState {
     saveStatus,
     saveError,
     setAlumno,
-    setEstaciones,
-    publish,
+    answerStation,
+    completeCase,
+    publishCase,
+    resetCase,
+    generateSummary,
+    updateSummary,
     remove,
     inviteCollaborator,
     dropCollaborator,

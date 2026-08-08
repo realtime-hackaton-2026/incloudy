@@ -20,6 +20,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<CollaboratorRole>('comentarista')
   const [inviteState, setInviteState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -219,7 +220,13 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
       )}
 
       {!lobbyOpen && !roomOpen && (
-        <aside className={styles.wrapper} data-testid="owl-door" data-state="closed">
+        <aside className={`${styles.wrapper} ${mobileMenuOpen ? styles.mobileMenuExpanded : ''}`} data-testid="owl-door" data-state="closed">
+          <button type="button" className={styles.mobileMenuToggle} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((current) => !current)}>
+            <OwlSprite className={styles.mobileMenuOwl} />
+            <span><strong>Búrix · sala docente</strong><small>{sessionActive ? 'Sala activa' : presenceLabel}</small></span>
+            <b aria-hidden="true">⌃</b>
+          </button>
+          <div className={styles.mobileMenuContent}>
           <div className={styles.whisper} role="status">
             <strong>{sessionActive ? 'La sala sigue con vosotros.' : canOpen ? 'Ya podéis reuniros.' : '¿Nos reunimos?'}</strong>
             <span>
@@ -271,6 +278,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
                 </button>
               )}
             </div>
+          </div>
           </div>
         </aside>
       )}

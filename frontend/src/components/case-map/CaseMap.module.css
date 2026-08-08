@@ -942,16 +942,25 @@
 
 @media (max-width: 720px) {
   .hotspot {
-    width: clamp(42px, 9vw, 56px);
+    width: clamp(34px, 8vw, 44px);
+    border-width: 1.5px;
   }
 
   .hotspotLabel {
-    top: 128%;
-    max-width: 116px;
+    top: 122%;
+    max-width: 104px;
     min-width: 0;
-    padding: 7px 9px;
-    font-size: 8px;
+    padding: 6px 7px;
+    font-size: clamp(10px, 2.7vw, 12px);
+    line-height: 1.15;
+    letter-spacing: 0.045em;
     white-space: normal;
+  }
+
+  .hotspotStatus {
+    margin-top: 3px;
+    font-size: clamp(8px, 2.2vw, 10px);
+    line-height: 1.2;
   }
 
   .missionBackdrop {

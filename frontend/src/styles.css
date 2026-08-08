@@ -43,10 +43,14 @@
   --leaf: #8fb84a;
 
   /* --- Brand ---------------------------------------------------------- */
-  --primary: #22678d;
+  /* River family — discovery, water. `--river-deep` is the darkest river:
+     filled controls still clear AA with paper-white text (≈5:1).
+     `--river` is the mid tone for borders, tints and hover fills.
+     `--map-blue` is a fill; it only reaches 4.1:1 as text on a panel. This
+     is the same hue lifted for type. */
+  --river-deep: #2c7687;
+  --river: #3b909d;
   --map-blue: #3c91b6;
-  /* --map-blue is a fill; it only reaches 4.1:1 as text on a panel. This is
-     the same hue lifted for type. */
   --river-hi: #72bcd0;
   /* `--parchment` is the *accent* role (labels, borders, active marks);
      `--parchment-hi` is its lighter surface/hover partner. */

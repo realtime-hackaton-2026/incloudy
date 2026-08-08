@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { addCollaborator, listCases } from '../cases/api'
-import type { Case, CollaboratorRole } from '../cases/api'
+import type { FormEvent } from 'react'
+import { joinCase, listCases } from '../cases/api'
+import type { Case } from '../cases/api'
+import { ApiError } from '../lib/http'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
 import { CaseRoom } from '../portal'
@@ -19,12 +21,10 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
-  const [inviteOpen, setInviteOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<CollaboratorRole>('comentarista')
-  const [inviteState, setInviteState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [roomCode, setRoomCode] = useState('')
+  const [joining, setJoining] = useState(false)
+  const [joinError, setJoinError] = useState<string | null>(null)
   const [presence, setPresence] = useState<CaseRoomPresenceState>({
     count: 0,
     participants: [],
@@ -85,24 +85,25 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     setRoomOpen(true)
   }, [])
 
-  async function handleInvite() {
-    const value = email.trim()
-    if (!value) return
-    setInviteState('sending')
-    setInviteError(null)
+  async function handleJoin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const code = roomCode.trim().toUpperCase()
+    if (code.length !== 6) return
+    setJoining(true)
+    setJoinError(null)
     try {
-      await addCollaborator(token, caseId, value, role)
-      setEmail('')
-      setInviteState('sent')
+      const joined = await joinCase(token, code)
+      setRoomCode('')
+      if (joined.id !== caseId) location.hash = `#/caso/${joined.id}`
     } catch (cause) {
-      setInviteState('error')
-      setInviteError(cause instanceof Error ? cause.message : 'No se pudo añadir al docente.')
+      setJoinError(cause instanceof ApiError ? cause.message : 'No se pudo entrar en la sala.')
+    } finally {
+      setJoining(false)
     }
   }
 
   function enterLobby() {
     setRosterOpen(false)
-    setInviteOpen(false)
     setLobbyOpen(true)
     setRoomOpen(false)
   }
@@ -179,31 +180,6 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
           onPresenceChange={handlePresenceChange}
         />
 
-        {sessionActive && (
-          <div className={styles.inviteBlock}>
-            <button type="button" className={styles.inviteToggle} onClick={() => setInviteOpen((current) => !current)}>
-              {inviteOpen ? 'Cerrar invitación' : 'Invitar a otro docente'}
-            </button>
-            {inviteOpen && (
-              <div className={styles.inviteForm}>
-                <p className={styles.inviteHint}>La invitación añade al docente al caso; al entrar aparecerá en presencia en tiempo real.</p>
-                <div className={styles.inviteRow}>
-                  <input className={styles.inviteInput} type="email" value={email} placeholder="correo@colegio.edu" onChange={(event) => setEmail(event.target.value)} />
-                  <select className={styles.inviteSelect} value={role} onChange={(event) => setRole(event.target.value as CollaboratorRole)}>
-                    <option value="comentarista">Comentarista</option>
-                    <option value="editor">Editor</option>
-                    <option value="lector">Lector</option>
-                  </select>
-                  <button type="button" className="btn-secondary" disabled={!email.trim() || inviteState === 'sending'} onClick={() => void handleInvite()}>
-                    {inviteState === 'sending' ? 'Invitando…' : 'Invitar'}
-                  </button>
-                </div>
-                {inviteState === 'sent' && <p className={styles.inviteSuccess}>Acceso concedido. Ya puede entrar en este caso.</p>}
-                {inviteState === 'error' && <p className={styles.inviteError}>{inviteError}</p>}
-              </div>
-            )}
-          </div>
-        )}
       </aside>
 
       {sessionActive && !roomOpen && (
@@ -255,28 +231,9 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
             </button>
 
             <div className={styles.actionRow}>
-              <button
-                type="button"
-                className={styles.viewButton}
-                onClick={() => {
-                  if (sessionActive) setRoomOpen(true)
-                  else setLobbyOpen(true)
-                  setRosterOpen(true)
-                }}
-              >
-                Ver sala · {portalReady ? presence.count : '…'}
+              <button type="button" className={styles.viewButton} onClick={sessionActive ? () => setRoomOpen(true) : enterLobby}>
+                {sessionActive ? 'Ver sala' : 'Entrar a sala'} · {portalReady ? presence.count : '…'}
               </button>
-              {!sessionActive && (
-                <button
-                  type="button"
-                  className={`${styles.openButton} ${canOpen ? styles.openButtonReady : ''}`}
-                  disabled={!canOpen}
-                  onClick={enterLobby}
-                  title={canOpen ? 'Abrir la sala de trabajo' : 'Necesitáis al menos dos docentes conectados'}
-                >
-                  Abrir sala
-                </button>
-              )}
             </div>
           </div>
           </div>
@@ -340,27 +297,26 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
               </div>
             </div>
 
-            <div className={styles.lobbyInvite}>
-              <button type="button" className={styles.inviteToggle} onClick={() => setInviteOpen((current) => !current)}>
-                {inviteOpen ? 'Ocultar invitación' : 'Invitar docentes a este caso'}
-              </button>
-              {inviteOpen && (
-                <div className={styles.inviteForm}>
-                  <p className={styles.inviteHint}>Invita por correo antes de comenzar la mesa.</p>
-                  <div className={styles.inviteRow}>
-                    <input className={styles.inviteInput} type="email" value={email} placeholder="correo@colegio.edu" onChange={(event) => setEmail(event.target.value)} />
-                    <select className={styles.inviteSelect} value={role} onChange={(event) => setRole(event.target.value as CollaboratorRole)}>
-                      <option value="comentarista">Comentarista</option>
-                      <option value="editor">Editor</option>
-                      <option value="lector">Lector</option>
-                    </select>
-                    <button type="button" className="btn-secondary" disabled={!email.trim() || inviteState === 'sending'} onClick={() => void handleInvite()}>{inviteState === 'sending' ? 'Invitando…' : 'Invitar'}</button>
-                  </div>
-                  {inviteState === 'sent' && <p className={styles.inviteSuccess}>Invitación enviada y acceso concedido.</p>}
-                  {inviteState === 'error' && <p className={styles.inviteError}>{inviteError}</p>}
-                </div>
-              )}
-            </div>
+            <form className={styles.lobbyJoin} onSubmit={handleJoin}>
+              <div>
+                <strong>Unirse a sala</strong>
+                <span>Introduce el código de 6 caracteres compartido por el profesor.</span>
+              </div>
+              <div className={styles.lobbyJoinRow}>
+                <input
+                  value={roomCode}
+                  onChange={(event) => setRoomCode(event.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase())}
+                  placeholder="ABC123"
+                  aria-label="Código para unirse a la sala"
+                  autoComplete="off"
+                  maxLength={6}
+                />
+                <button type="submit" className="btn-secondary" disabled={joining || roomCode.length !== 6}>
+                  {joining ? 'Uniéndose…' : 'Unirse'}
+                </button>
+              </div>
+              {joinError && <p className={styles.joinError} role="alert">{joinError}</p>}
+            </form>
 
             <div className={styles.lobbyActions}>
               <button
@@ -369,7 +325,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
                 disabled={!canOpen}
                 onClick={startExperience}
               >
-                {canOpen ? 'Comenzar experiencia' : 'Esperando docentes…'}
+                {canOpen ? 'Crear sala' : 'Esperando docentes…'}
               </button>
               <button type="button" className={styles.backButton} onClick={backToMap}>Volver al mapa</button>
             </div>

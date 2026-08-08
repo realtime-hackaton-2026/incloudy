@@ -141,7 +141,7 @@
 
 .actionRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 7px;
 }
 
@@ -670,6 +670,57 @@
   background: color-mix(in srgb, var(--text) 3%, transparent);
   border: 1px solid var(--hairline);
   border-radius: 10px;
+}
+
+.lobbyJoin {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+
+.lobbyJoin > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.lobbyJoin strong {
+  color: var(--parchment);
+  font: 700 10px/1.2 var(--label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lobbyJoin span {
+  color: var(--text-soft);
+  font-size: 10px;
+}
+
+.lobbyJoinRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.lobbyJoinRow input {
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.joinError {
+  margin: 0;
+  color: var(--danger, #ffb4a7);
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .lobbyJoinRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .historyButton {

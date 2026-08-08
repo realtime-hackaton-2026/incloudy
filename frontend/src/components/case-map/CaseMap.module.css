@@ -650,6 +650,7 @@
   align-items: baseline;
   justify-content: space-between;
   margin-top: 14px;
+  padding-inline: clamp(16px, 2vw, 28px);
 }
 
 .current {

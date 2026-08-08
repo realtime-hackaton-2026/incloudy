@@ -5,7 +5,7 @@
   padding: 10px 12px;
   border: 1px solid rgb(230 201 149 / 22%);
   border-radius: 12px;
-  background: rgb(255 255 255 / 3%);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
 }
 
 .icon {
@@ -41,5 +41,5 @@
 
 .dismiss:hover {
   color: var(--text);
-  border-color: rgb(255 255 255 / 26%);
+  border-color: rgb(233 240 232 / 26%);
 }

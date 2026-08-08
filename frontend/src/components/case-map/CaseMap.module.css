@@ -206,7 +206,7 @@
   width: clamp(40px, 4.8%, 68px);
   aspect-ratio: 1;
   padding: 0;
-  border: 2px solid rgb(255 255 255 / 55%);
+  border: 2px solid rgb(233 240 232 / 55%);
   border-radius: 50%;
   background: rgb(10 20 28 / 45%);
   cursor: pointer;
@@ -530,7 +530,7 @@
   font-size: 13px;
   line-height: 1;
   color: var(--text-soft);
-  background: rgb(255 255 255 / 6%);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
   border: 1px solid var(--hairline-strong);
   border-radius: 50%;
   cursor: pointer;
@@ -541,7 +541,7 @@
 
 .hudCloseCorner:hover {
   color: var(--text);
-  border-color: rgb(255 255 255 / 26%);
+  border-color: rgb(233 240 232 / 26%);
 }
 
 /* --- Panel mode: a real form instead of the "Explorar →" preview -------- */
@@ -587,7 +587,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 1.5px solid rgb(255 255 255 / 26%);
+  border: 1.5px solid rgb(233 240 232 / 26%);
   background: transparent;
 }
 
@@ -638,7 +638,7 @@
 
 .hudClose:hover {
   color: var(--text);
-  border-color: rgb(255 255 255 / 26%);
+  border-color: rgb(233 240 232 / 26%);
 }
 
 /* --- Caption ----------------------------------------------------------- */
@@ -831,8 +831,8 @@
   --option-padding: 10px 12px;
   --option-border: 2px solid rgb(32 26 16 / 45%);
   --option-radius: 6px;
-  --option-bg: rgb(255 255 255 / 45%);
-  --option-bg-hover: rgb(255 255 255 / 68%);
+  --option-bg: color-mix(in srgb, var(--paper) 45%, transparent);
+  --option-bg-hover: color-mix(in srgb, var(--paper) 68%, transparent);
   --option-border-selected: #7a4d17;
   --option-bg-selected: rgb(230 201 149 / 45%);
   --option-hover-lift: translateY(-1px);
@@ -864,7 +864,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7a4d17;
+  color: var(--parchment);
 }
 
 .missionStation {
@@ -872,7 +872,7 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #171b20;
+  color: var(--ink);
 }
 
 /* Beads for the quest chain — the same collected-badge language as the HUD,
@@ -887,22 +887,22 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 1.5px solid rgb(32 26 16 / 32%);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 32%, transparent);
   background: transparent;
 }
 
 .missionBeadDone {
-  background: #7a4d17;
-  border-color: #7a4d17;
+  background: var(--parchment);
+  border-color: var(--parchment);
   box-shadow: 0 0 8px rgb(122 77 23 / 45%);
 }
 
 .missionClose {
   width: 30px;
   height: 30px;
-  color: #171b20;
+  color: var(--ink);
   background: transparent;
-  border: 1px solid rgb(21 40 53 / 28%);
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
   cursor: pointer;
 }
 
@@ -913,7 +913,7 @@
   overflow-x: hidden;
   scrollbar-width: none;
   overscroll-behavior: contain;
-  color: #171b20;
+  color: var(--ink);
 }
 
 .missionBody::-webkit-scrollbar {
@@ -927,13 +927,13 @@
    into the case-form markup from here. */
 .missionBody textarea {
   color: var(--text);
-  background: rgb(255 255 255 / 55%);
-  border-color: rgb(32 26 16 / 22%);
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 22%, transparent);
 }
 
 .missionBody textarea:focus {
-  background: rgb(255 255 255 / 82%);
-  border-color: rgb(122 77 23 / 55%);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border-color: color-mix(in srgb, var(--parchment) 55%, transparent);
 }
 
 .missionBody textarea::placeholder {

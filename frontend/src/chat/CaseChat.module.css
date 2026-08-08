@@ -101,7 +101,7 @@
   font-family: var(--sans);
   font-size: 14px;
   color: var(--text);
-  background: rgb(11 23 32 / 70%);
+  background: color-mix(in srgb, var(--surface-deep) 70%, transparent);
   border: 1px solid var(--hairline);
   border-radius: 9px;
 }

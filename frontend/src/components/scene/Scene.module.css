@@ -91,9 +91,9 @@
 .clouds {
   inset: 0 -50%;
   background-image:
-    radial-gradient(60% 34% at 20% 26%, rgb(255 255 255 / 7%) 0%, transparent 70%),
-    radial-gradient(48% 28% at 62% 17%, rgb(255 255 255 / 5%) 0%, transparent 70%),
-    radial-gradient(40% 22% at 86% 31%, rgb(255 255 255 / 4%) 0%, transparent 70%);
+  radial-gradient(60% 34% at 20% 26%, rgb(233 240 232 / 7%) 0%, transparent 70%),
+  radial-gradient(48% 28% at 62% 17%, rgb(233 240 232 / 5%) 0%, transparent 70%),
+  radial-gradient(40% 22% at 86% 31%, rgb(233 240 232 / 4%) 0%, transparent 70%);
   animation: cloudDrift 150s linear infinite alternate;
 }
 

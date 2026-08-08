@@ -360,7 +360,7 @@
   height: 4px;
   margin: 12px 0 14px;
   border-radius: 3px;
-  background: rgb(255 255 255 / 8%);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   overflow: hidden;
 }
 
@@ -449,7 +449,7 @@
 
 .cardDelete:hover {
   color: var(--danger);
-  border-color: rgb(255 107 107 / 45%);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

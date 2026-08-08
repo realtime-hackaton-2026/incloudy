@@ -10,7 +10,7 @@
   padding: 10px 12px;
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  background: rgb(255 255 255 / 5%);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
   animation: saysIn var(--small) var(--ease) both;
 }
 

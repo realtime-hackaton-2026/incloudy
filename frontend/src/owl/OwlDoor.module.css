@@ -652,7 +652,7 @@
 .lobbyInvite {
   margin-top: 12px;
   padding: 12px;
-  background: rgb(255 255 255 / 3%);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
   border: 1px solid var(--hairline);
   border-radius: 10px;
 }
@@ -703,7 +703,7 @@
   min-width: 0;
   padding: 8px 9px;
   color: var(--text);
-  background: rgb(11 23 32 / 85%);
+  background: color-mix(in srgb, var(--surface-deep) 85%, transparent);
   border: 1px solid var(--hairline);
   border-radius: 8px;
 }

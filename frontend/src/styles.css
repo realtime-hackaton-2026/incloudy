@@ -370,7 +370,7 @@ p {
   padding: 8px;
   border: 1px solid var(--hairline);
   border-radius: 14px;
-  background: rgb(255 255 255 / 4%);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
   transition: border-color var(--micro) var(--ease), background var(--micro) var(--ease), transform var(--micro) var(--ease);
 }
 

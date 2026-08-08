@@ -17,7 +17,7 @@
 .sectionHeading > span,.cardHeading > span { font-family:var(--label); color:var(--muted); font-size:11px; }
 .caseList { padding:7px; }
 .caseItem { width:100%; display:grid; grid-template-columns:8px minmax(0,1fr) auto; gap:10px; align-items:center; padding:11px 9px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--text); text-align:left; cursor:pointer; }
-.caseItem:hover { background:rgb(255 255 255 / 3%); }
+.caseItem:hover { background:color-mix(in srgb, var(--text) 3%, transparent); }
 .caseItemActive { background:rgb(230 201 149 / 7%); border-color:rgb(230 201 149 / 15%); }
 .caseDot { width:7px; height:7px; border-radius:50%; background:var(--map-blue); }
 .caseItemActive .caseDot { background:var(--parchment); box-shadow:0 0 0 4px rgb(230 201 149 / 8%); }

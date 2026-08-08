@@ -61,7 +61,12 @@ export function Scene({ variant, entering = false, attentive = false }: ScenePro
   if (attentive) classes.push(styles.attentive)
 
   return (
-    <div className={classes.join(' ')} aria-hidden="true">
+    <div
+      className={classes.join(' ')}
+      aria-hidden="true"
+      data-scene={variant}
+      data-state={entering ? 'entering' : 'idle'}
+    >
       {variant === 'gate' && (
         <>
           <div className={`${styles.layer} ${styles.starsFar}`} />

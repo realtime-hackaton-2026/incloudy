@@ -141,7 +141,12 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={styles.wrapper}
+      data-testid="case-form"
+      data-state={saveStatus}
+      data-case-status={current.status}
+    >
       <button type="button" className={styles.back} onClick={onBack}>
         ← Tus casos
       </button>

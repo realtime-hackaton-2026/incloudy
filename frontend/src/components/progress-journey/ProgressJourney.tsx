@@ -41,6 +41,9 @@ export function ProgressJourney({ nodes, activeIndex, onSelect }: ProgressJourne
       className={styles.journey}
       role="group"
       aria-label={`Aventura ${safeIndex + 1} de ${nodes.length}`}
+      data-testid="progress-journey"
+      data-active-index={safeIndex}
+      data-total={nodes.length}
     >
       <span className={styles.track} aria-hidden="true" />
       <span className={styles.fill} style={{ width: `${span}%` }} aria-hidden="true" />
@@ -50,6 +53,8 @@ export function ProgressJourney({ nodes, activeIndex, onSelect }: ProgressJourne
         if (index < safeIndex) classes.push(styles.reached)
         if (index === safeIndex) classes.push(styles.current)
 
+        const state = index < safeIndex ? 'reached' : index === safeIndex ? 'current' : 'upcoming'
+
         return (
           <button
             key={node.id}
@@ -57,12 +62,13 @@ export function ProgressJourney({ nodes, activeIndex, onSelect }: ProgressJourne
             className={classes.join(' ')}
             disabled={!onSelect}
             onClick={() => onSelect?.(node.id)}
-            aria-current={index === activeIndex ? 'step' : undefined}
+            aria-current={index === safeIndex ? 'step' : undefined}
+            data-state={state}
           >
             <span className={styles.index}>{String(index + 1).padStart(2, '0')}</span>
             <span className={styles.dot} />
             <span className={styles.label}>{node.label}</span>
-            {index === activeIndex && <span className={styles.here}>Aquí estás</span>}
+            {index === safeIndex && <span className={styles.here}>Aquí estás</span>}
           </button>
         )
       })}

@@ -51,6 +51,8 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
+        data-testid="confirm-dialog"
+        data-state={pending ? 'pending' : 'open'}
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="confirm-dialog-title" className={styles.title}>

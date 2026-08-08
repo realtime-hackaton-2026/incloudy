@@ -106,7 +106,9 @@ function App() {
     return (
       <>
         <Scene variant="journal" />
-        <p className="app-restoring">Recuperando tu sesión…</p>
+        <p className="app-restoring" data-testid="app-restoring">
+          Recuperando tu sesión…
+        </p>
       </>
     )
   }
@@ -151,7 +153,12 @@ function App() {
       <Scene variant={scene} entering={entering} />
       {entering && <CinematicOverlay caption="Tu mundo te espera" />}
 
-      <main className="app">
+      <main
+        className="app"
+        data-testid="app"
+        data-route={route}
+        data-state={entering ? 'entering' : 'idle'}
+      >
         <AppHeader
           active={route}
           email={session.email}

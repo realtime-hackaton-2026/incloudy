@@ -51,7 +51,12 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={styles.wrapper}
+      data-testid="case-list"
+      data-state={status === 'ready' ? (cases.length === 0 ? 'empty' : 'populated') : status}
+      data-case-count={cases.length}
+    >
       <div className={styles.intro}>
         <div className={styles.introText}>
           <span className="eyebrow">Tu diario de aventuras</span>

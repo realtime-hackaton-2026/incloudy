@@ -32,7 +32,12 @@ export function AppHeader({
   onSignOut,
 }: AppHeaderProps) {
   return (
-    <header className={`${styles.header} ${signingOut ? styles.signingOut : ''}`}>
+    <header
+      className={`${styles.header} ${signingOut ? styles.signingOut : ''}`}
+      data-testid="app-header"
+      data-active-route={active}
+      data-state={signingOut ? 'signing-out' : 'idle'}
+    >
       <div className={styles.brand}>
         <img className={styles.mark} src={logo} alt="" />
         incloudy
@@ -45,6 +50,7 @@ export function AppHeader({
             type="button"
             className={`${styles.navItem} ${active === route.name ? styles.navItemActive : ''}`}
             aria-current={active === route.name ? 'page' : undefined}
+            data-state={active === route.name ? 'active' : 'idle'}
             onClick={() => onNavigate(route.name)}
           >
             {route.label}

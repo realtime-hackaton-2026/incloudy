@@ -42,7 +42,12 @@ export function AuthScreen({
   }
 
   return (
-    <div className={styles.screen}>
+    <div
+      className={styles.screen}
+      data-testid="auth-screen"
+      data-state={showCurtain ? 'entering' : 'ready'}
+      data-focused={focused ? 'true' : 'false'}
+    >
       {showCurtain && <div className={styles.curtain} aria-hidden="true" />}
 
       <div

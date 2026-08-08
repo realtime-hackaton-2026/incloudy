@@ -69,7 +69,14 @@ export function CaseMap({
 
   return (
     <div className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
-      <div className={styles.frame} style={{ aspectRatio: MAP_ASPECT_RATIO }}>
+      <div
+        className={styles.frame}
+        style={{ aspectRatio: MAP_ASPECT_RATIO }}
+        data-testid="case-map"
+        data-state={focusedStation ? 'focused' : 'wide'}
+        data-focused-station={focusedStation?.stage ?? ''}
+        data-active-station={stage}
+      >
         <div className={styles.camera} style={camera}>
           <img
             src={mapArt}

@@ -13,7 +13,12 @@ export interface CinematicOverlayProps {
 
 export function CinematicOverlay({ caption = 'Entrando al mapa' }: CinematicOverlayProps) {
   return (
-    <div className={styles.overlay} role="presentation">
+    <div
+      className={styles.overlay}
+      role="presentation"
+      data-testid="cinematic-overlay"
+      data-state="active"
+    >
       <span className={styles.word}>{caption}</span>
     </div>
   )

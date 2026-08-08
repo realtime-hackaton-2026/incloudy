@@ -563,3 +563,57 @@
   font-size: 11px;
   font-weight: 600;
 }
+
+.stationResult {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 14px;
+  color: #171b20;
+  background: rgb(255 255 255 / 72%);
+  border: 1px solid rgb(23 27 32 / 22%);
+  border-radius: 8px;
+}
+
+.stationResultIcon {
+  font-size: 20px;
+  color: #b78b2d !important;
+}
+
+.stationResult p {
+  margin: 0;
+  color: #45484d !important;
+}
+
+.missionBody .stationOptions {
+  gap: 8px;
+}
+
+.missionBody .stationOption {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 2px solid rgb(23 27 32 / 72%);
+  border-radius: 5px;
+  background: rgb(255 255 255 / 36%);
+  color: #171b20;
+  transition: background-color var(--micro) var(--ease), transform var(--micro) var(--ease);
+}
+
+.missionBody .stationOption:hover {
+  transform: translateY(-1px);
+  background: rgb(255 255 255 / 58%);
+}
+
+.missionBody .stationOptionSelected {
+  background: rgb(230 201 149 / 45%);
+  border-color: #b78b2d;
+}
+
+.missionBody .stationCardTitle {
+  color: #171b20;
+  font-size: 19px;
+}
+
+.missionBody .stationCardSubtitle {
+  color: #5b5e62;
+}

@@ -268,7 +268,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
   // The map is the only place a station is answered — clicking a hotspot
   // opens that station's real form in the map's own popup, rather than a
   // separate list of cards repeating what the map already shows.
-  function renderStationPanel(mapStation: Station) {
+  function renderStationPanel(mapStation: Station, close: () => void) {
     if (!template) return null
     const templateStation = template.estaciones.find((entry) => entry.id === mapStation.stage)
     if (!templateStation) {
@@ -289,6 +289,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
         answer={current.respuestas.find((r) => r.estacionId === templateStation.id) ?? null}
         editable={isEditor}
         onAnswer={answerStation}
+        onContinue={close}
+        onFinish={completeCase}
       />
     )
   }

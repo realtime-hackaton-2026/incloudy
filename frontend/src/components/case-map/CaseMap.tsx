@@ -36,7 +36,7 @@ export interface CaseMapProps {
    * summary card. Also makes hotspots clickable on its own, independent of
    * `onSelectStage`.
    */
-  renderStationPanel?: (station: Station) => ReactNode
+  renderStationPanel?: (station: Station, close: () => void) => ReactNode
 }
 
 export function CaseMap({
@@ -172,84 +172,89 @@ export function CaseMap({
         </div>
 
         {focusedStation && (
-          <div
-            className={
-              renderStationPanel
-                ? `${styles.hud} ${styles.hudPanel} ${hudOnLeft ? styles.hudLeft : styles.hudRight}`
-                : `${styles.hud} ${hudOnLeft ? styles.hudLeft : styles.hudRight}`
-            }
-            style={
-              {
-                left: `${focusedStation.x}%`,
-                top: `${focusedStation.y}%`,
-                transform: hudTransform,
-                '--hud-transform': hudTransform,
-              } as CSSProperties
-            }
-            data-testid="case-map-hud"
-          >
-            <div className={styles.hudHeader}>
-              <span className={styles.hudTitle}>
-                {focusedStation.label}
-                <span className={styles.hudPlace}>{focusedStation.place}</span>
-              </span>
-              {renderStationPanel && (
-                <button
-                  type="button"
-                  className={styles.hudCloseCorner}
-                  onClick={() => focus(null)}
-                  aria-label="Cerrar"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {renderStationPanel ? (
-              <div className={styles.hudPanelBody}>{renderStationPanel(focusedStation)}</div>
-            ) : (
-              <>
-                <p className={styles.hudMeta}>
-                  Aventura {stationIndex(focusedStation.stage) + 1} de {STATIONS.length}
-                </p>
-                <div
-                  className={styles.hudBeads}
-                  role="img"
-                  aria-label={`Aventura ${stationIndex(focusedStation.stage) + 1} de ${STATIONS.length}`}
-                >
-                  {STATIONS.map((entry, index) => (
-                    <span
-                      key={entry.stage}
-                      className={`${styles.bead} ${
-                        index <= stationIndex(focusedStation.stage) ? styles.beadDone : ''
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <div className={styles.hudActions}>
+          renderStationPanel ? (
+            <div className={styles.missionOverlay} data-testid="case-map-mission">
+              <div
+                className={styles.missionBackdrop}
+                style={{ backgroundImage: `url(${focusedStation.scene})` }}
+                aria-hidden="true"
+              />
+              <div className={styles.missionShade} aria-hidden="true" />
+              <div className={styles.missionPanel}>
+                <div className={styles.missionHeader}>
+                  <span className={styles.missionStation}>{focusedStation.label}</span>
                   <button
                     type="button"
-                    className={styles.hudGo}
-                    onClick={() => {
-                      onSelectStage?.(focusedStation.stage)
-                      focus(null)
-                    }}
-                  >
-                    Explorar →
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.hudClose}
+                    className={styles.missionClose}
                     onClick={() => focus(null)}
-                    aria-label="Cerrar y alejar la cámara"
+                    aria-label="Volver al mapa"
                   >
                     ✕
                   </button>
                 </div>
-              </>
-            )}
-          </div>
+                <div className={styles.missionBody}>
+                  {renderStationPanel(focusedStation, () => focus(null))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`${styles.hud} ${hudOnLeft ? styles.hudLeft : styles.hudRight}`}
+              style={
+                {
+                  left: `${focusedStation.x}%`,
+                  top: `${focusedStation.y}%`,
+                  transform: hudTransform,
+                  '--hud-transform': hudTransform,
+                } as CSSProperties
+              }
+              data-testid="case-map-hud"
+            >
+              <div className={styles.hudHeader}>
+                <span className={styles.hudTitle}>
+                  {focusedStation.label}
+                  <span className={styles.hudPlace}>{focusedStation.place}</span>
+                </span>
+              </div>
+              <p className={styles.hudMeta}>
+                Aventura {stationIndex(focusedStation.stage) + 1} de {STATIONS.length}
+              </p>
+              <div
+                className={styles.hudBeads}
+                role="img"
+                aria-label={`Aventura ${stationIndex(focusedStation.stage) + 1} de ${STATIONS.length}`}
+              >
+                {STATIONS.map((entry, index) => (
+                  <span
+                    key={entry.stage}
+                    className={`${styles.bead} ${
+                      index <= stationIndex(focusedStation.stage) ? styles.beadDone : ''
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className={styles.hudActions}>
+                <button
+                  type="button"
+                  className={styles.hudGo}
+                  onClick={() => {
+                    onSelectStage?.(focusedStation.stage)
+                    focus(null)
+                  }}
+                >
+                  Explorar →
+                </button>
+                <button
+                  type="button"
+                  className={styles.hudClose}
+                  onClick={() => focus(null)}
+                  aria-label="Cerrar y alejar la cámara"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )
         )}
       </div>
 

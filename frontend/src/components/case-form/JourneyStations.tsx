@@ -21,6 +21,8 @@ export interface StationCardProps {
     orden: number,
     input: { opcionesSeleccionadas: string[]; comentario?: string },
   ) => Promise<void>
+  onContinue?: () => void
+  onFinish?: () => Promise<void>
 }
 
 function optionContent(option: StationOption, key: string): unknown {
@@ -152,11 +154,13 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
   return null
 }
 
-export function StationCard({ station, answer, editable, onAnswer }: StationCardProps) {
+export function StationCard({ station, answer, editable, onAnswer, onContinue, onFinish }: StationCardProps) {
   const [selected, setSelected] = useState<string[]>(answer?.opcionesSeleccionadas ?? [])
   const [comentario, setComentario] = useState(answer?.comentario ?? '')
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showResult, setShowResult] = useState(Boolean(answer?.completado))
+  const [finishState, setFinishState] = useState<'idle' | 'saving' | 'error'>('idle')
 
   function toggle(optionId: string) {
     if (station.tipo === ('unica' as QuestionType)) {
@@ -177,6 +181,7 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
     try {
       await onAnswer(station.orden, { opcionesSeleccionadas: selected, comentario })
       setSaveState('saved')
+      setShowResult(true)
     } catch (cause) {
       setSaveState('error')
       setSaveError(cause instanceof ApiError ? cause.message : 'No se pudo guardar la estación.')
@@ -205,7 +210,13 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
       {station.descripcion && <p className={styles.stationCardBody}>{station.descripcion}</p>}
 
       {typeof station.contenido?.introduccion === 'string' && (
-        <p className={styles.stationIntro}>{station.contenido.introduccion}</p>
+        <p className={styles.stationIntro}>
+          {station.id === 'orientar'
+            ? selected.length >= 2
+              ? String(station.contenido.mensaje_dos_o_mas_pistas ?? station.contenido.introduccion)
+              : String(station.contenido.mensaje_pocas_pistas ?? station.contenido.introduccion)
+            : station.contenido.introduccion}
+        </p>
       )}
 
       <div
@@ -242,14 +253,49 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
         />
       </label>
 
-      {editable && (
+      {showResult && (
+        <div className={styles.stationResult} role="status">
+          <span className={styles.stationResultIcon}>✦</span>
+          <strong>
+            {station.id === 'explorar' && 'Has investigado todo lo que había que ver aquí.'}
+            {station.id === 'orientar' && 'HIPÓTESIS SOSTENIDA (no confirmada)'}
+            {station.id === 'actuar' && 'Intervención preparada.'}
+            {station.id === 'acompanar' && 'Seguimiento registrado en el cuaderno.'}
+            {station.id === 'compartir' && 'Caso compartido con el equipo.'}
+          </strong>
+          {station.id === 'orientar' && <p>Aún no sabes si se sostendrá cuando lleguen los resultados.</p>}
+          {editable && station.id === 'compartir' && onFinish ? (
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={finishState === 'saving'}
+              onClick={async () => {
+                setFinishState('saving')
+                try {
+                  await onFinish()
+                  onContinue?.()
+                } catch {
+                  setFinishState('error')
+                }
+              }}
+            >
+              {finishState === 'saving' ? 'Cerrando…' : 'Cerrar el caso'}
+            </button>
+          ) : editable && onContinue ? (
+            <button type="button" className="btn-primary" onClick={onContinue}>Continuar →</button>
+          ) : null}
+          {finishState === 'error' && <p className={styles.stationCardWarning}>⚠ No se pudo cerrar el caso.</p>}
+        </div>
+      )}
+
+      {editable && !showResult && (
         <div className={styles.stationCardFooter}>
           <button
             type="submit"
             className="btn-secondary"
             disabled={saveState === 'saving' || (station.obligatoria && selected.length === 0)}
           >
-            {saveState === 'saving' ? 'Guardando…' : 'Guardar respuesta'}
+            {saveState === 'saving' ? 'Guardando…' : station.id === 'explorar' ? 'Dar el caso por explorado' : 'Continuar'}
           </button>
           {saveState === 'saved' && <span className={styles.stationCardSaved}>Guardado</span>}
         </div>

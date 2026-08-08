@@ -539,3 +539,97 @@
     transform: var(--hud-transform);
   }
 }
+
+/* --- Full-screen mission mode ------------------------------------------ */
+.missionOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: auto;
+  background: #07090c;
+  animation: missionIn 220ms var(--ease) both;
+}
+
+@keyframes missionIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.missionBackdrop {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
+  transform: scale(1.015);
+}
+
+.missionShade {
+  position: absolute;
+  inset: 0;
+  background: rgb(6 8 12 / 48%);
+  backdrop-filter: blur(1px);
+}
+
+.missionPanel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, calc(100% - 36px));
+  max-height: calc(100% - 36px);
+  overflow-y: auto;
+  margin: 18px auto;
+  padding: 16px;
+  color: var(--text);
+  background: rgb(245 240 218 / 96%);
+  border: 2px solid rgb(30 34 39 / 88%);
+  box-shadow: 0 28px 70px rgb(0 0 0 / 62%);
+}
+
+.missionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.missionStation {
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #171b20;
+}
+
+.missionClose {
+  width: 30px;
+  height: 30px;
+  color: #171b20;
+  background: transparent;
+  border: 1px solid rgb(23 27 32 / 28%);
+  cursor: pointer;
+}
+
+.missionBody :global(.stationCard) {
+  color: #171b20;
+  background: transparent;
+  border: 0;
+  padding: 4px 0 0;
+}
+
+.missionBody :global(.stationCard p),
+.missionBody :global(.stationCard label),
+.missionBody :global(.stationCard span),
+.missionBody :global(.stationCard strong),
+.missionBody :global(.stationCard h4) {
+  color: #171b20;
+}
+
+@media (max-width: 720px) {
+  .missionPanel {
+    width: calc(100% - 20px);
+    max-height: calc(100% - 20px);
+    margin: 10px auto;
+    padding: 12px;
+  }
+}

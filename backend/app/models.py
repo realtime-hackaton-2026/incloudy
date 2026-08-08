@@ -48,16 +48,20 @@ class Student(BaseModel):
 class StationOption(BaseModel):
     id: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9_-]+$")
     texto: str = Field(min_length=1, max_length=500)
+    icono: Optional[str] = Field(default=None, max_length=20)
+    contenido: dict[str, Any] = Field(default_factory=dict)
 
 
 class TemplateStation(BaseModel):
     id: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9_-]+$")
     orden: int = Field(ge=1)
     titulo: str = Field(min_length=1, max_length=150)
+    subtitulo: str = Field(default="", max_length=200)
     descripcion: str = Field(default="", max_length=2_000)
     tipo: QuestionType = QuestionType.single
     obligatoria: bool = True
     opciones: list[StationOption] = Field(default_factory=list)
+    contenido: dict[str, Any] = Field(default_factory=dict)
 
 
 class Station(BaseModel):
@@ -98,6 +102,29 @@ class Collaborator(BaseModel):
     added_at: datetime = Field(default_factory=utcnow)
 
 
+class TeacherNote(BaseModel):
+    id: str
+    contenido: str = Field(min_length=1, max_length=4_000)
+    categoria: str = Field(default="general", max_length=80)
+    creada_por: str
+    creada_en: datetime = Field(default_factory=utcnow)
+
+
+class InteractiveCaseState(BaseModel):
+    estacion_actual: str = "explorar"
+    dias_totales: int = Field(default=7, ge=0)
+    dias_restantes: int = Field(default=7, ge=0)
+    confianza_equipo: int = Field(default=50, ge=0, le=100)
+    xp_total: int = Field(default=0, ge=0)
+    pistas_recogidas: list[str] = Field(default_factory=list)
+    hipotesis_sostenida: Optional[str] = None
+    estrategia_elegida: Optional[str] = None
+    seguimiento_elegido: Optional[str] = None
+    compartido_con: list[str] = Field(default_factory=list)
+    imprevistos_resueltos: list[str] = Field(default_factory=list)
+    notas: list[TeacherNote] = Field(default_factory=list)
+
+
 class User(Document):
     nombre: str = Field(default="Profesor", min_length=1, max_length=100)
     email: Indexed(EmailStr, unique=True)
@@ -110,8 +137,24 @@ class JourneyTemplate(Document):
     version: int = Field(ge=1)
     activa: bool = True
     estaciones: list[TemplateStation] = Field(min_length=1)
+    contenido: dict[str, Any] = Field(default_factory=dict)
     created_by: str
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class CaseScenario(Document):
+    slug: Indexed(str, unique=True)
+    nombre: str = Field(min_length=1, max_length=150)
+    template_id: str
+    template_version: int = Field(ge=1)
+    alumno: Student
+    presentacion: str = Field(max_length=4_000)
+    hipotesis: list[StationOption] = Field(default_factory=list)
+    estado_inicial: InteractiveCaseState = Field(default_factory=InteractiveCaseState)
+    contenido: dict[str, Any] = Field(default_factory=dict)
+    activa: bool = True
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
 
 
 class Case(Document):
@@ -120,11 +163,13 @@ class Case(Document):
     colaboradores_ids: list[str] = Field(default_factory=list)
     template_id: Optional[str] = None
     template_version: Optional[int] = None
+    scenario_id: Optional[str] = None
     alumno: Student
     respuestas: list[StationResponse] = Field(default_factory=list)
     progreso: CaseProgress = Field(default_factory=CaseProgress)
     resumen_final: FinalSummary = Field(default_factory=FinalSummary)
     estaciones: list[Station] = Field(default_factory=list)
+    estado_interactivo: InteractiveCaseState = Field(default_factory=InteractiveCaseState)
     status: CaseStatus = CaseStatus.draft
     retention_until: Optional[datetime] = None
     created_at: datetime = Field(default_factory=utcnow)

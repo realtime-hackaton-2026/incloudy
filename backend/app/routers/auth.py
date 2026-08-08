@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from ..auth import create_access_token, get_current_user, hash_password, verify_password
 from ..models import User
 from ..schemas import RegisterRequest, TokenResponse, UserResponse
+from ..services.seeds import ensure_alex_case_for_user
 
 router = APIRouter()
 
@@ -18,6 +19,7 @@ async def register(body: RegisterRequest) -> TokenResponse:
         hashed_password=hash_password(body.password),
     )
     await user.insert()
+    await ensure_alex_case_for_user(user)
     return TokenResponse(access_token=create_access_token(str(user.id)))
 
 

@@ -10,6 +10,7 @@ from .auth import decode_access_token
 from .models import (
     Case,
     CaseEvent,
+    CaseScenario,
     Invitation,
     JourneyTemplate,
     Notification,
@@ -23,7 +24,7 @@ from .routers import portal as portal_router
 from .routers import invitations as invitations_router
 from .routers import journeys as journeys_router
 from .routers import notifications as notifications_router
-from .services.seeds import ensure_default_journey
+from .services.seeds import ensure_seed_content
 from .services.privacy import archive_expired_cases
 from .ws import manager
 
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
         document_models=[
             User,
             JourneyTemplate,
+            CaseScenario,
             Case,
             Invitation,
             CaseEvent,
@@ -43,7 +45,7 @@ async def lifespan(app: FastAPI):
             PortalComment,
         ],
     )
-    await ensure_default_journey()
+    await ensure_seed_content()
     await archive_expired_cases()
     yield
     client.close()

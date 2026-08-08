@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
@@ -27,6 +27,7 @@ class JourneyTemplateCreate(BaseModel):
     version: int = Field(ge=1)
     activa: bool = True
     estaciones: list[TemplateStation] = Field(min_length=1)
+    contenido: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_stations(self) -> "JourneyTemplateCreate":

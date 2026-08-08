@@ -2,10 +2,28 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth import get_current_user
-from ..models import JourneyTemplate, User
+from ..models import CaseScenario, JourneyTemplate, User
 from ..schemas import JourneyTemplateCreate
 
 router = APIRouter()
+
+
+@router.get("/scenarios")
+async def list_scenarios(
+    current_user: User = Depends(get_current_user),
+) -> list[CaseScenario]:
+    return await CaseScenario.find(CaseScenario.activa == True).to_list()  # noqa: E712
+
+
+@router.get("/scenarios/{slug}")
+async def get_scenario(
+    slug: str,
+    current_user: User = Depends(get_current_user),
+) -> CaseScenario:
+    scenario = await CaseScenario.find_one(CaseScenario.slug == slug)
+    if scenario is None or not scenario.activa:
+        raise HTTPException(status_code=404, detail="Escenario no encontrado")
+    return scenario
 
 
 @router.get("/templates")
@@ -65,6 +83,7 @@ async def create_template(
         version=body.version,
         activa=body.activa,
         estaciones=body.estaciones,
+        contenido=body.contenido,
         created_by=str(current_user.id),
     )
     await template.insert()

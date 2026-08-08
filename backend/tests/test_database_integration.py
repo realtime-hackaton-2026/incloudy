@@ -8,6 +8,7 @@ from mongomock_motor import AsyncMongoMockClient
 from app.models import (
     Case,
     CaseEvent,
+    CaseScenario,
     Collaborator,
     CollaboratorRole,
     Invitation,
@@ -22,6 +23,7 @@ from app.models import (
 from app.routers import cases as cases_router
 from app.schemas import StationResponseRequest
 from app.services.cases import get_editable_case
+from app.services.seeds import ensure_seed_content
 from app.services.webhooks import process_portal_webhook
 
 
@@ -33,6 +35,7 @@ async def test_complete_collaborative_case_flow_persists(monkeypatch) -> None:
         document_models=[
             User,
             JourneyTemplate,
+            CaseScenario,
             Case,
             Invitation,
             CaseEvent,
@@ -132,3 +135,53 @@ async def test_complete_collaborative_case_flow_persists(monkeypatch) -> None:
     }
     assert notifications
     assert comments[0].content == {"text": "Comentario de seguimiento"}
+
+
+@pytest.mark.asyncio
+async def test_alex_content_and_case_are_seeded_idempotently() -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_alex_seed,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+        ],
+    )
+    professor = User(
+        nombre="Profesora Demo",
+        email="demo@example.com",
+        hashed_password="hash",
+    )
+    await professor.insert()
+
+    await ensure_seed_content()
+    await ensure_seed_content()
+
+    template = await JourneyTemplate.find_one(JourneyTemplate.activa == True)  # noqa: E712
+    scenario = await CaseScenario.find_one(CaseScenario.slug == "caso-alex")
+    cases = await Case.find(Case.profesor_id == str(professor.id)).to_list()
+
+    assert template is not None
+    assert [station.id for station in template.estaciones] == [
+        "explorar",
+        "orientar",
+        "actuar",
+        "acompanar",
+        "compartir",
+    ]
+    assert template.estaciones[0].opciones[0].contenido["coste_dias"] == 1
+    assert len(template.contenido["imprevistos"]) == 2
+    assert template.contenido["cierre"]["niveles"][0]["min"] == 70
+    assert scenario is not None
+    assert scenario.alumno.nombre == "Alex"
+    assert len(scenario.hipotesis) == 3
+    assert len(cases) == 1
+    assert cases[0].scenario_id == str(scenario.id)
+    assert cases[0].estado_interactivo.dias_restantes == 7
+    assert cases[0].progreso.total == 5

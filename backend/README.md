@@ -28,6 +28,7 @@ Documentación interactiva: `http://localhost:8000/docs`.
 |---|---|
 | `User` | Profesores, correo y contraseña con hash |
 | `JourneyTemplate` | Versiones de estaciones y opciones oficiales |
+| `CaseScenario` | Contenido canónico del caso ficticio de Alex |
 | `Case` | Alumno ficticio, respuestas, progreso, resumen y colaboradores |
 | `Invitation` | Invitaciones pendientes, aceptadas o revocadas |
 | `CaseEvent` | Historial y seguimiento del caso |
@@ -82,8 +83,20 @@ borrador → en_progreso → completado → publicado → cerrado → archivado
 | GET | `/journeys/templates/{id}` | Consultar una versión |
 | POST | `/journeys/templates` | Crear una nueva versión |
 
-Al iniciar el backend se crea automáticamente una plantilla inicial de cinco
-estaciones si la base de datos todavía no tiene una plantilla activa.
+Al iniciar el backend se guarda de forma idempotente el recorrido completo de
+Alex: cinco estaciones, hipótesis, pistas, voces, estrategias, imprevistos,
+reglas de cierre, textos del cuaderno y Data Station. El contenido editorial
+vive en `JourneyTemplate` y `CaseScenario`; no está codificado en el frontend.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/journeys/scenarios` | Listar escenarios ficticios activos |
+| GET | `/journeys/scenarios/caso-alex` | Obtener la presentación e hipótesis de Alex |
+
+Al registrar un profesor se crea una copia independiente del caso de Alex en
+`Case`. En el arranque también se provisiona esa copia para profesores que ya
+existían. La operación es idempotente: nunca crea dos casos de Alex para la
+misma cuenta.
 
 ### Casos y recorrido
 
@@ -129,6 +142,9 @@ Responder estación:
 
 El backend valida que la estación exista, que los IDs correspondan a opciones
 oficiales y que una pregunta de selección única no reciba varias respuestas.
+El caso incluye `estado_interactivo`, donde se persisten días restantes,
+confianza, XP, pistas, hipótesis, estrategia, seguimiento, destinatarios,
+imprevistos y notas privadas.
 
 ## Resumen final
 

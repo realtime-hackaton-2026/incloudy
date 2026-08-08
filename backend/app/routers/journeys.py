@@ -61,6 +61,11 @@ async def create_template(
     body: JourneyTemplateCreate,
     current_user: User = Depends(get_current_user),
 ) -> JourneyTemplate:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo un administrador puede gestionar plantillas",
+        )
     existing = await JourneyTemplate.find_one(
         JourneyTemplate.nombre == body.nombre,
         JourneyTemplate.version == body.version,

@@ -7,7 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth import get_current_user
 from ..config import settings
-from ..models import Case, CaseStatus, Invitation, InvitationStatus, User, utcnow
+from ..models import (
+    Case,
+    CaseStatus,
+    Invitation,
+    InvitationStatus,
+    User,
+    ensure_utc,
+    utcnow,
+)
 from ..schemas import (
     InvitationAcceptResponse,
     InvitationCreateRequest,
@@ -49,7 +57,7 @@ async def create_invitation(
         Invitation.email == body.email,
         Invitation.status == InvitationStatus.pending,
     )
-    if existing is not None and existing.expires_at > utcnow():
+    if existing is not None and ensure_utc(existing.expires_at) > utcnow():
         raise HTTPException(status_code=409, detail="Ya existe una invitación pendiente")
 
     raw_token = secrets.token_urlsafe(32)
@@ -125,7 +133,7 @@ async def accept_invitation(
     )
     if invitation is None or invitation.status != InvitationStatus.pending:
         raise HTTPException(status_code=404, detail="Invitación no encontrada")
-    if invitation.expires_at <= utcnow():
+    if ensure_utc(invitation.expires_at) <= utcnow():
         invitation.status = InvitationStatus.expired
         await invitation.save()
         raise HTTPException(status_code=410, detail="La invitación expiró")

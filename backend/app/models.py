@@ -10,6 +10,12 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def ensure_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 class CaseStatus(str, Enum):
     draft = "borrador"
     in_progress = "en_progreso"
@@ -102,11 +108,11 @@ class Collaborator(BaseModel):
     added_at: datetime = Field(default_factory=utcnow)
 
 
-class TeacherNote(BaseModel):
-    id: str
+class TeacherNote(Document):
+    case_id: str
+    user_id: str
     contenido: str = Field(min_length=1, max_length=4_000)
     categoria: str = Field(default="general", max_length=80)
-    creada_por: str
     creada_en: datetime = Field(default_factory=utcnow)
 
 
@@ -122,13 +128,13 @@ class InteractiveCaseState(BaseModel):
     seguimiento_elegido: Optional[str] = None
     compartido_con: list[str] = Field(default_factory=list)
     imprevistos_resueltos: list[str] = Field(default_factory=list)
-    notas: list[TeacherNote] = Field(default_factory=list)
 
 
 class User(Document):
     nombre: str = Field(default="Profesor", min_length=1, max_length=100)
     email: Indexed(EmailStr, unique=True)
     hashed_password: str
+    is_admin: bool = False
     created_at: datetime = Field(default_factory=utcnow)
 
 

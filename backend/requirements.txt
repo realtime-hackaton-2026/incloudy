@@ -9,3 +9,4 @@ PyJWT
 bcrypt
 python-multipart
 httpx
+reportlab

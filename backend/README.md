@@ -34,6 +34,7 @@ Documentación interactiva: `http://localhost:8000/docs`.
 | `CaseEvent` | Historial y seguimiento del caso |
 | `Notification` | Notificaciones persistentes por profesor |
 | `PortalComment` | Copia de comentarios recibidos mediante webhooks de Portal |
+| `TeacherNote` | Notas privadas, visibles únicamente para su autor |
 
 Las contraseñas nunca se guardan ni se devuelven en texto plano.
 
@@ -105,6 +106,11 @@ misma cuenta.
 | GET, POST | `/cases` | Listar casos accesibles o crear uno |
 | GET, PUT, DELETE | `/cases/{id}` | Consultar, editar datos del alumno o eliminar |
 | PUT | `/cases/{id}/stations/{order}/response` | Guardar respuesta de una estación |
+| PUT | `/cases/{id}/unexpected-events/{event_id}/response` | Resolver un imprevisto |
+| GET, POST | `/cases/{id}/notes` | Consultar o crear notas privadas |
+| DELETE | `/cases/{id}/notes/{note_id}` | Eliminar una nota propia |
+| POST | `/cases/{id}/reset` | Reiniciar el progreso del caso |
+| GET | `/cases/{id}/report.pdf` | Descargar el informe del recorrido |
 | POST | `/cases/{id}/complete` | Validar recorrido y generar resumen |
 | POST | `/cases/{id}/summary/generate` | Regenerar resumen de forma controlada |
 | PUT | `/cases/{id}/summary` | Editar y persistir el resumen |
@@ -141,7 +147,9 @@ Responder estación:
 ```
 
 El backend valida que la estación exista, que los IDs correspondan a opciones
-oficiales y que una pregunta de selección única no reciba varias respuestas.
+oficiales, que una pregunta de selección única no reciba varias respuestas y
+que las estaciones anteriores estén completas. Al responder recalcula y guarda
+días, confianza, XP, pistas, hipótesis, estrategia, seguimiento y destinatarios.
 El caso incluye `estado_interactivo`, donde se persisten días restantes,
 confianza, XP, pistas, hipótesis, estrategia, seguimiento, destinatarios,
 imprevistos y notas privadas.
@@ -150,6 +158,11 @@ imprevistos y notas privadas.
 
 `POST /cases/{id}/complete` verifica el 100 % de las estaciones obligatorias,
 envía sus respuestas a Gemini y guarda el resultado en `resumen_final`.
+Si `GEMINI_API_KEY` está vacía, genera un resumen pedagógico local para que el
+recorrido pueda completarse sin depender de un servicio externo. El modelo se
+configura con `GEMINI_MODEL` y por defecto utiliza `gemini-3.6-flash`.
+El chat también devuelve una orientación local basada en el progreso mientras
+Gemini no esté configurado.
 
 Una edición manual queda protegida. Para sobrescribirla al regenerar:
 
@@ -274,6 +287,19 @@ caracteres. `CORS_ORIGINS` utiliza una lista JSON:
 ```env
 CORS_ORIGINS=["http://localhost:5173"]
 ```
+
+### MongoDB local
+
+La configuración local utiliza `mongodb://127.0.0.1:27017/incloudy`. En Windows:
+
+```powershell
+Get-Service MongoDB
+Start-Service MongoDB
+```
+
+MongoDB se ejecuta como servicio automático. Al arrancar FastAPI se crean los
+índices, la plantilla completa, el escenario de Alex y un caso independiente
+para cada profesor registrado.
 
 ## Pruebas
 

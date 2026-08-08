@@ -136,6 +136,15 @@ class FollowUpRequest(BaseModel):
     estacion_id: Optional[str] = Field(default=None, max_length=80)
 
 
+class UnexpectedEventResponseRequest(BaseModel):
+    opcion_id: str = Field(min_length=1, max_length=80)
+
+
+class TeacherNoteCreateRequest(BaseModel):
+    contenido: str = Field(min_length=1, max_length=4_000)
+    categoria: str = Field(default="general", min_length=1, max_length=80)
+
+
 class PortalSessionResponse(BaseModel):
     token: str
     expires_at: str

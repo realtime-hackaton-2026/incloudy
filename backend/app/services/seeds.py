@@ -279,9 +279,23 @@ def build_stations() -> list[TemplateStation]:
             descripcion="¿Qué observas?",
             tipo=QuestionType.single,
             opciones=[
-                option("mejorado", "Ha mejorado", "↑", direccion="mejora"),
-                option("se_mantiene", "Se mantiene", "→", direccion="estable"),
-                option("empeorado", "Ha empeorado", "↓", direccion="empeora"),
+                option(
+                    "mejorado", "Ha mejorado", "↑", direccion="mejora", confianza=10
+                ),
+                option(
+                    "se_mantiene",
+                    "Se mantiene",
+                    "→",
+                    direccion="estable",
+                    confianza=0,
+                ),
+                option(
+                    "empeorado",
+                    "Ha empeorado",
+                    "↓",
+                    direccion="empeora",
+                    confianza=-10,
+                ),
             ],
             contenido={
                 "introduccion": (
@@ -618,23 +632,23 @@ async def ensure_default_journey() -> JourneyTemplate:
     active_templates = await JourneyTemplate.find(
         JourneyTemplate.activa == True  # noqa: E712
     ).to_list()
-    for active in active_templates:
-        if template is None or active.id != template.id:
-            active.activa = False
-            await active.save()
+    should_activate = not active_templates or (
+        template is not None
+        and all(active.id == template.id for active in active_templates)
+    )
 
     if template is None:
         template = JourneyTemplate(
             nombre=TEMPLATE_NAME,
             version=TEMPLATE_VERSION,
-            activa=True,
+            activa=should_activate,
             estaciones=stations,
             contenido=content,
             created_by="system",
         )
         await template.insert()
     else:
-        template.activa = True
+        template.activa = should_activate
         template.estaciones = stations
         template.contenido = content
         await template.save()

@@ -15,6 +15,7 @@ from .models import (
     JourneyTemplate,
     Notification,
     PortalComment,
+    TeacherNote,
     User,
 )
 from .routers import auth as auth_router
@@ -31,7 +32,7 @@ from .ws import manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    client = AsyncIOMotorClient(settings.mongodb_uri)
+    client = AsyncIOMotorClient(settings.mongodb_uri, tz_aware=True)
     await init_beanie(
         database=client[settings.mongodb_db],
         document_models=[
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
             CaseEvent,
             Notification,
             PortalComment,
+            TeacherNote,
         ],
     )
     await ensure_seed_content()

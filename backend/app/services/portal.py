@@ -18,7 +18,8 @@ def case_channel_id(case: Case) -> str:
 
 
 def is_portal_configured() -> bool:
-    return bool(settings.portal_secret_key and settings.portal_publishable_key)
+    keys = (settings.portal_secret_key, settings.portal_publishable_key)
+    return all(keys) and not any("reemplaza" in key.lower() for key in keys)
 
 
 def ensure_portal_configured() -> None:

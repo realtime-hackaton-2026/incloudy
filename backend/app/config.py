@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 1440
     jwt_algorithm: str = "HS256"
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.6-flash"
     portal_secret_key: str = ""
     portal_publishable_key: str = ""
     portal_api_url: str = "https://api.useportal.co"

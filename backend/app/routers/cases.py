@@ -1,22 +1,25 @@
 from datetime import timedelta
-
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from ..auth import get_current_user
 from ..config import settings
 from ..models import (
     Case,
     CaseEvent,
+    CaseProgress,
+    CaseScenario,
     CaseStatus,
     CollaboratorRole,
     FinalSummary,
     Invitation,
+    InteractiveCaseState,
     JourneyTemplate,
     Notification,
     PortalComment,
     QuestionType,
     StationResponse,
+    TeacherNote,
     User,
     utcnow,
 )
@@ -29,10 +32,13 @@ from ..schemas import (
     StationResponseRequest,
     SummaryGenerateRequest,
     SummaryUpdateRequest,
+    TeacherNoteCreateRequest,
+    UnexpectedEventResponseRequest,
 )
 from ..services.ai import generate_case_summary
 from ..services.cases import (
     add_or_update_collaborator,
+    calculate_interactive_state,
     calculate_progress,
     create_notification,
     get_accessible_case,
@@ -40,10 +46,12 @@ from ..services.cases import (
     get_commentable_case,
     get_editable_case,
     get_owned_case,
+    ensure_station_is_unlocked,
     notify_case_participants,
     record_event,
 )
 from ..services.portal import is_portal_configured, remove_case_member
+from ..services.reports import build_case_pdf
 from ..ws import manager
 
 router = APIRouter()
@@ -89,7 +97,7 @@ async def save_generated_summary(
     content = await generate_case_summary(case, template)
     case.resumen_final = FinalSummary(
         contenido=content,
-        generado_por_ia=True,
+        generado_por_ia=bool(settings.gemini_api_key),
         editado_manualmente=False,
         actualizado_por=str(user.id),
         actualizado_en=utcnow(),
@@ -184,6 +192,7 @@ async def answer_station(
     )
     if station is None:
         raise HTTPException(status_code=404, detail="Estación no encontrada")
+    ensure_station_is_unlocked(case, template, station.orden)
 
     selected = body.opciones_seleccionadas
     valid_options = {option.id for option in station.opciones}
@@ -193,6 +202,15 @@ async def answer_station(
         raise HTTPException(status_code=422, detail="Debes seleccionar una opción")
     if station.tipo == QuestionType.single and len(selected) > 1:
         raise HTTPException(status_code=422, detail="La estación acepta una sola opción")
+    if (
+        station.id == "compartir"
+        and case.estado_interactivo.dias_restantes == 0
+        and len(selected) > 1
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Con la semana agotada solo puedes elegir una persona",
+        )
 
     response = StationResponse(
         estacion_id=station.id,
@@ -215,6 +233,7 @@ async def answer_station(
 
     case.status = CaseStatus.in_progress
     case.progreso = calculate_progress(case, template)
+    case.estado_interactivo = calculate_interactive_state(case, template)
     case.updated_at = utcnow()
     await case.save()
     await record_event(
@@ -229,6 +248,62 @@ async def answer_station(
         "estacion_respondida",
         "Recorrido actualizado",
         f"Se actualizó la estación {station.titulo}.",
+    )
+    return case
+
+
+@router.put("/{case_id}/unexpected-events/{event_id}/response")
+async def answer_unexpected_event(
+    case_id: str,
+    event_id: str,
+    body: UnexpectedEventResponseRequest,
+    current_user: User = Depends(get_current_user),
+) -> Case:
+    case = await get_editable_case(case_id, current_user)
+    ensure_case_is_editable(case)
+    template = await get_case_template(case)
+    event = next(
+        (
+            item
+            for item in template.contenido.get("imprevistos", [])
+            if item.get("id") == event_id
+        ),
+        None,
+    )
+    if event is None:
+        raise HTTPException(status_code=404, detail="Imprevisto no encontrado")
+    station = next(
+        (
+            item
+            for item in template.estaciones
+            if item.id == event.get("estacion_id")
+        ),
+        None,
+    )
+    if station is None:
+        raise HTTPException(status_code=409, detail="Imprevisto sin estación válida")
+    ensure_station_is_unlocked(case, template, station.orden)
+    valid_options = {item["id"] for item in event.get("opciones", [])}
+    if body.opcion_id not in valid_options:
+        raise HTTPException(status_code=422, detail="Opción de imprevisto inválida")
+
+    prefix = f"{event_id}:"
+    case.estado_interactivo.imprevistos_resueltos = [
+        item
+        for item in case.estado_interactivo.imprevistos_resueltos
+        if not item.startswith(prefix)
+    ]
+    case.estado_interactivo.imprevistos_resueltos.append(
+        f"{event_id}:{body.opcion_id}"
+    )
+    case.estado_interactivo = calculate_interactive_state(case, template)
+    case.updated_at = utcnow()
+    await case.save()
+    await record_event(
+        case,
+        str(current_user.id),
+        "imprevisto_resuelto",
+        {"event_id": event_id, "opcion_id": body.opcion_id},
     )
     return case
 
@@ -387,6 +462,7 @@ async def delete_case(
     await record_event(case, str(current_user.id), "caso_eliminado")
     await Invitation.find(Invitation.case_id == case_id).delete()
     await CaseEvent.find(CaseEvent.case_id == case_id).delete()
+    await TeacherNote.find(TeacherNote.case_id == case_id).delete()
     await PortalComment.find(PortalComment.case_id == case_id).delete()
     await Notification.find(Notification.case_id == case_id).delete()
     await case.delete()
@@ -493,6 +569,98 @@ async def create_follow_up(
         body.observacion[:200],
     )
     return event
+
+
+@router.get("/{case_id}/notes")
+async def list_teacher_notes(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> list[TeacherNote]:
+    case = await get_accessible_case(case_id, current_user)
+    return await TeacherNote.find(
+        TeacherNote.case_id == str(case.id),
+        TeacherNote.user_id == str(current_user.id),
+    ).sort("-creada_en").to_list()
+
+
+@router.post("/{case_id}/notes", status_code=status.HTTP_201_CREATED)
+async def create_teacher_note(
+    case_id: str,
+    body: TeacherNoteCreateRequest,
+    current_user: User = Depends(get_current_user),
+) -> TeacherNote:
+    case = await get_accessible_case(case_id, current_user)
+    note = TeacherNote(
+        case_id=str(case.id),
+        user_id=str(current_user.id),
+        contenido=body.contenido,
+        categoria=body.categoria,
+    )
+    await note.insert()
+    return note
+
+
+@router.delete("/{case_id}/notes/{note_id}", status_code=204)
+async def delete_teacher_note(
+    case_id: str,
+    note_id: str,
+    current_user: User = Depends(get_current_user),
+) -> None:
+    case = await get_accessible_case(case_id, current_user)
+    if not ObjectId.is_valid(note_id):
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+    note = await TeacherNote.get(note_id)
+    if (
+        note is None
+        or note.case_id != str(case.id)
+        or note.user_id != str(current_user.id)
+    ):
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+    await note.delete()
+
+
+@router.post("/{case_id}/reset")
+async def reset_case(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> Case:
+    case = await get_owned_case(case_id, current_user)
+    template = await get_case_template(case)
+    initial_state = InteractiveCaseState()
+    if case.scenario_id and ObjectId.is_valid(case.scenario_id):
+        scenario = await CaseScenario.get(case.scenario_id)
+        if scenario is not None:
+            initial_state = scenario.estado_inicial.model_copy(deep=True)
+
+    case.respuestas = []
+    case.progreso = CaseProgress(
+        completadas=0,
+        total=sum(item.obligatoria for item in template.estaciones),
+        porcentaje=0,
+    )
+    case.resumen_final = FinalSummary()
+    case.estado_interactivo = initial_state
+    case.status = CaseStatus.draft
+    case.updated_at = utcnow()
+    await case.save()
+    await record_event(case, str(current_user.id), "caso_reiniciado")
+    return case
+
+
+@router.get("/{case_id}/report.pdf")
+async def download_case_report(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    case = await get_accessible_case(case_id, current_user)
+    template = await get_case_template(case)
+    return Response(
+        content=build_case_pdf(case, template),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="informe-caso-alex.pdf"'
+        },
+    )
 
 
 @router.get("/{case_id}/events")

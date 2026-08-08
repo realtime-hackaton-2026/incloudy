@@ -3,13 +3,16 @@ import hashlib
 import hmac
 import json
 import time
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.auth import create_access_token, decode_access_token
 from app.models import (
+    Case,
     CaseProgress,
     CaseStatus,
     Collaborator,
@@ -19,11 +22,18 @@ from app.models import (
     StationResponse,
     Student,
     TemplateStation,
+    ensure_utc,
 )
 from app.schemas import CaseCreate, JourneyTemplateCreate, RegisterRequest
 from app.services import portal as portal_service
-from app.services.ai import build_case_context
-from app.services.cases import calculate_progress
+from app.services.ai import build_case_context, generate_local_case_summary
+from app.services.cases import (
+    calculate_interactive_state,
+    calculate_progress,
+    ensure_station_is_unlocked,
+)
+from app.services.reports import build_case_pdf
+from app.services.seeds import build_stations, build_template_content
 from app.services.webhooks import verify_portal_signature
 
 
@@ -154,3 +164,71 @@ def test_portal_webhook_signature_is_verified(monkeypatch) -> None:
     )
 
     verify_portal_signature(body, f"t={timestamp},v1={signature}")
+
+
+def test_interactive_state_calculates_days_confidence_xp_and_unlock() -> None:
+    template = SimpleNamespace(
+        estaciones=build_stations(),
+        contenido=build_template_content(),
+    )
+    case = Case.model_construct(
+        profesor_id="owner",
+        alumno=Student(nombre="Alex"),
+        respuestas=[
+            StationResponse(
+                estacion_id="explorar",
+                opciones_seleccionadas=["observar_contextos", "hablar_alumno"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="orientar",
+                opciones_seleccionadas=["reto"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="actuar",
+                opciones_seleccionadas=["reto_abierto"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="acompanar",
+                opciones_seleccionadas=["mejorado"],
+                respondido_por="owner",
+            ),
+        ],
+    )
+
+    state = calculate_interactive_state(case, template)
+
+    assert state.dias_restantes == 2
+    assert state.confianza_equipo == 75
+    assert state.xp_total == 400
+    assert state.estacion_actual == "compartir"
+    assert state.pistas_recogidas == ["observar_contextos", "hablar_alumno"]
+
+
+def test_station_order_is_enforced() -> None:
+    template = SimpleNamespace(estaciones=build_stations())
+    case = SimpleNamespace(respuestas=[])
+    with pytest.raises(HTTPException) as error:
+        ensure_station_is_unlocked(case, template, 2)
+    assert error.value.status_code == 409
+
+
+def test_mongodb_naive_dates_are_normalized_to_utc() -> None:
+    normalized = ensure_utc(datetime(2026, 8, 8, 12, 0, 0))
+    assert normalized.tzinfo == timezone.utc
+
+
+def test_local_summary_and_pdf_are_generated_without_external_services() -> None:
+    template = SimpleNamespace(
+        estaciones=build_stations(),
+        contenido=build_template_content(),
+    )
+    case = Case.model_construct(
+        profesor_id="owner",
+        alumno=Student(nombre="Alex", descripcion="Caso ficticio"),
+        progreso=CaseProgress(completadas=0, total=5, porcentaje=0),
+    )
+    assert "Alex" in generate_local_case_summary(case, template)
+    assert build_case_pdf(case, template).startswith(b"%PDF")

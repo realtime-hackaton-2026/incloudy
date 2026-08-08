@@ -3,6 +3,7 @@ import time
 
 import pytest
 from beanie import init_beanie
+from fastapi import HTTPException
 from mongomock_motor import AsyncMongoMockClient
 
 from app.models import (
@@ -18,10 +19,15 @@ from app.models import (
     StationOption,
     Student,
     TemplateStation,
+    TeacherNote,
     User,
 )
 from app.routers import cases as cases_router
-from app.schemas import StationResponseRequest
+from app.schemas import (
+    StationResponseRequest,
+    TeacherNoteCreateRequest,
+    UnexpectedEventResponseRequest,
+)
 from app.services.cases import get_editable_case
 from app.services.seeds import ensure_seed_content
 from app.services.webhooks import process_portal_webhook
@@ -41,6 +47,7 @@ async def test_complete_collaborative_case_flow_persists(monkeypatch) -> None:
             CaseEvent,
             Notification,
             PortalComment,
+            TeacherNote,
         ],
     )
     owner = User(
@@ -151,6 +158,7 @@ async def test_alex_content_and_case_are_seeded_idempotently() -> None:
             CaseEvent,
             Notification,
             PortalComment,
+            TeacherNote,
         ],
     )
     professor = User(
@@ -185,3 +193,61 @@ async def test_alex_content_and_case_are_seeded_idempotently() -> None:
     assert cases[0].scenario_id == str(scenario.id)
     assert cases[0].estado_interactivo.dias_restantes == 7
     assert cases[0].progreso.total == 5
+
+    with pytest.raises(HTTPException) as locked:
+        await cases_router.answer_station(
+            str(cases[0].id),
+            2,
+            StationResponseRequest(opciones_seleccionadas=["reto"]),
+            professor,
+        )
+    assert locked.value.status_code == 409
+
+    answers = [
+        (1, ["observar_contextos"]),
+        (2, ["reto"]),
+        (3, ["reto_abierto"]),
+        (4, ["mejorado"]),
+        (5, ["tutor"]),
+    ]
+    for order, selected in answers[:2]:
+        await cases_router.answer_station(
+            str(cases[0].id),
+            order,
+            StationResponseRequest(opciones_seleccionadas=selected),
+            professor,
+        )
+    await cases_router.answer_unexpected_event(
+        str(cases[0].id),
+        "llamada_familia",
+        UnexpectedEventResponseRequest(opcion_id="atender_ahora"),
+        professor,
+    )
+    for order, selected in answers[2:]:
+        completed_route = await cases_router.answer_station(
+            str(cases[0].id),
+            order,
+            StationResponseRequest(opciones_seleccionadas=selected),
+            professor,
+        )
+
+    assert completed_route.progreso.porcentaje == 100
+    assert completed_route.estado_interactivo.dias_restantes == 2
+    assert completed_route.estado_interactivo.confianza_equipo == 83
+    assert completed_route.estado_interactivo.xp_total == 500
+
+    note = await cases_router.create_teacher_note(
+        str(cases[0].id),
+        TeacherNoteCreateRequest(contenido="Nota privada"),
+        professor,
+    )
+    notes = await cases_router.list_teacher_notes(str(cases[0].id), professor)
+    assert len(notes) == 1
+    assert notes[0].id == note.id
+    assert notes[0].contenido == "Nota privada"
+
+    completed_case = await cases_router.complete_case(str(cases[0].id), professor)
+    assert completed_case.resumen_final.contenido
+    assert not completed_case.resumen_final.generado_por_ia
+    report = await cases_router.download_case_report(str(cases[0].id), professor)
+    assert report.body.startswith(b"%PDF")

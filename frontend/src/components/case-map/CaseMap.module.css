@@ -1,82 +1,223 @@
+/*
+ * The map as the application's canvas.
+ *
+ * Hard rule: the artwork itself is never modified. Everything here is
+ * scale, position, masking, lighting and interaction layered *around*
+ * `fondo.png` — the illustration stays 100% recognisable.
+ */
+
 .wrapper {
   width: 100%;
-  max-width: 1100px;
-  margin-inline: auto;
+}
+
+/*
+ * Staged reveal — "show first, explain second".
+ *
+ * The world arrives alone, then the markers, then the progress. Landing on
+ * everything at once gave the user no moment to simply look at the map,
+ * which is the one thing this screen exists for.
+ */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealMap {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.frame {
+  animation: revealMap 700ms var(--ease) both;
+}
+
+/* Step 02 — markers, once the world has had a beat on its own.
+   Opacity only: these are positioned with `transform: translate(-50%, …)`,
+   so animating transform here would fight their placement. */
+@keyframes revealFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hotspot,
+.marker {
+  animation: revealFade 420ms var(--ease) 700ms both;
+}
+
+/* Step 03 — the journey. */
+.caption {
+  animation: revealUp 420ms var(--ease) 980ms both;
 }
 
 .frame {
   position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
   background: #05070a;
-  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+  box-shadow:
+    0 40px 80px -34px rgb(0 0 0 / 90%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+/*
+ * The camera. Zooming with `transform-origin` set to the focused station
+ * means that station stays exactly where it is on screen while everything
+ * else moves around it — so the HUD can be anchored to the same
+ * percentage coordinates without any correction maths.
+ */
+.camera {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+  transition:
+    transform var(--medium) var(--ease),
+    filter var(--medium) var(--ease);
+  will-change: transform;
 }
 
 .art {
   display: block;
   width: 100%;
   height: auto;
-  /* The artwork is pixel art — let it stay crunchy instead of being smoothed. */
+  /* The artwork is pixel art — let it stay crunchy instead of smoothed. */
   image-rendering: pixelated;
 }
 
-.station {
+/* Warm light on the station under the cursor or under the camera. */
+.spotlight {
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 2.4%;
-  min-width: 14px;
-  aspect-ratio: 1;
-  padding: 0;
-  border: 2px solid rgb(255 255 255 / 70%);
-  border-radius: 50%;
-  background: rgb(8 10 14 / 55%);
-  cursor: pointer;
-  transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    transform 200ms ease;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--medium) var(--ease);
 }
 
-.station:disabled {
+.spotlightOn {
+  opacity: 1;
+}
+
+/* --- Hotspots ---------------------------------------------------------- */
+
+.hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 3.4%;
+  min-width: 20px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: rgb(8 10 14 / 45%);
+  cursor: pointer;
+  transition:
+    transform var(--micro) var(--ease),
+    background-color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease),
+    box-shadow var(--micro) var(--ease);
+}
+
+.hotspot:disabled {
   cursor: default;
 }
 
-.station:not(:disabled):hover {
-  transform: translate(-50%, -50%) scale(1.2);
+/* Only the region under the pointer reacts — never the whole map. */
+.hotspot:not(:disabled):hover,
+.hotspotHighlighted {
+  transform: translate(-50%, -50%) scale(1.28);
+  border-color: var(--parchment-hi);
+  background: rgb(230 201 149 / 30%);
+  box-shadow: 0 0 22px 6px rgb(230 201 149 / 35%);
 }
 
-.station:focus-visible {
-  outline: 3px solid #fde68a;
-  outline-offset: 3px;
+.hotspot:focus-visible {
+  outline: 2px solid var(--parchment);
+  outline-offset: 4px;
 }
 
 /* Stations the case has already passed through. */
 .reached {
-  background: rgb(251 191 36 / 90%);
-  border-color: #fffbeb;
+  background: rgb(52 120 184 / 78%);
+  border-color: rgb(241 216 166 / 85%);
 }
 
-/* The current station: the pin stands here, so the bead gets out of the way. */
+/* The current station: the pin stands here, so the bead gets out of the way.
+   `animation: none` matters — the reveal above fills to opacity 1 and an
+   animated value outranks this declaration, which would bring the bead back
+   underneath the pin. */
 .underPin {
+  animation: none;
   opacity: 0;
+  pointer-events: none;
 }
+
+.hotspotLabel {
+  position: absolute;
+  left: 50%;
+  bottom: 130%;
+  padding: 4px 9px;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text);
+  background: rgb(10 13 19 / 88%);
+  border: 1px solid rgb(230 201 149 / 30%);
+  border-radius: 6px;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  pointer-events: none;
+  transition:
+    opacity var(--micro) var(--ease),
+    transform var(--micro) var(--ease);
+}
+
+/* The label lifts as it appears. */
+.hotspot:hover .hotspotLabel,
+.hotspot:focus-visible .hotspotLabel,
+.hotspotHighlighted .hotspotLabel {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --- The case's position ----------------------------------------------- */
 
 .marker {
   position: absolute;
   transform: translate(-50%, -108%);
   pointer-events: none;
-  color: #fbbf24;
+  color: var(--parchment);
   transition:
-    left 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    top 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    left var(--large) var(--ease),
+    top var(--large) var(--ease);
 }
 
 .pin {
   display: block;
   width: clamp(26px, 3.4vw, 44px);
   height: auto;
-  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 60%));
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 75%));
 }
 
 .pulse {
@@ -88,56 +229,299 @@
   transform: translateX(-50%);
   border: 2px solid currentcolor;
   border-radius: 50%;
-  animation: pulse 1800ms ease-out infinite;
+  animation: pulse 2200ms ease-out infinite;
 }
 
 @keyframes pulse {
   0% {
-    opacity: 0.75;
+    opacity: 0.7;
     transform: translateX(-50%) scale(0.4);
   }
 
   100% {
     opacity: 0;
-    transform: translateX(-50%) scale(1.6);
+    transform: translateX(-50%) scale(1.7);
   }
 }
+
+/* --- HUD --------------------------------------------------------------- */
+
+.hud {
+  position: absolute;
+  z-index: 3;
+  width: min(260px, 62%);
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid rgb(230 201 149 / 26%);
+  background: rgb(12 16 22 / 88%);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px -20px rgb(0 0 0 / 90%);
+  animation: hudIn var(--small) var(--ease) 120ms both;
+}
+
+@keyframes hudIn {
+  from {
+    opacity: 0;
+    transform: var(--hud-transform) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: var(--hud-transform) scale(1);
+  }
+}
+
+/* The connector: a short line drawn from the station toward the panel, so
+   the HUD reads as belonging to that place rather than floating loose. */
+.hud::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--parchment), transparent);
+  transform: scaleX(0);
+  animation: connector var(--small) var(--ease) 60ms forwards;
+}
+
+@keyframes connector {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.hudRight::before {
+  right: 100%;
+  transform-origin: right center;
+  background: linear-gradient(270deg, var(--parchment), transparent);
+}
+
+.hudLeft::before {
+  left: 100%;
+  transform-origin: left center;
+}
+
+.hudHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hudTitle {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.hudCloseCorner {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-soft);
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.hudCloseCorner:hover {
+  color: var(--text);
+  border-color: rgb(255 255 255 / 26%);
+}
+
+/* --- Panel mode: a real form instead of the "Explorar →" preview -------- */
+
+.hudPanel {
+  width: min(360px, 84vw);
+  max-height: min(520px, 72vh);
+  overflow-y: auto;
+}
+
+.hudPanelBody {
+  margin-top: 12px;
+}
+
+.hudPlace {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.hudMeta {
+  margin: 14px 0 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+/* Beads, not a bar — a badge counts what you have collected. */
+.hudBeads {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.bead {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(255 255 255 / 26%);
+  background: transparent;
+}
+
+.beadDone {
+  background: var(--parchment);
+  border-color: var(--parchment-hi);
+  box-shadow: 0 0 10px rgb(230 201 149 / 55%);
+}
+
+.hudActions {
+  display: flex;
+  gap: 8px;
+}
+
+.hudGo,
+.hudClose {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform var(--micro) var(--ease),
+    background-color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.hudGo {
+  color: #10131a;
+  background: var(--parchment);
+  border: 1px solid var(--parchment-hi);
+}
+
+.hudGo:hover {
+  transform: translateY(-2px);
+  background: var(--parchment-hi);
+}
+
+.hudClose {
+  flex: 0 0 auto;
+  color: var(--text-soft);
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+}
+
+.hudClose:hover {
+  color: var(--text);
+  border-color: rgb(255 255 255 / 26%);
+}
+
+/* --- Caption ----------------------------------------------------------- */
 
 .caption {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: 6px 16px;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: 0.75rem;
-  font-family: system-ui, sans-serif;
+  margin-top: 14px;
 }
 
 .current {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .place {
-  font-weight: 400;
-  opacity: 0.75;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--parchment);
 }
 
-.progress {
-  font-size: 0.875rem;
-  opacity: 0.7;
+.hint {
+  font-family: var(--label);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* --- Mobile: the HUD becomes a bottom sheet ----------------------------- */
+
+@media (max-width: 720px) {
+  .hud {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    width: 100%;
+    max-height: 84vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    /* Anchoring to a map coordinate is meaningless once it spans the
+       screen, so the connector goes away with it. */
+    transform: none !important;
+    animation: sheetIn var(--small) var(--ease) both;
+  }
+
+  .hud::before {
+    display: none;
+  }
+
+  /* Already full-width and scrollable via .hud above; only the size cap
+     needs to change for a form's worth of content. */
+  .hudPanel {
+    width: 100%;
+    max-height: 84vh;
+  }
+
+  @keyframes sheetIn {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marker {
-    transition: none;
-  }
-
   .pulse {
     animation: none;
   }
 
-  .station:not(:disabled):hover {
+  .camera {
+    transition: none;
+  }
+
+  .hotspot:not(:disabled):hover,
+  .hotspotHighlighted {
     transform: translate(-50%, -50%);
+  }
+
+  .hud,
+  .hud::before {
+    animation: none;
+    transform: var(--hud-transform);
   }
 }

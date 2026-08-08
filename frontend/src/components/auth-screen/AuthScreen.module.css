@@ -1,112 +1,119 @@
 /*
- * Ported from the static mockup that lived at `src/index.html`.
+ * The explorer's notebook.
  *
- * That file leaned on the Tailwind CDN, the Material Symbols font and a
- * remote background image — three network calls the built app should not
- * make. The look is the same; the dependencies are gone. Palette tokens are
- * in `src/styles.css`, shared with the rest of the app.
+ * Rolled back to parchment on purpose: the card reading as an object lying
+ * in the world — not a modal floating over it — is what gave the original
+ * login its charm. Lighter than the original though, so it sits in the
+ * campsite rather than dominating it.
  */
 
 .screen {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100svh;
   width: 100%;
-  padding: 24px;
-  box-sizing: border-box;
-  overflow: hidden;
+  padding: 32px 24px;
 }
 
-/* The case map itself, out of focus. The login already stands where the work
-   happens, so the palette carries over without repainting anything. */
-.backdrop {
-  position: absolute;
+/* Scene 01 — darkness. One firefly crosses, then the world fades up. */
+.curtain {
+  position: fixed;
   inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: blur(4px);
-  transform: scale(1.06);
-  z-index: 0;
+  z-index: 5;
+  background: #05070a;
+  pointer-events: none;
+  animation: curtainLift 800ms var(--ease) 420ms both;
 }
 
-.veil {
+.curtain::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  background: rgb(195 169 133 / 32%);
-  backdrop-filter: blur(2px);
-  z-index: 1;
+  top: 54%;
+  left: 22%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--firefly);
+  box-shadow: 0 0 14px 4px rgb(255 233 168 / 70%);
+  animation: firstFirefly 1100ms ease-in-out both;
 }
 
-/* --- The wooden frame -------------------------------------------------- */
+@keyframes firstFirefly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translate(40px, -18px) scale(1);
+  }
+
+  70% {
+    opacity: 0.9;
+    transform: translate(150px, -46px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(230px, -70px) scale(0.7);
+  }
+}
+
+@keyframes curtainLift {
+  to {
+    opacity: 0;
+  }
+}
+
+/* --- Notebook ---------------------------------------------------------- */
 
 .panel {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 520px;
-  padding: 20px;
-  margin: 8px;
-  box-sizing: border-box;
-  border: 4px solid var(--wood-dark);
-  border-radius: 8px;
-  background-color: var(--wood);
-  background-image:
-    linear-gradient(90deg, rgb(195 169 133 / 20%) 1px, transparent 1px),
-    linear-gradient(0deg, rgb(195 169 133 / 20%) 1px, transparent 1px);
-  background-size: 8px 8px;
+  max-width: 400px;
+  padding: 30px 30px 26px;
+  border-radius: 10px;
+  background: var(--paper);
+  /* A warm rule down the spine side, like a stitched notebook edge. */
+  border: 1px solid var(--paper-edge);
+  border-left: 5px solid var(--wood-dark);
   box-shadow:
-    /* Two stepped rings — the pixel-art frame the mockup calls for. */
-    0 -4px 0 var(--wood-dark),
-    0 4px 0 var(--wood-dark),
-    -4px 0 0 var(--wood-dark),
-    4px 0 0 var(--wood-dark),
-    0 -8px 0 var(--surface-dim),
-    0 8px 0 var(--surface-dim),
-    -8px 0 0 var(--surface-dim),
-    8px 0 0 var(--surface-dim),
-    /* Offset block shadow, pushed clear of the rings. */ 12px 12px 0
-      rgb(195 169 133 / 40%);
+    0 26px 60px -22px rgb(0 0 0 / 78%),
+    0 2px 0 0 rgb(255 255 255 / 40%) inset;
+  transition:
+    box-shadow var(--medium) var(--ease),
+    transform var(--medium) var(--ease);
 }
 
-.paper {
-  position: relative;
-  /* Trimmed from the mockup's flat 40px so the panel clears a 720px-tall
-     window without scrolling. */
-  padding: 32px 40px;
-  border: 4px solid var(--wood-dark);
-  background-color: var(--paper);
-  /* 4×4 dot of ink: paper grain that survives any zoom level. */
-  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmY4ZjIiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJyZ2JhKDc1LDQ0LDMyLDAuMDUpIi8+PC9zdmc+');
+/* Scene 05 — the notebook rises into place. */
+@keyframes notebookIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.corner {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--wood-dark);
+.panel {
+  animation: notebookIn 640ms var(--ease) 1820ms both;
 }
 
-.cornerTopLeft {
-  top: -4px;
-  left: -4px;
-}
-
-.cornerTopRight {
-  top: -4px;
-  right: -4px;
-}
-
-.cornerBottomLeft {
-  bottom: -4px;
-  left: -4px;
-}
-
-.cornerBottomRight {
-  bottom: -4px;
-  right: -4px;
+/* The world leans in while a field is being filled. */
+.panelFocused {
+  transform: translateY(-2px);
+  box-shadow:
+    0 32px 70px -22px rgb(0 0 0 / 82%),
+    0 0 44px -8px rgb(255 200 120 / 34%),
+    0 2px 0 0 rgb(255 255 255 / 40%) inset;
 }
 
 /* --- Branding ---------------------------------------------------------- */
@@ -115,36 +122,59 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 6px;
+  margin-bottom: 22px;
   text-align: center;
 }
 
+/* Scene 04 — the logo settles before the notebook arrives under it. */
+@keyframes logoIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.branding {
+  animation: logoIn 520ms var(--ease) 1440ms both;
+}
+
 .logo {
-  width: 64px;
-  height: 64px;
+  width: 50px;
+  height: 50px;
   image-rendering: pixelated;
 }
 
 .wordmark {
-  margin: 0;
   font-family: var(--display);
-  font-size: 44px;
-  line-height: 1.1;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--primary);
 }
 
 .tagline {
-  margin: 0;
   font-family: var(--label);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 9px;
   font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--ink-soft);
+}
+
+/* The invitation, and the reason the form exists. */
+.prompt {
+  margin-top: 12px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
 }
 
 /* --- Form -------------------------------------------------------------- */
@@ -152,21 +182,23 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .label {
   font-family: var(--label);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--ink);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  transition: color var(--micro) var(--ease);
 }
 
 .inputWrap {
@@ -177,39 +209,55 @@
 
 .icon {
   position: absolute;
-  left: 14px;
-  width: 20px;
-  height: 20px;
-  color: var(--outline);
+  left: 12px;
+  width: 17px;
+  height: 17px;
+  color: var(--wood-dark);
   pointer-events: none;
+  transition:
+    color var(--micro) var(--ease),
+    filter var(--micro) var(--ease);
 }
 
 .input {
   width: 100%;
-  box-sizing: border-box;
-  padding: 16px 16px 16px 46px;
-  font-family: inherit;
-  font-size: 18px;
-  line-height: 24px;
+  /* 48px tall: comfortably past the 44px minimum target. */
+  min-height: 48px;
+  padding: 13px 13px 13px 40px;
+  font: inherit;
+  font-size: 15px;
   color: var(--ink);
   background: #fff;
-  border: 4px solid var(--wood-dark);
-  border-radius: 0;
-  box-shadow: inset 4px 4px 0 0 rgb(195 169 133 / 20%);
-  transition: border-color 200ms ease;
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgb(58 50 38 / 8%);
+  transition:
+    border-color var(--micro) var(--ease),
+    box-shadow var(--micro) var(--ease);
 }
 
 .input::placeholder {
-  color: var(--outline-soft);
+  color: #a9a094;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--secondary);
+  border-color: var(--wood-dark);
+  box-shadow:
+    inset 0 2px 4px rgb(58 50 38 / 6%),
+    0 0 0 3px rgb(224 201 163 / 45%);
+}
+
+.field:focus-within .icon {
+  color: var(--ember);
+}
+
+.field:focus-within .label {
+  color: var(--ink);
 }
 
 .input:disabled {
-  background: var(--surface-dim);
+  background: #f4f0e9;
   cursor: not-allowed;
 }
 
@@ -218,19 +266,32 @@
 .error {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  font-size: 15px;
-  line-height: 20px;
-  color: var(--danger);
-  background: var(--danger-bg);
-  border: 4px solid var(--danger);
+  gap: 9px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #8f2f2f;
+  background: #fbe9e5;
+  border: 1px solid #e8bfb6;
+  border-radius: 8px;
+  animation: errorIn var(--small) var(--ease) both;
+}
+
+@keyframes errorIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .errorIcon {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 /* --- Actions ----------------------------------------------------------- */
@@ -239,112 +300,137 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  padding-top: 4px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .submit {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 18px 20px;
+  min-height: 52px;
   font-family: var(--display);
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  /* The mockup asked for white here; on this wood it lands near 1.7:1, so the
-     ink blue takes its place at 5.4:1. */
-  color: var(--primary);
-  background: var(--wood);
-  border: 4px solid var(--wood-dark);
-  border-bottom-width: 8px;
-  border-radius: 0;
+  color: #3a2a16;
+  background: linear-gradient(180deg, var(--parchment-hi), var(--wood));
+  border: 1px solid var(--wood-dark);
+  border-radius: 9px;
   cursor: pointer;
-  box-shadow: 4px 4px 0 0 rgb(195 169 133 / 40%);
+  box-shadow: 0 3px 0 0 var(--wood-dark);
   transition:
-    transform 80ms ease,
-    box-shadow 80ms ease,
-    filter 200ms ease;
+    transform var(--micro) var(--ease),
+    box-shadow var(--micro) var(--ease),
+    filter var(--micro) var(--ease);
 }
 
 .submit:hover:not(:disabled) {
+  transform: translateY(-2px);
   filter: brightness(1.04);
+  box-shadow:
+    0 5px 0 0 var(--wood-dark),
+    0 12px 26px -10px rgb(255 157 92 / 55%);
 }
 
+/* Pressed: the button compresses onto its own shadow. */
 .submit:active:not(:disabled) {
-  border-bottom-width: 4px;
-  box-shadow: 0 0 0 0 rgb(195 169 133 / 40%);
-  transform: translate(4px, 4px);
-}
-
-.submit:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 3px;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 0 var(--wood-dark);
 }
 
 .submit:disabled {
   cursor: progress;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .submitIcon {
-  width: 24px;
-  height: 24px;
+  width: 17px;
+  height: 17px;
+  transition: transform var(--micro) var(--ease);
+}
+
+.submit:hover:not(:disabled) .submitIcon {
+  transform: translateX(4px);
+}
+
+/* Warm flash as the world opens. */
+.submit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgb(255 236 200 / 95%), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.submit:active:not(:disabled)::after {
+  animation: flash 460ms ease-out both;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .help {
-  /* Reset in case this class lands on a <button> — Registro's link back to
-     Login is an in-app view switch, not a navigation, so it isn't an <a>. */
-  padding: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  font-family: var(--label);
+  font-size: 11px;
+  color: var(--ink-soft);
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--label);
-  font-size: 14px;
-  color: var(--outline);
-  text-decoration: underline dotted;
-  text-underline-offset: 4px;
-  transition: color 200ms ease;
+  transition: color var(--micro) var(--ease);
 }
 
 .help:hover {
-  color: var(--secondary);
-}
-
-.help:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 3px;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --- Small screens ----------------------------------------------------- */
 
-@media (max-width: 560px) {
+@media (max-width: 520px) {
   .screen {
-    padding: 16px;
+    padding: 20px 16px;
   }
 
-  .paper {
-    padding: 28px 20px;
+  .panel {
+    padding: 24px 20px 22px;
   }
 
   .wordmark {
-    font-size: 32px;
-  }
-
-  .branding {
-    margin-bottom: 28px;
+    font-size: 26px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .submit {
-    transition: none;
+  .curtain,
+  .curtain::after {
+    animation: none;
+    opacity: 0;
   }
 
-  .submit:active:not(:disabled) {
+  .panel,
+  .branding {
+    animation: none;
+  }
+
+  .panelFocused,
+  .submit:hover:not(:disabled) {
     transform: none;
   }
 }

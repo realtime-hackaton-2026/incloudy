@@ -1,15 +1,59 @@
 import asyncio
+import hashlib
+import hmac
+import json
+import time
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.auth import create_access_token, decode_access_token
-from app.models import Student
-from app.schemas import CaseCreate, RegisterRequest, StationInput
-from app.services.ai import build_prompt
+from app.models import (
+    Case,
+    CaseProgress,
+    CaseStatus,
+    Collaborator,
+    CollaboratorRole,
+    QuestionType,
+    StationOption,
+    StationResponse,
+    Student,
+    TemplateStation,
+    ensure_utc,
+)
+from app.schemas import CaseCreate, JourneyTemplateCreate, RegisterRequest
 from app.services import portal as portal_service
-from app.ws import ConnectionManager
+from app.services.ai import build_case_context, generate_local_case_summary
+from app.services.cases import (
+    calculate_interactive_state,
+    calculate_progress,
+    ensure_station_is_unlocked,
+)
+from app.services.reports import build_case_pdf
+from app.services.seeds import build_stations, build_template_content
+from app.services.webhooks import verify_portal_signature
+
+
+def sample_stations() -> list[TemplateStation]:
+    return [
+        TemplateStation(
+            id="observar",
+            orden=1,
+            titulo="Observar",
+            tipo=QuestionType.single,
+            opciones=[StationOption(id="atencion", texto="Dificultad de atención")],
+        ),
+        TemplateStation(
+            id="actuar",
+            orden=2,
+            titulo="Actuar",
+            tipo=QuestionType.multiple,
+            opciones=[StationOption(id="rutina", texto="Usar rutina visual")],
+        ),
+    ]
 
 
 def test_access_token_round_trip() -> None:
@@ -17,58 +61,68 @@ def test_access_token_round_trip() -> None:
     assert decode_access_token(token) == "profesor-123"
 
 
-def test_registration_requires_a_secure_minimum_password() -> None:
+def test_registration_requires_name_and_secure_password() -> None:
     with pytest.raises(ValidationError):
-        RegisterRequest(email="profesor@example.com", password="1234567")
+        RegisterRequest(nombre="", email="profesor@example.com", password="1234567")
 
 
-def test_case_rejects_duplicate_station_order() -> None:
+def test_case_requires_fictional_student_and_privacy_confirmation() -> None:
     with pytest.raises(ValidationError):
         CaseCreate(
-            alumno=Student(nombre="Ana"),
-            estaciones=[
-                StationInput(orden=1, titulo="Inicio"),
-                StationInput(orden=1, titulo="Seguimiento"),
-            ],
+            alumno=Student(nombre="Ana", es_ficticio=False),
+            privacy_acknowledged=True,
         )
 
 
-def test_prompt_contains_case_context() -> None:
+def test_template_rejects_duplicate_station_order() -> None:
+    stations = sample_stations()
+    stations[1].orden = 1
+    with pytest.raises(ValidationError):
+        JourneyTemplateCreate(
+            nombre="Recorrido",
+            version=1,
+            estaciones=stations,
+        )
+
+
+def test_progress_uses_required_station_responses() -> None:
+    template = SimpleNamespace(estaciones=sample_stations())
     case = SimpleNamespace(
-        profesor_id="profesor-123",
-        alumno=Student(nombre="Ana", edad=10, curso="Quinto"),
-        estaciones=[SimpleNamespace(titulo="Observación")],
+        respuestas=[
+            StationResponse(
+                estacion_id="observar",
+                opciones_seleccionadas=["atencion"],
+                respondido_por="user-1",
+            )
+        ]
     )
-    prompt = build_prompt("¿Cómo puedo ayudarla?", case)
-
-    assert "Ana" in prompt
-    assert "Observación" in prompt
-    assert "¿Cómo puedo ayudarla?" in prompt
-
-
-def test_websocket_message_is_private_to_its_user() -> None:
-    class FakeWebSocket:
-        def __init__(self) -> None:
-            self.messages: list[dict] = []
-
-        async def send_json(self, message: dict) -> None:
-            self.messages.append(message)
-
-    manager = ConnectionManager()
-    first_user_socket = FakeWebSocket()
-    second_user_socket = FakeWebSocket()
-    manager.active_connections = {
-        "user-1": [first_user_socket],
-        "user-2": [second_user_socket],
-    }
-
-    asyncio.run(manager.send_to_user("user-1", {"event": "case_published"}))
-
-    assert first_user_socket.messages == [{"event": "case_published"}]
-    assert second_user_socket.messages == []
+    assert calculate_progress(case, template) == CaseProgress(
+        completadas=1,
+        total=2,
+        porcentaje=50,
+    )
 
 
-def test_portal_session_is_restricted_to_the_case_channel(monkeypatch) -> None:
+def test_ai_context_uses_selected_option_text() -> None:
+    template = SimpleNamespace(estaciones=sample_stations())
+    case = SimpleNamespace(
+        alumno=Student(nombre="Ana", edad=10, curso="Quinto"),
+        respuestas=[
+            StationResponse(
+                estacion_id="observar",
+                opciones_seleccionadas=["atencion"],
+                comentario="Sucede en tareas extensas",
+                respondido_por="user-1",
+            )
+        ],
+        estaciones=[],
+    )
+    context = build_case_context(case, template)
+    assert "Dificultad de atención" in context
+    assert "Sucede en tareas extensas" in context
+
+
+def test_portal_reader_session_cannot_publish(monkeypatch) -> None:
     requests: list[tuple[str, dict]] = []
 
     async def fake_portal_post(path: str, payload: dict) -> dict:
@@ -79,14 +133,102 @@ def test_portal_session_is_restricted_to_the_case_channel(monkeypatch) -> None:
 
     monkeypatch.setattr(portal_service, "portal_post", fake_portal_post)
     monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "pk_test")
-    user = SimpleNamespace(id="user-1", email="teacher@example.com")
-    case = SimpleNamespace(id="case-1")
+    user = SimpleNamespace(id="user-1", email="reader@example.com", nombre="Reader")
+    case = SimpleNamespace(
+        id="case-1",
+        profesor_id="owner",
+        colaboradores=[
+            Collaborator(user_id="user-1", role=CollaboratorRole.reader)
+        ],
+        colaboradores_ids=[],
+        status=CaseStatus.draft,
+    )
 
-    session = asyncio.run(portal_service.create_case_session(user, case))
+    asyncio.run(portal_service.create_case_session(user, case))
 
-    assert session.channel_id == "case-case-1"
-    assert session.token == "portal-jwt"
-    assert requests[0][0] == "/v1/channels/case-case-1/members"
-    assert requests[1][1]["channels"] == {
-        "case-case-1": ["connect", "publish"]
-    }
+    assert requests[1][1]["channels"] == {"case-case-1": ["connect"]}
+
+
+def test_portal_webhook_signature_is_verified(monkeypatch) -> None:
+    secret = "whsec_test"
+    body = json.dumps({"id": "event-1"}, separators=(",", ":")).encode()
+    timestamp = str(int(time.time()))
+    signature = hmac.new(
+        secret.encode(),
+        timestamp.encode() + b"." + body,
+        hashlib.sha256,
+    ).hexdigest()
+    monkeypatch.setattr(
+        "app.services.webhooks.settings.portal_webhook_secret",
+        secret,
+    )
+
+    verify_portal_signature(body, f"t={timestamp},v1={signature}")
+
+
+def test_interactive_state_calculates_days_confidence_xp_and_unlock() -> None:
+    template = SimpleNamespace(
+        estaciones=build_stations(),
+        contenido=build_template_content(),
+    )
+    case = Case.model_construct(
+        profesor_id="owner",
+        alumno=Student(nombre="Alex"),
+        respuestas=[
+            StationResponse(
+                estacion_id="explorar",
+                opciones_seleccionadas=["observar_contextos", "hablar_alumno"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="orientar",
+                opciones_seleccionadas=["reto"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="actuar",
+                opciones_seleccionadas=["reto_abierto"],
+                respondido_por="owner",
+            ),
+            StationResponse(
+                estacion_id="acompanar",
+                opciones_seleccionadas=["mejorado"],
+                respondido_por="owner",
+            ),
+        ],
+    )
+
+    state = calculate_interactive_state(case, template)
+
+    assert state.dias_restantes == 2
+    assert state.confianza_equipo == 75
+    assert state.xp_total == 400
+    assert state.estacion_actual == "compartir"
+    assert state.pistas_recogidas == ["observar_contextos", "hablar_alumno"]
+
+
+def test_station_order_is_enforced() -> None:
+    template = SimpleNamespace(estaciones=build_stations())
+    case = SimpleNamespace(respuestas=[])
+    with pytest.raises(HTTPException) as error:
+        ensure_station_is_unlocked(case, template, 2)
+    assert error.value.status_code == 409
+
+
+def test_mongodb_naive_dates_are_normalized_to_utc() -> None:
+    normalized = ensure_utc(datetime(2026, 8, 8, 12, 0, 0))
+    assert normalized.tzinfo == timezone.utc
+
+
+def test_local_summary_and_pdf_are_generated_without_external_services() -> None:
+    template = SimpleNamespace(
+        estaciones=build_stations(),
+        contenido=build_template_content(),
+    )
+    case = Case.model_construct(
+        profesor_id="owner",
+        alumno=Student(nombre="Alex", descripcion="Caso ficticio"),
+        progreso=CaseProgress(completadas=0, total=5, porcentaje=0),
+    )
+    assert "Alex" in generate_local_case_summary(case, template)
+    assert build_case_pdf(case, template).startswith(b"%PDF")

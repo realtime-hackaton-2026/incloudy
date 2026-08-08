@@ -1,0 +1,414 @@
+/*
+ * One component, three worlds.
+ *
+ * Every route gets a backdrop with its own identity — that is the whole
+ * point. Reusing the map everywhere spent its impact before the user ever
+ * arrived at it; here the map appears in exactly one place, so reaching it
+ * still means something.
+ *
+ *   gate     — dusk at the explorer's campsite (login). No map.
+ *   journal  — warm paper (casos). No map.
+ *   world    — the map itself (mapa). The destination.
+ */
+
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* ======================================================================
+ * GATE — night sky, treeline, campfire, fireflies.
+ * Built from gradients and two small SVG silhouettes rather than an
+ * illustration, so it stays a few KB and can animate freely.
+ * ==================================================================== */
+
+.gate {
+  background: linear-gradient(
+    180deg,
+    var(--night-top) 0%,
+    var(--night-mid) 42%,
+    var(--dusk) 72%,
+    var(--horizon) 100%
+  );
+}
+
+/* Stars. Three layers on different twinkle cycles so the sky never pulses
+   as one — the composite is what stops it reading as a loop. */
+.stars {
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 18%, #fff 50%, transparent),
+    radial-gradient(1.2px 1.2px at 28% 9%, #fff 50%, transparent),
+    radial-gradient(1.6px 1.6px at 44% 24%, #fff 50%, transparent),
+    radial-gradient(1.1px 1.1px at 61% 12%, #fff 50%, transparent),
+    radial-gradient(1.5px 1.5px at 77% 21%, #fff 50%, transparent),
+    radial-gradient(1.2px 1.2px at 89% 8%, #fff 50%, transparent),
+    radial-gradient(1.3px 1.3px at 35% 33%, #fff 50%, transparent),
+    radial-gradient(1.1px 1.1px at 68% 31%, #fff 50%, transparent);
+  opacity: 0.75;
+  animation: twinkleA 7s ease-in-out infinite alternate;
+}
+
+.starsFar {
+  background-image:
+    radial-gradient(1px 1px at 20% 27%, #cfe3ff 50%, transparent),
+    radial-gradient(1px 1px at 52% 6%, #cfe3ff 50%, transparent),
+    radial-gradient(1px 1px at 83% 30%, #cfe3ff 50%, transparent),
+    radial-gradient(1px 1px at 7% 38%, #cfe3ff 50%, transparent),
+    radial-gradient(1px 1px at 95% 17%, #cfe3ff 50%, transparent);
+  opacity: 0.5;
+  animation: twinkleB 11s ease-in-out infinite alternate;
+}
+
+@keyframes twinkleA {
+  from {
+    opacity: 0.5;
+  }
+
+  to {
+    opacity: 0.85;
+  }
+}
+
+@keyframes twinkleB {
+  from {
+    opacity: 0.65;
+  }
+
+  to {
+    opacity: 0.3;
+  }
+}
+
+/* Clouds — very slow, and wider than the viewport so the wrap never shows. */
+.clouds {
+  inset: 0 -50%;
+  background-image:
+    radial-gradient(60% 34% at 20% 26%, rgb(255 255 255 / 7%) 0%, transparent 70%),
+    radial-gradient(48% 28% at 62% 17%, rgb(255 255 255 / 5%) 0%, transparent 70%),
+    radial-gradient(40% 22% at 86% 31%, rgb(255 255 255 / 4%) 0%, transparent 70%);
+  animation: cloudDrift 150s linear infinite alternate;
+}
+
+@keyframes cloudDrift {
+  from {
+    transform: translate3d(-2%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(2%, 0, 0);
+  }
+}
+
+/* Horizon warmth from the campfire below. */
+.emberGlow {
+  background: radial-gradient(
+    52% 30% at 50% 100%,
+    rgb(255 157 92 / 26%) 0%,
+    rgb(255 157 92 / 8%) 42%,
+    transparent 72%
+  );
+  animation: breathe 5.5s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Two treelines at different depths — cheap 2.5D. */
+.treesFar {
+  top: auto;
+  bottom: 0;
+  height: 30%;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 520px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 160' preserveAspectRatio='none'%3E%3Cpath d='M0 160 L46 74 L92 160 Z M84 160 L134 44 L184 160 Z M176 160 L220 90 L264 160 Z M256 160 L308 58 L360 160 Z M350 160 L396 96 L442 160 Z M432 160 L478 66 L520 148 L520 160 Z' fill='%2316293d'/%3E%3C/svg%3E");
+  opacity: 0.85;
+}
+
+.treesNear {
+  top: auto;
+  bottom: 0;
+  height: 22%;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 380px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 380 140' preserveAspectRatio='none'%3E%3Cpath d='M0 140 L38 40 L76 140 Z M70 140 L116 16 L162 140 Z M154 140 L192 62 L230 140 Z M222 140 L268 28 L314 140 Z M306 140 L344 70 L380 128 L380 140 Z' fill='%230b1622'/%3E%3C/svg%3E");
+}
+
+/* The campfire itself, small and low. */
+.campfire {
+  top: auto;
+  bottom: 7%;
+  left: 50%;
+  width: 120px;
+  height: 60px;
+  inset-inline: auto;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    50% 60% at 50% 80%,
+    rgb(255 214 140 / 85%) 0%,
+    rgb(255 157 92 / 55%) 35%,
+    transparent 70%
+  );
+  filter: blur(6px);
+  animation: flicker 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+/* Fireflies — each carries its own duration and delay (set inline), so the
+   swarm never falls into step and the scene never visibly repeats. */
+.firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--firefly);
+  box-shadow: 0 0 8px 2px rgb(255 233 168 / 70%);
+  animation-name: fly, glow;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+}
+
+@keyframes fly {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(var(--dx), var(--dy), 0);
+  }
+}
+
+@keyframes glow {
+  0% {
+    opacity: 0.15;
+  }
+
+  100% {
+    opacity: 0.9;
+  }
+}
+
+/* Section 10 — the world notices the explorer. Focusing a field brightens
+   the scene and draws the fireflies in toward the notebook. */
+.gate.attentive .emberGlow {
+  opacity: 1;
+}
+
+.gate.attentive .firefly {
+  animation-duration: 2.2s, 1.4s;
+}
+
+.gate.attentive .stars {
+  opacity: 0.95;
+}
+
+.gate .stars,
+.gate .emberGlow,
+.gate .firefly {
+  transition: opacity var(--medium) var(--ease);
+}
+
+/* --- Entrance: scenes 01–03 ------------------------------------------- */
+
+/* Scene 01 (0–500ms) is darkness: everything but the sky waits. */
+.gate.entering .stars,
+.gate.entering .starsFar {
+  animation-delay: 0s;
+  opacity: 0;
+  animation: starsIn 900ms var(--ease) 520ms both;
+}
+
+@keyframes starsIn {
+  to {
+    opacity: 0.75;
+  }
+}
+
+/* Scene 02 (500–1400ms): depth arrives back to front. */
+.gate.entering .treesFar {
+  animation: layerIn 800ms var(--ease) 600ms both;
+}
+
+.gate.entering .treesNear {
+  animation: layerIn 800ms var(--ease) 760ms both;
+}
+
+.gate.entering .campfire,
+.gate.entering .emberGlow {
+  animation: layerIn 900ms var(--ease) 900ms both;
+}
+
+@keyframes layerIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scene 03: the swarm only lights up once the world exists. */
+.gate.entering .firefly {
+  animation-delay: 1100ms, 1100ms;
+}
+
+/* ======================================================================
+ * JOURNAL — the explorer's desk. Warm, papery, no map.
+ * ==================================================================== */
+
+.journal {
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgb(230 201 149 / 10%) 0%, transparent 62%),
+    linear-gradient(180deg, #16130f 0%, #12100d 60%, #0f0d0b 100%);
+}
+
+.paperGrain {
+  background-image: var(--grain);
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  /* A couple of pixels of drift, so the paper feels handled rather than
+     printed on the screen. */
+  animation: paperShift 24s ease-in-out infinite alternate;
+}
+
+@keyframes paperShift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(2px, -2px, 0);
+  }
+}
+
+.motes {
+  background-image:
+    radial-gradient(1.6px 1.6px at 18% 32%, rgb(230 201 149 / 45%) 50%, transparent),
+    radial-gradient(1.3px 1.3px at 63% 21%, rgb(230 201 149 / 35%) 50%, transparent),
+    radial-gradient(1.5px 1.5px at 84% 58%, rgb(230 201 149 / 30%) 50%, transparent),
+    radial-gradient(1.2px 1.2px at 37% 74%, rgb(230 201 149 / 32%) 50%, transparent);
+  animation: moteDrift 40s ease-in-out infinite alternate;
+}
+
+@keyframes moteDrift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-1.2%, -2%, 0);
+  }
+}
+
+/* ======================================================================
+ * WORLD — the map. Only ever rendered on the Mapa route.
+ * ==================================================================== */
+
+.world {
+  background: var(--bg);
+}
+
+.worldMap {
+  inset: -6%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.28;
+  filter: blur(8px);
+  will-change: transform;
+  animation: worldDrift 34s ease-in-out infinite alternate;
+}
+
+@keyframes worldDrift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: scale(1.07) translate3d(-0.8%, -0.6%, 0);
+  }
+}
+
+.worldLight {
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    rgb(52 120 184 / 20%) 0%,
+    transparent 62%
+  );
+}
+
+.worldVignette {
+  background: radial-gradient(
+    100% 86% at 50% 34%,
+    transparent 30%,
+    rgb(6 8 12 / 90%) 100%
+  );
+}
+
+/* Arriving from the login: black, then the world resolves. */
+.world.entering .worldMap {
+  animation: worldArrive var(--cinematic) var(--ease) both;
+}
+
+@keyframes worldArrive {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: blur(16px);
+  }
+
+  to {
+    opacity: 0.28;
+    transform: scale(1.04);
+    filter: blur(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars,
+  .starsFar,
+  .clouds,
+  .emberGlow,
+  .campfire,
+  .firefly,
+  .paperGrain,
+  .motes,
+  .worldMap {
+    animation: none !important;
+  }
+
+  .firefly {
+    opacity: 0.6;
+  }
+}

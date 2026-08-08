@@ -1,13 +1,15 @@
 /**
- * Every case the signed-in teacher owns or was invited into.
+ * Casos: the map, and the stories living on it.
  *
- * Presentational except for what it triggers through `useCases` — create,
- * open, delete. A case's own stage/estaciones editing lives in CaseForm.
+ * The map is the hero rather than one card among many, and hovering a case
+ * lights its location — and vice versa — so the list and the world read as
+ * one thing instead of two panels that happen to share a page.
  */
 
 import { useState } from 'react'
-import { useCases } from '../../cases'
+import { CASE_STATUS_LABELS, useCases } from '../../cases'
 import type { Case } from '../../cases'
+import { STATIONS, toCaseStage } from '../case-map'
 import { ConfirmDialog } from '../confirm-dialog'
 import styles from './CaseList.module.css'
 
@@ -28,7 +30,6 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
     try {
       const created = await create({
         alumno: { nombre: 'Nuevo alumno', descripcion: '' },
-        estaciones: [],
       })
       onOpen(created.id)
     } finally {
@@ -48,55 +49,124 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   }
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.toolbar}>
-        <h2 className={styles.heading}>Tus casos</h2>
+    <div
+      className={styles.wrapper}
+      data-testid="case-list"
+      data-state={status === 'ready' ? (cases.length === 0 ? 'empty' : 'populated') : status}
+      data-case-count={cases.length}
+    >
+      <div className={styles.intro}>
+        <div className={styles.introText}>
+          <span className="eyebrow">Tu diario de aventuras</span>
+          <p className={styles.lede}>Cada historia empieza en un lugar del mapa.</p>
+        </div>
         <button
           type="button"
-          className={styles.newButton}
+          className={`btn-primary ${styles.newButton}`}
           onClick={handleCreate}
           disabled={creating}
         >
-          {creating ? 'Creando…' : '+ Nuevo caso'}
+          {creating ? 'Creando…' : '+ Nueva aventura'}
         </button>
       </div>
 
-      {status === 'loading' && <p className={styles.state}>Cargando casos…</p>}
+      {status === 'loading' && <p className={styles.state}>Abriendo el diario…</p>}
       {status === 'error' && (
         <p className={`${styles.state} ${styles.stateError}`} role="alert">
           {error}
         </p>
       )}
+
       {status === 'ready' && cases.length === 0 && (
-        <p className={styles.state}>Todavía no hay casos. Crea el primero.</p>
+        <div className={styles.empty}>
+          <span className={styles.emptyBook} aria-hidden="true">
+            <span className={styles.emptyBookMark}>?</span>
+          </span>
+          <span className={styles.emptyTitle}>Tu diario de aventuras</span>
+          <p className={styles.emptyBody}>
+            Todavía no hay historias aquí. Crea la primera aventura para comenzar a
+            explorar.
+          </p>
+          <button
+            type="button"
+            className={`btn-primary ${styles.emptyCta}`}
+            onClick={handleCreate}
+            disabled={creating}
+          >
+            {creating ? 'Creando…' : '+ Nueva aventura'}
+          </button>
+        </div>
       )}
 
-      <ul className={styles.list}>
-        {cases.map((item) => (
-          <li key={item.id} className={styles.card}>
-            <button type="button" className={styles.cardMain} onClick={() => onOpen(item.id)}>
-              <span className={styles.cardName}>{item.alumno.nombre}</span>
-              <span className={styles.cardMeta}>
-                {item.status === 'publicado' ? 'Publicado' : 'Borrador'} ·{' '}
-                {percentComplete(item)}% completado
-                {ownerId && item.profesorId !== ownerId ? ' · Compartido contigo' : ''}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={styles.cardDelete}
-              onClick={() => setPendingDelete(item)}
-              aria-label={`Eliminar el caso de ${item.alumno.nombre}`}
-            >
-              Eliminar
-            </button>
-          </li>
-        ))}
-      </ul>
+      {cases.length > 0 && (
+        <ul className={styles.list}>
+          {cases.map((item) => {
+            const { completadas: done, total } = item.progreso
+            const percent = item.progreso.porcentaje
+            const station = STATIONS.find(
+              (entry) => entry.stage === toCaseStage(item.estadoInteractivo.estacionActual),
+            )
+            const shared = ownerId !== null && item.profesorId !== ownerId
+
+            return (
+              <li key={item.id} className={styles.card}>
+                <button
+                  type="button"
+                  className={styles.cardMain}
+                  onClick={() => onOpen(item.id)}
+                >
+                  <span className={styles.cardNumber}>
+                    ✦ Aventura #{item.id.slice(-4).toUpperCase()}
+                  </span>
+                  <span className={styles.cardName}>{item.alumno.nombre}</span>
+
+                  <span className={styles.cardBar}>
+                    <span className={styles.cardBarFill} style={{ width: `${percent}%` }} />
+                  </span>
+
+                  <span className={styles.cardStations}>
+                    {total === 0
+                      ? 'La aventura aún no empieza'
+                      : `${done} de ${total} aventuras completadas`}
+                  </span>
+
+                  <span className={styles.cardActivity}>
+                    {station ? `${station.label} ${station.place}` : '—'}
+                  </span>
+                </button>
+
+                <div className={styles.cardBottom}>
+                  <span
+                    className={`${styles.cardStatus} ${shared ? styles.cardShared : ''}`}
+                  >
+                    {shared ? 'Compartido contigo' : CASE_STATUS_LABELS[item.status]}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.cardContinue}
+                    onClick={() => onOpen(item.id)}
+                  >
+                    Continuar →
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className={styles.cardDelete}
+                  onClick={() => setPendingDelete(item)}
+                  aria-label={`Eliminar la aventura de ${item.alumno.nombre}`}
+                >
+                  ✕
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title={`¿Eliminar el caso de ${pendingDelete?.alumno.nombre ?? ''}?`}
+        title={`¿Eliminar la aventura de ${pendingDelete?.alumno.nombre ?? ''}?`}
         description="Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
         tone="danger"
@@ -106,10 +176,4 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
       />
     </div>
   )
-}
-
-function percentComplete(item: Case): number {
-  if (item.estaciones.length === 0) return 0
-  const done = item.estaciones.filter((station) => station.completado).length
-  return Math.round((done / item.estaciones.length) * 100)
 }

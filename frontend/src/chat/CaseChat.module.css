@@ -1,0 +1,153 @@
+/*
+ * Cool blue throughout, deliberately opposite CaseRoom's warm parchment —
+ * the two chats need to read as different kinds of conversation at a
+ * glance: a private assistant here, the whole team over there.
+ */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgb(52 120 184 / 22%);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.chatHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.chatTitle {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--map-blue);
+}
+
+.chatHint {
+  font-family: var(--label);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.turns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.turn {
+  max-width: 88%;
+  padding: 9px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: 10px;
+  white-space: pre-wrap;
+}
+
+.turnProfesor {
+  align-self: flex-end;
+  color: var(--text);
+  background: rgb(52 120 184 / 20%);
+  border: 1px solid rgb(52 120 184 / 30%);
+}
+
+.turnAsistente {
+  align-self: flex-start;
+  color: var(--text);
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid var(--hairline);
+}
+
+.empty {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.asking {
+  align-self: flex-start;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.composer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  background: rgb(9 12 17 / 70%);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+}
+
+.composer input:focus {
+  border-color: rgb(52 120 184 / 55%);
+}
+
+.askButton {
+  padding: 8px 16px;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #eef4fb;
+  background: var(--primary);
+  border: 1px solid var(--map-blue);
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    background-color var(--micro) var(--ease),
+    transform var(--micro) var(--ease);
+}
+
+.askButton:hover:not(:disabled) {
+  background: var(--map-blue);
+  transform: translateY(-1px);
+}
+
+.askButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.state {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stateError {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--danger);
+}

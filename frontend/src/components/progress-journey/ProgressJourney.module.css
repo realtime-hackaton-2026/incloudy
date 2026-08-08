@@ -1,0 +1,154 @@
+/*
+ * "Etapa 2 de 5" as a journey rather than a number: five nodes on a track,
+ * with the travelled part of the line filling in.
+ */
+
+.journey {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px 4px 4px;
+}
+
+/* The track sits behind the nodes, aligned to their centres. */
+.track,
+.fill {
+  position: absolute;
+  top: 24px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.track {
+  left: 10%;
+  right: 10%;
+  background: var(--hairline-strong);
+}
+
+.fill {
+  left: 10%;
+  background: linear-gradient(90deg, var(--map-blue), var(--parchment));
+  /* Travelled distance animates rather than snapping — the progress
+     "travels" when a stage completes. */
+  transition: width var(--medium) var(--ease);
+}
+
+.node {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color var(--micro) var(--ease);
+}
+
+.node:disabled {
+  cursor: default;
+}
+
+.dot {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--surface-deep);
+  border: 2px solid var(--hairline-strong);
+  transition:
+    background-color var(--small) var(--ease),
+    border-color var(--small) var(--ease),
+    transform var(--micro) var(--ease),
+    box-shadow var(--small) var(--ease);
+}
+
+.node:not(:disabled):hover .dot {
+  transform: scale(1.25);
+  border-color: var(--parchment);
+}
+
+.index {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.label {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* Stages already travelled through. */
+.reached {
+  color: var(--text-soft);
+}
+
+.reached .dot {
+  background: var(--map-blue);
+  border-color: var(--map-blue);
+}
+
+/* Where the case stands now. */
+.current {
+  color: var(--parchment);
+}
+
+.current .dot {
+  background: var(--parchment);
+  border-color: var(--parchment-hi);
+  box-shadow: 0 0 0 4px rgb(230 201 149 / 18%);
+}
+
+/* A slow beacon, not a blink — this marks a position, it is not an alert. */
+.current .dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--parchment);
+  animation: beacon 2400ms ease-out infinite;
+}
+
+@keyframes beacon {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+.here {
+  font-family: var(--label);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+@media (max-width: 620px) {
+  .label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .current .dot::after {
+    animation: none;
+    opacity: 0.35;
+  }
+}

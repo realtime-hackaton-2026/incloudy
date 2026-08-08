@@ -1,123 +1,310 @@
+/*
+ * Casos. The map is the hero; the cards are the stories living on it.
+ *
+ * Page-load choreography: the environment and header are already in place,
+ * so this file only sequences the map, then the content, then the CTA.
+ */
+
 .wrapper {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
-.toolbar {
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.intro {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  animation: riseIn var(--medium) var(--ease) 320ms both;
 }
 
-.heading {
-  margin: 0;
-  font-family: var(--display);
-  font-size: 24px;
-  color: var(--primary);
+.introText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lede {
+  font-size: 15px;
+  color: var(--text-soft);
 }
 
 .newButton {
-  padding: 10px 18px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--primary);
-  background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  cursor: pointer;
+  animation: riseIn var(--small) var(--ease) 440ms both;
 }
 
-.newButton:hover:not(:disabled) {
-  filter: brightness(1.04);
-}
-
-.newButton:disabled {
-  cursor: progress;
-  opacity: 0.7;
-}
-
-.newButton:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 2px;
-}
+/* --- States ------------------------------------------------------------ */
 
 .state {
-  padding: 16px;
-  font-size: 15px;
-  color: var(--ink-soft);
+  padding: 18px 0;
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .stateError {
   color: var(--danger);
+  letter-spacing: normal;
+  text-transform: none;
+  font-family: var(--sans);
+  font-size: 14px;
 }
 
-.list {
+/* --- Empty world ------------------------------------------------------- */
+
+.empty {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px 44px;
+  text-align: center;
+  border: 1px dashed rgb(230 201 149 / 26%);
+  border-radius: 16px;
+  background: rgb(28 23 18 / 55%);
+  animation: riseIn var(--medium) var(--ease) 380ms both;
+}
+
+/* A closed notebook waiting to be opened. */
+.emptyBook {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 92px;
+  border-radius: 4px 8px 8px 4px;
+  background: linear-gradient(100deg, var(--wood-dark) 0 8px, var(--paper) 8px);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 80%);
+  animation: bookBreathe 6s ease-in-out infinite alternate;
+}
+
+@keyframes bookBreathe {
+  from {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+
+  to {
+    transform: translateY(-5px) rotate(1.5deg);
+  }
+}
+
+.emptyBookMark {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--wood-dark);
+}
+
+.emptyTitle {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.emptyBody {
+  max-width: 34ch;
+  font-size: 15px;
+  color: var(--text-soft);
+}
+
+.emptyCta {
+  margin-top: 8px;
+}
+
+/* --- Story cards ------------------------------------------------------- */
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 .card {
+  position: relative;
   display: flex;
-  align-items: stretch;
-  gap: 8px;
-  border: 3px solid var(--wood-dark);
-  background: var(--paper);
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    transform var(--small) var(--ease),
+    border-color var(--small) var(--ease),
+    box-shadow var(--small) var(--ease);
+}
+
+/* Lit either by its own hover or by the map — the link runs both ways. */
+.cardLit {
+  transform: translateY(-3px);
+  border-color: rgb(230 201 149 / 42%);
+  box-shadow:
+    0 24px 46px -22px rgb(0 0 0 / 85%),
+    0 0 34px -14px rgb(230 201 149 / 40%);
 }
 
 .cardMain {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   align-items: flex-start;
-  padding: 14px 16px;
+  padding: 18px 18px 16px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   background: none;
   border: none;
-  text-align: left;
   cursor: pointer;
-  font: inherit;
 }
 
-.cardMain:hover {
-  background: rgb(195 169 133 / 12%);
-}
-
-.cardMain:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: -3px;
+.cardNumber {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .cardName {
+  font-family: var(--display);
+  font-size: 21px;
   font-weight: 700;
-  color: var(--ink);
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
-.cardMeta {
+.cardStations {
   font-size: 13px;
-  color: var(--outline);
+  color: var(--text-soft);
+}
+
+.cardBar {
+  width: 100%;
+  height: 4px;
+  margin: 12px 0 14px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+  overflow: hidden;
+}
+
+.cardBarFill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--map-blue), var(--parchment));
+  transition: width var(--medium) var(--ease);
+}
+
+.cardFooterLabel {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cardActivity {
+  font-size: 14px;
+  color: var(--parchment);
+}
+
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--hairline);
+  background: rgb(10 13 19 / 40%);
+}
+
+.cardStatus {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.cardShared {
+  color: var(--map-blue);
+}
+
+.cardContinue {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--micro) var(--ease);
+}
+
+.card:hover .cardContinue {
+  transform: translateX(3px);
 }
 
 .cardDelete {
-  flex: none;
-  padding: 0 16px;
-  font-size: 13px;
-  color: var(--danger);
-  background: none;
-  border: none;
-  border-left: 3px solid var(--wood-dark);
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  background: rgb(10 13 19 / 60%);
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
   cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--micro) var(--ease),
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease);
+}
+
+.card:hover .cardDelete,
+.cardDelete:focus-visible {
+  opacity: 1;
 }
 
 .cardDelete:hover {
-  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: rgb(255 107 107 / 45%);
 }
 
-.cardDelete:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: -3px;
+@media (prefers-reduced-motion: reduce) {
+  .mapStage,
+  .intro,
+  .newButton,
+  .empty {
+    animation: none;
+  }
+
+  .cardLit {
+    transform: none;
+  }
 }

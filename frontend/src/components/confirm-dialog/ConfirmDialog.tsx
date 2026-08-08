@@ -51,6 +51,8 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
+        data-testid="confirm-dialog"
+        data-state={pending ? 'pending' : 'open'}
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="confirm-dialog-title" className={styles.title}>
@@ -58,12 +60,12 @@ export function ConfirmDialog({
         </h2>
         {description && <div className={styles.description}>{description}</div>}
         <div className={styles.actions}>
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={pending}>
+          <button type="button" className="btn-secondary" onClick={onCancel} disabled={pending}>
             {cancelLabel}
           </button>
           <button
             type="button"
-            className={tone === 'danger' ? styles.confirmDanger : styles.confirm}
+            className={tone === 'danger' ? `btn-primary ${styles.confirmDanger}` : 'btn-primary'}
             onClick={onConfirm}
             disabled={pending}
           >

@@ -1,192 +1,366 @@
+/*
+ * A single case. Functional editing UI, so surfaces here are solid rather
+ * than translucent — the environment stays behind the panels, not through
+ * them, and long forms remain readable.
+ */
+
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wrapper > * {
+  animation: riseIn var(--small) var(--ease) both;
+}
+
+.wrapper > *:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.wrapper > *:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.wrapper > *:nth-child(n + 3) {
+  animation-delay: 220ms;
 }
 
 .back {
   align-self: flex-start;
   padding: 0;
-  font: inherit;
-  font-size: 14px;
-  color: var(--outline);
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
   background: none;
   border: none;
   cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    transform var(--micro) var(--ease);
 }
 
 .back:hover {
-  color: var(--secondary);
+  color: var(--parchment);
+  transform: translateX(-3px);
 }
+
+/* --- Header ------------------------------------------------------------ */
 
 .header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px 14px;
+  gap: 10px 14px;
 }
 
 .heading {
   margin: 0;
   font-family: var(--display);
-  font-size: 26px;
-  color: var(--primary);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .status {
-  padding: 2px 10px;
+  padding: 3px 10px;
   font-family: var(--label);
-  font-size: 12px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ink-soft);
-  background: var(--surface-dim);
+  color: var(--text-soft);
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid var(--hairline);
   border-radius: 999px;
 }
 
 .saveState {
   margin-left: auto;
   font-family: var(--label);
-  font-size: 13px;
-  color: var(--outline);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  transition: color var(--micro) var(--ease);
 }
+
+/* --- Sections ---------------------------------------------------------- */
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px;
-  border: 3px solid var(--wood-dark);
-  background: var(--paper);
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--surface);
 }
 
 .section:disabled {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .sectionTitle {
   margin: 0;
   padding: 0;
   border: none;
-  font-family: var(--display);
-  font-size: 18px;
-  color: var(--ink);
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--parchment);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
+  gap: 6px;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
 }
 
 .input,
-.textarea {
-  padding: 10px 12px;
-  font: inherit;
+.textarea,
+.stationTitle {
+  padding: 11px 13px;
+  font-family: var(--sans);
   font-size: 15px;
-  color: var(--ink);
-  background: #fff;
-  border: 3px solid var(--wood-dark);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text);
+  background: rgb(9 12 17 / 70%);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  transition:
+    border-color var(--micro) var(--ease),
+    background-color var(--micro) var(--ease);
 }
 
 .input:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--secondary);
+.textarea:focus,
+.stationTitle:focus {
+  /* No `outline: none` — the global :focus-visible rule in styles.css still
+     needs to draw its ring for keyboard focus; this only layers the border
+     and background highlight on top, for every focus method. */
+  border-color: rgb(230 201 149 / 46%);
+  background: rgb(12 16 22 / 88%);
+}
+
+.input::placeholder,
+.textarea::placeholder,
+.stationTitle::placeholder {
+  color: var(--muted);
 }
 
 .textarea {
-  min-height: 80px;
+  min-height: 84px;
   resize: vertical;
 }
+
+/* --- Progress ---------------------------------------------------------- */
 
 .progressHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .percent {
   font-family: var(--label);
-  font-size: 13px;
-  color: var(--outline);
+  font-size: 11px;
+  color: var(--parchment);
 }
 
 .progressBar {
-  height: 10px;
-  background: var(--surface-dim);
-  border: 1px solid var(--wood-dark);
+  height: 5px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 8%);
+  overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--secondary);
-  transition: width 300ms ease;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--map-blue), var(--parchment));
+  transition: width var(--medium) var(--ease);
 }
 
-.stations {
+/* --- Stats row ----------------------------------------------------------- */
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.stat {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 12px;
+  background: rgb(255 255 255 / 4%);
+  border-radius: 9px;
+}
+
+.statLabel {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.statValue {
+  margin: 4px 0 0;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* --- Journey stations ---------------------------------------------------- */
+
+.stationCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
+  gap: 10px;
+  padding: 16px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
 }
 
-.station {
+.stationCard[data-state='completed'] {
+  border-color: rgb(230 201 149 / 35%);
+}
+
+.stationCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stationCardBadge {
+  flex: none;
+  padding: 3px 8px;
+  font-family: var(--label);
+  font-size: 10px;
+  color: var(--parchment);
+  background: rgb(230 201 149 / 12%);
+  border-radius: 999px;
+}
+
+.stationCardTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--text);
+}
+
+.stationCardSubtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.stationCardDone {
+  margin-left: auto;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.stationCardBody {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.stationOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stationOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.stationOption input {
+  accent-color: var(--parchment);
+  cursor: pointer;
+}
+
+.stationCardFooter {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.stationTitle {
-  flex: 1;
-  padding: 8px 10px;
-  font: inherit;
-  color: var(--ink);
-  background: #fff;
-  border: 3px solid var(--wood-dark);
+.stationCardSaved {
+  font-family: var(--label);
+  font-size: 11px;
+  color: var(--muted);
 }
 
-.stationTitle:focus {
-  outline: none;
-  border-color: var(--secondary);
-}
-
-.stationRemove {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  font-size: 18px;
-  line-height: 1;
+/* A locked-station attempt or any other save failure — the backend's own
+   Spanish message, framed so it reads as a real notice rather than a
+   stray line of red text at the bottom of the form. */
+.stationCardWarning {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13.5px;
   color: var(--danger);
-  background: none;
-  border: 2px solid var(--wood-dark);
-  cursor: pointer;
-}
-
-.stationRemove:hover {
   background: var(--danger-bg);
+  border: 1px solid rgb(255 107 107 / 35%);
+  border-radius: 9px;
 }
 
-.addStation {
-  align-self: flex-start;
-  padding: 8px 14px;
-  font: inherit;
+/* --- Summary -------------------------------------------------------------- */
+
+.summaryBody {
+  margin: 0;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--primary);
-  background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  cursor: pointer;
+  line-height: 1.5;
+  color: var(--text-soft);
+  white-space: pre-wrap;
 }
 
-.addStation:hover {
-  filter: brightness(1.04);
+.summaryActions {
+  display: flex;
+  gap: 8px;
 }
+
+/* --- Collaborators ----------------------------------------------------- */
 
 .collaborators {
   display: flex;
@@ -201,44 +375,44 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  font-size: 14px;
-  background: var(--surface-dim);
+  gap: 12px;
+  padding: 10px 12px;
+  font-family: var(--label);
+  font-size: 12px;
+  color: var(--text-soft);
+  background: rgb(255 255 255 / 4%);
+  border-radius: 9px;
 }
 
 .collaborator button {
-  padding: 4px 10px;
+  padding: 5px 11px;
   font: inherit;
-  font-size: 13px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--danger);
   background: none;
-  border: 1px solid var(--danger);
+  border: 1px solid rgb(255 107 107 / 40%);
+  border-radius: 7px;
   cursor: pointer;
+}
+
+.collaborator button:hover {
+  background: var(--danger-bg);
 }
 
 .inviteForm {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .inviteForm .input {
   flex: 1;
+  min-width: 160px;
 }
 
-.inviteForm button {
-  padding: 0 16px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--primary);
-  background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  cursor: pointer;
-}
-
-.inviteForm button:disabled {
-  cursor: progress;
-  opacity: 0.7;
-}
+/* --- Footer ------------------------------------------------------------ */
 
 .footer {
   display: flex;
@@ -246,38 +420,45 @@
   gap: 12px;
 }
 
-.deleteButton,
-.publishButton {
-  padding: 10px 18px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  border: 3px solid var(--wood-dark);
-}
-
 .deleteButton {
   color: var(--danger);
+  border-color: rgb(255 107 107 / 40%);
+}
+
+.deleteButton:hover:not(:disabled) {
   background: var(--danger-bg);
-  border-color: var(--danger);
+  border-color: rgb(255 107 107 / 60%);
 }
 
 .publishButton {
   margin-left: auto;
-  color: var(--primary);
-  background: var(--wood);
 }
 
+/* --- States ------------------------------------------------------------ */
+
 .state {
-  padding: 16px;
-  font-size: 15px;
-  color: var(--ink-soft);
+  padding: 14px 0;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .stateError {
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--danger);
 }
 
-:is(button, input, textarea):focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+  .wrapper > * {
+    animation: none;
+  }
+
+  .back:hover {
+    transform: none;
+  }
 }

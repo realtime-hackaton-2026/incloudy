@@ -1,13 +1,32 @@
 export {
   addCollaborator,
+  answerStation,
+  completeCase,
   createCase,
   deleteCase,
+  generateSummary,
   getCase,
   listCases,
+  publishCase,
   removeCollaborator,
-  updateCase,
+  resetCase,
+  updateStudent,
+  updateSummary,
 } from './api'
-export type { Case, CaseDraft, CaseStatus, CollaboratorRecord, StationRecord, Student } from './api'
+export { CASE_STATUS_LABELS } from './api'
+export type {
+  Case,
+  CaseDraft,
+  CaseProgress,
+  CaseStatus,
+  Collaborator,
+  CollaboratorRecord,
+  CollaboratorRole,
+  FinalSummary,
+  InteractiveState,
+  StationAnswer,
+  Student,
+} from './api'
 export { useCases } from './useCases'
 export type { CasesState, CasesStatus } from './useCases'
 export { useCase } from './useCase'

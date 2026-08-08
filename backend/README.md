@@ -1,156 +1,324 @@
 # incloudy · Backend API
 
-API REST y en tiempo real de incloudy, construida con **FastAPI, MongoDB, JWT, Portal y Google Gemini**.
+Backend del recorrido pedagógico de incloudy. Un profesor analiza un caso
+ficticio por estaciones, guarda sus respuestas, obtiene un resumen editable y
+puede colaborar en una sala privada de Portal.
 
 ## Stack
 
-- **FastAPI** sobre Uvicorn — API asíncrona con validación tipada (Pydantic) y documentación OpenAPI en `/docs`.
-- **MongoDB** con Motor y Beanie — persistencia NoSQL documental.
-- **Autenticación JWT** (PyJWT + bcrypt) — acceso exclusivo para profesores.
-- **WebSockets** — notificaciones en vivo al publicar un caso (`case_published`).
-- **Portal** — salas privadas por caso con sesión limitada a sus participantes.
-- **Google Gemini** — asistente conversacional con contexto del caso del alumno.
-
-## Estructura
-
-```
-app/
-├── main.py          # Aplicación, CORS y WebSocket
-├── config.py        # Configuración por variables de entorno
-├── models.py        # Modelos Beanie (User, Case, Station)
-├── schemas.py       # Contratos y validación de entrada/salida
-├── auth.py          # JWT, hashing y dependencias de seguridad
-├── ws.py            # Gestión de conexiones WebSocket
-├── services/        # Acceso a casos e integraciones con Gemini y Portal
-└── routers/         # Endpoints HTTP: auth, cases, chat y portal
-portal.config.ts     # Canales privados case-* desplegados en Portal
-```
+- FastAPI y Pydantic
+- MongoDB con Motor y Beanie
+- JWT y bcrypt
+- Google Gemini para el resumen pedagógico
+- Portal para salas privadas y comentarios en tiempo real
 
 ## Ejecución
 
-```bash
+```powershell
 uv pip install -r requirements.txt
-copy .env.example .env
+Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-La documentación interactiva queda en `http://localhost:8000/docs`. Toda operación (salvo registro, login y health) requiere un token Bearer obtenido en `/auth/login`. El campo `_id` identifica cada recurso.
+Documentación interactiva: `http://localhost:8000/docs`.
+
+## Colecciones de MongoDB
+
+| Colección | Contenido |
+|---|---|
+| `User` | Profesores, correo y contraseña con hash |
+| `JourneyTemplate` | Versiones de estaciones y opciones oficiales |
+| `CaseScenario` | Contenido canónico del caso ficticio de Alex |
+| `Case` | Alumno ficticio, respuestas, progreso, resumen y colaboradores |
+| `Invitation` | Invitaciones pendientes, aceptadas o revocadas |
+| `CaseEvent` | Historial y seguimiento del caso |
+| `Notification` | Notificaciones persistentes por profesor |
+| `PortalComment` | Copia de comentarios recibidos mediante webhooks de Portal |
+| `TeacherNote` | Notas privadas, visibles únicamente para su autor |
+
+Las contraseñas nunca se guardan ni se devuelven en texto plano.
+
+## Flujo principal
+
+```text
+registro/login
+  → crear caso con plantilla activa
+  → responder estaciones
+  → progreso 0–100 %
+  → completar recorrido
+  → generar resumen con Gemini
+  → revisar o editar resumen
+  → publicar/cerrar/archivar
+  → invitar colaboradores
+  → conversar en la sala privada de Portal
+```
+
+## Estados del caso
+
+```text
+borrador → en_progreso → completado → publicado → cerrado → archivado
+```
+
+- Una respuesta válida mueve el caso a `en_progreso`.
+- `complete` exige todas las estaciones obligatorias y genera el resumen.
+- `publish` exige un caso completado y un resumen guardado.
+- Un caso cerrado puede reabrirse.
+- Un caso archivado es de solo lectura.
 
 ## Endpoints
 
+### Autenticación
+
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/auth/register` | Alta de profesor → token |
-| POST | `/auth/login` | Autenticación → token |
-| GET | `/auth/me` | Perfil autenticado |
-| GET, POST | `/cases` | Listar y crear casos |
-| GET, PUT, DELETE | `/cases/{id}` | Consultar, editar y eliminar casos |
-| POST | `/cases/{id}/collaborators` | Invitar a un profesor por email |
-| DELETE | `/cases/{id}/collaborators/{user_id}` | Retirar acceso a un profesor |
-| POST | `/portal/sessions/{case_id}` | Crear una sesión para la sala privada del caso |
-| POST | `/chat` | Asistente IA con contexto del caso |
-| WS | `/ws?token=<JWT>` | Evento privado `case_published` en tiempo real |
-| GET | `/health` | Estado del servicio |
+| POST | `/auth/register` | Registrar profesor con nombre, email y contraseña |
+| POST | `/auth/login` | Obtener JWT de incloudy |
+| GET | `/auth/me` | Consultar el profesor autenticado |
 
-## Configuración
+### Plantillas
 
-Variables de entorno (ver `.env.example`):
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/journeys/templates` | Listar versiones del recorrido |
+| GET | `/journeys/templates/active` | Obtener estaciones y opciones activas |
+| GET | `/journeys/templates/{id}` | Consultar una versión |
+| POST | `/journeys/templates` | Crear una nueva versión |
 
-- `MONGODB_URI` / `MONGODB_DB` — conexión a MongoDB
-- `JWT_SECRET` — clave para firmar tokens
-- `GEMINI_API_KEY` — clave de Gemini (opcional; sin ella el chat responde un fallback)
-- `PORTAL_SECRET_KEY` — clave privada `sk_...`, usada solamente por FastAPI
-- `PORTAL_PUBLISHABLE_KEY` — clave pública `pk_...` entregada al cliente
-- `PORTAL_API_URL` — API de Portal; normalmente `https://api.useportal.co`
-- `PORTAL_TOKEN_TTL` — duración de la sesión de sala; por defecto `1h`
-- `CORS_ORIGINS` — orígenes permitidos en el navegador
+Al iniciar el backend se guarda de forma idempotente el recorrido completo de
+Alex: cinco estaciones, hipótesis, pistas, voces, estrategias, imprevistos,
+reglas de cierre, textos del cuaderno y Data Station. El contenido editorial
+vive en `JourneyTemplate` y `CaseScenario`; no está codificado en el frontend.
 
-`JWT_SECRET` es obligatorio y debe tener al menos 32 caracteres. En `.env`,
-`CORS_ORIGINS` se escribe como una lista JSON, por ejemplo
-`["http://localhost:5173"]`.
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/journeys/scenarios` | Listar escenarios ficticios activos |
+| GET | `/journeys/scenarios/caso-alex` | Obtener la presentación e hipótesis de Alex |
 
-## Salas privadas con Portal
+Al registrar un profesor se crea una copia independiente del caso de Alex en
+`Case`. En el arranque también se provisiona esa copia para profesores que ya
+existían. La operación es idempotente: nunca crea dos casos de Alex para la
+misma cuenta.
 
-Cada caso tiene un canal estable `case-{case_id}`. El identificador nunca incluye
-el nombre del alumno. Solo el propietario y los colaboradores registrados en
-MongoDB pueden solicitar una sesión.
+### Casos y recorrido
 
-### 1. Invitar a otro profesor
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET, POST | `/cases` | Listar casos accesibles o crear uno |
+| GET, PUT, DELETE | `/cases/{id}` | Consultar, editar datos del alumno o eliminar |
+| PUT | `/cases/{id}/stations/{order}/response` | Guardar respuesta de una estación |
+| PUT | `/cases/{id}/unexpected-events/{event_id}/response` | Resolver un imprevisto |
+| GET, POST | `/cases/{id}/notes` | Consultar o crear notas privadas |
+| DELETE | `/cases/{id}/notes/{note_id}` | Eliminar una nota propia |
+| POST | `/cases/{id}/reset` | Reiniciar el progreso del caso |
+| GET | `/cases/{id}/report.pdf` | Descargar el informe del recorrido |
+| POST | `/cases/{id}/complete` | Validar recorrido y generar resumen |
+| POST | `/cases/{id}/summary/generate` | Regenerar resumen de forma controlada |
+| PUT | `/cases/{id}/summary` | Editar y persistir el resumen |
+| POST | `/cases/{id}/publish` | Publicar análisis completado |
+| POST | `/cases/{id}/close` | Cerrar caso |
+| POST | `/cases/{id}/reopen` | Reabrir caso cerrado |
+| POST | `/cases/{id}/archive` | Archivar caso |
+| GET | `/cases/{id}/events` | Consultar historial y seguimiento |
+| POST | `/cases/{id}/follow-ups` | Agregar una observación de seguimiento |
+| GET | `/cases/{id}/comments` | Consultar comentarios sincronizados desde Portal |
 
-```http
-POST /cases/{case_id}/collaborators
-Authorization: Bearer <jwt-incloudy>
-Content-Type: application/json
-
-{"email": "especialista@colegio.edu"}
-```
-
-La operación es idempotente. El profesor invitado aparecerá también al listar
-sus casos y podrá consultar el caso y usar su sala, pero no editarlo ni eliminarlo.
-
-### 2. Crear la sesión de la sala
-
-```http
-POST /portal/sessions/{case_id}
-Authorization: Bearer <jwt-incloudy>
-```
-
-Respuesta:
+Crear caso:
 
 ```json
 {
-  "token": "<jwt-portal>",
-  "expires_at": "2026-08-08T00:00:00.000Z",
-  "channel_id": "case-6895...",
-  "publishable_key": "pk_..."
+  "alumno": {
+    "nombre": "Caso ficticio A",
+    "edad": 10,
+    "curso": "Quinto",
+    "descripcion": "Caso anonimizado",
+    "es_ficticio": true
+  },
+  "privacy_acknowledged": true
 }
 ```
 
-FastAPI registra al profesor como miembro y solicita a Portal un token limitado
-a ese único canal, con permisos `connect` y `publish`. La clave privada de Portal
-nunca se entrega al navegador.
+Responder estación:
 
-### 3. Desplegar la política privada
+```json
+{
+  "opciones_seleccionadas": ["dificultad_atencion"],
+  "comentario": "Se observa especialmente en tareas extensas"
+}
+```
 
-Desde `backend`, configura la clave del proyecto y despliega
-`portal.config.ts`:
+El backend valida que la estación exista, que los IDs correspondan a opciones
+oficiales, que una pregunta de selección única no reciba varias respuestas y
+que las estaciones anteriores estén completas. Al responder recalcula y guarda
+días, confianza, XP, pistas, hipótesis, estrategia, seguimiento y destinatarios.
+El caso incluye `estado_interactivo`, donde se persisten días restantes,
+confianza, XP, pistas, hipótesis, estrategia, seguimiento, destinatarios,
+imprevistos y notas privadas.
+
+## Resumen final
+
+`POST /cases/{id}/complete` verifica el 100 % de las estaciones obligatorias,
+envía sus respuestas a Gemini y guarda el resultado en `resumen_final`.
+Si `GEMINI_API_KEY` está vacía, genera un resumen pedagógico local para que el
+recorrido pueda completarse sin depender de un servicio externo. El modelo se
+configura con `GEMINI_MODEL` y por defecto utiliza `gemini-3.6-flash`.
+El chat también devuelve una orientación local basada en el progreso mientras
+Gemini no esté configurado.
+
+Una edición manual queda protegida. Para sobrescribirla al regenerar:
+
+```json
+{
+  "overwrite_manual": true
+}
+```
+
+Sin esa confirmación, el backend responde `409`.
+
+## Colaboración y roles
+
+| Rol | Consultar | Comentar/Portal | Responder/editar | Administrar |
+|---|---:|---:|---:|---:|
+| propietario | sí | sí | sí | sí |
+| editor | sí | sí | sí | no |
+| comentarista | sí | sí | no | no |
+| lector | sí | no, solo lectura | no | no |
+
+Profesor ya registrado:
+
+```http
+POST /cases/{case_id}/collaborators
+
+{"email":"editor@colegio.edu","role":"editor"}
+```
+
+Invitación pendiente para cualquier correo:
+
+```http
+POST /cases/{case_id}/invitations
+
+{"email":"especialista@colegio.edu","role":"comentarista"}
+```
+
+La respuesta contiene un token que el equipo puede enviar por correo. La
+persona inicia sesión con el mismo email y acepta mediante:
+
+```http
+POST /invitations/{token}/accept
+```
+
+Las invitaciones duran 72 horas por defecto y el token solo se almacena como
+hash SHA-256.
+
+## Notificaciones
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/notifications` | Últimas 100 notificaciones |
+| GET | `/notifications?unread_only=true` | Solo pendientes |
+| PUT | `/notifications/{id}/read` | Marcar una como leída |
+| PUT | `/notifications/read-all` | Marcar todas como leídas |
+
+Se generan notificaciones al invitar, aceptar, completar, publicar, comentar o
+agregar seguimiento.
+
+## Portal
+
+Variables:
+
+```env
+PORTAL_SECRET_KEY=sk_...
+PORTAL_PUBLISHABLE_KEY=pk_...
+PORTAL_API_URL=https://api.useportal.co
+PORTAL_TOKEN_TTL=1h
+PORTAL_WEBHOOK_SECRET=whsec_...
+```
+
+Una sesión se solicita con:
+
+```http
+POST /portal/sessions/{case_id}
+```
+
+El JWT resultante está restringido a `case-{case_id}`. Lectores reciben solo
+`connect`; propietario, editor y comentarista reciben `connect` y `publish`.
+
+### Configuración privada
 
 ```powershell
 npm install --save-dev @portalsdk/config
 $env:PORTAL_SECRET="sk_..."
+$env:PORTAL_WEBHOOK_URL="https://TU_API/portal/webhooks"
 npx @portalsdk/cli deploy --config portal.config.ts
 ```
 
-La política desactiva usuarios anónimos para todos los canales `case-*`.
+Portal crea el secreto de firma. Obtenlo desde el servidor y guárdalo como
+`PORTAL_WEBHOOK_SECRET`:
 
-### Contrato para el frontend
-
-El frontend deberá instalar `@portalsdk/core` y `@portalsdk/react`, pedir una
-sesión al endpoint anterior y entregar `token`, `publishable_key` y
-`channel_id` al SDK. El contenido mínimo recomendado para cada mensaje es:
-
-```json
-{"text": "Observé un avance en la segunda estación"}
+```http
+GET https://api.useportal.co/v1/webhooks/secret
+Authorization: Bearer sk_...
 ```
 
-El chat de Portal es una conversación entre profesores. El endpoint `/chat`
-continúa siendo la conversación separada con Gemini.
+`POST /portal/webhooks` verifica `portal-signature` mediante HMAC-SHA256 sobre
+el cuerpo original, rechaza firmas con más de cinco minutos y deduplica por el
+ID del evento. Los mensajes publicados se guardan en `PortalComment`; las
+retracciones también se reflejan.
+
+## Privacidad
+
+- `privacy_acknowledged` es obligatorio al crear un caso.
+- `alumno.es_ficticio` debe ser `true`.
+- Textos y comentarios tienen límites de longitud.
+- `DATA_RETENTION_DAYS` define el periodo activo, 30 días por defecto.
+- Al iniciar el servicio, los casos vencidos se archivan; no se eliminan de
+  manera silenciosa.
+- La eliminación definitiva requiere `DELETE /cases/{id}` del propietario.
+- La eliminación también limpia invitaciones, eventos, notificaciones y copias
+  locales de comentarios asociados al caso.
+- La retención del historial alojado por Portal debe configurarse también en el
+  proyecto de Portal; MongoDB no puede borrar automáticamente datos remotos.
+- No deben ingresarse nombres reales ni diagnósticos clínicos.
+
+## Configuración completa
+
+Consulta `.env.example`. `JWT_SECRET` es obligatorio y debe tener al menos 32
+caracteres. `CORS_ORIGINS` utiliza una lista JSON:
+
+```env
+CORS_ORIGINS=["http://localhost:5173"]
+```
+
+### MongoDB local
+
+La configuración local utiliza `mongodb://127.0.0.1:27017/incloudy`. En Windows:
+
+```powershell
+Get-Service MongoDB
+Start-Service MongoDB
+```
+
+MongoDB se ejecuta como servicio automático. Al arrancar FastAPI se crean los
+índices, la plantilla completa, el escenario de Alex y un caso independiente
+para cada profesor registrado.
 
 ## Pruebas
 
-```bash
+```powershell
 uv pip install -r requirements-dev.txt
 pytest
 ```
 
-Las pruebas rápidas comprueban tokens JWT, validación de contraseñas y estaciones,
-y la construcción del contexto enviado al asistente.
+Las pruebas cubren validación de plantillas y privacidad, progreso, contexto de
+Gemini, permisos de Portal, firma de webhooks y persistencia integrada mediante
+una MongoDB simulada.
 
 ## Despliegue
 
-La API se despliega en **Railway** a partir de la carpeta `backend`:
+Railway ejecuta el backend desde `backend`:
 
-- **Comando de inicio:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- **Base de datos:** MongoDB Atlas (plan gratuito), con la URI en `MONGODB_URI` y acceso de red abierto a la API (`0.0.0.0/0`).
-- **Variables:** las de la sección anterior; `CORS_ORIGINS` debe apuntar a la URL del frontend.
-- **Verificación:** la API responde en `https://<app>.up.railway.app/docs`.
+```text
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Configura MongoDB Atlas, Gemini, Portal, JWT, CORS y la URL HTTPS del webhook en
+las variables del servicio.

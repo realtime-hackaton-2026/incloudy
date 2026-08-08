@@ -757,3 +757,36 @@
 .roomDockOpen {
   display: flex;
 }
+
+/* Mínimos legibles para la sala, manteniendo la jerarquía pixel-art. */
+.whisper span,
+.activeBannerCopy strong,
+.lobbyGuide strong { font-size: var(--text-sm); }
+
+.subtitle,
+.viewButton,
+.openButton,
+.startButton,
+.backButton,
+.bannerButton,
+.activeBannerCopy span,
+.lobbyPanelTop span,
+.lobbyPanelTitle small,
+.lobbyParticipants li,
+.lobbyParticipants li small,
+.lobbyStatus span:last-child,
+.lobbyFootnote,
+.lobbyGuide span,
+.inviteHint,
+.inviteError { font-size: var(--text-xs); }
+
+.title,
+.lobbyPanelTop strong,
+.lobbyPanelTitle span,
+.lobbyStatus strong { font-size: var(--text-sm); }
+
+.viewButton,
+.openButton,
+.startButton,
+.backButton,
+.bannerButton { min-height: 42px; }

@@ -135,6 +135,7 @@ class InteractiveCaseState(BaseModel):
 
 class User(Document):
     nombre: str = Field(default="Profesor", min_length=1, max_length=100)
+    seccion: Optional[str] = Field(default=None, max_length=120)
     email: Indexed(EmailStr, unique=True)
     hashed_password: str
     is_admin: bool = False

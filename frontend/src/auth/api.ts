@@ -15,6 +15,11 @@ export interface Credentials {
   password: string
 }
 
+export interface Registration extends Credentials {
+  nombre: string
+  seccion?: string
+}
+
 /** Exchange credentials for a bearer token. */
 export async function requestToken({ email, password }: Credentials): Promise<string> {
   // /auth/login is an OAuth2 password flow, so it wants a form body with the
@@ -31,14 +36,14 @@ export async function requestToken({ email, password }: Credentials): Promise<st
  * Create an account and get a token back in the same call — /auth/register
  * logs the new teacher in immediately, so there's no separate sign-in step.
  */
-export async function registerAccount({ email, password }: Credentials): Promise<string> {
+export async function registerAccount({ nombre, seccion, email, password }: Registration): Promise<string> {
   const response = await apiFetch('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     // The current registration screen intentionally stays compact and does
     // not ask for a display name. Use the email prefix as a sensible default;
     // the backend requires `nombre` when creating the user.
-    body: JSON.stringify({ nombre: email.split('@')[0], email, password }),
+    body: JSON.stringify({ nombre, seccion: seccion || null, email, password }),
   })
   return readAccessToken(response)
 }
@@ -47,6 +52,30 @@ export interface CurrentUser {
   id: string
   nombre: string
   email: string
+  seccion: string | null
+}
+
+export interface ProfileUpdate {
+  nombre: string
+  email: string
+  seccion?: string
+  currentPassword?: string
+  newPassword?: string
+}
+
+export async function updateCurrentUser(token: string, input: ProfileUpdate): Promise<CurrentUser> {
+  const response = await apiFetch('/auth/me', {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nombre: input.nombre,
+      email: input.email,
+      seccion: input.seccion || null,
+      current_password: input.currentPassword || null,
+      new_password: input.newPassword || null,
+    }),
+  })
+  return (await response.json()) as CurrentUser
 }
 
 /** Who the token belongs to. Also the cheapest way to know a stored token still works. */

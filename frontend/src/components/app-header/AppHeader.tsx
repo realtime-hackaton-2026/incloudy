@@ -6,17 +6,22 @@
  * level of the product is.
  */
 
+import { useEffect, useState } from 'react'
 import logo from '../../assets/images/logo.webp'
+import type { ProfileUpdate } from '../../auth'
 import styles from './AppHeader.module.css'
 
 export type RouteName = 'casos' | 'mapa' | 'dashboard'
 
 export interface AppHeaderProps {
   active: RouteName
+  nombre?: string
   email: string
+  seccion?: string | null
   signingOut?: boolean
   onNavigate: (route: RouteName) => void
   onSignOut: () => void
+  onUpdateProfile?: (input: ProfileUpdate) => Promise<boolean>
 }
 
 const ROUTES: ReadonlyArray<{ name: RouteName; label: string }> = [
@@ -26,11 +31,32 @@ const ROUTES: ReadonlyArray<{ name: RouteName; label: string }> = [
 
 export function AppHeader({
   active,
+  nombre = 'Docente',
   email,
+  seccion,
   signingOut = false,
   onNavigate,
   onSignOut,
+  onUpdateProfile = async () => false,
 }: AppHeaderProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profile, setProfile] = useState({ nombre, email, seccion: seccion ?? '', currentPassword: '', newPassword: '' })
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    setProfile((current) => ({ ...current, nombre, email, seccion: seccion ?? '' }))
+  }, [nombre, email, seccion])
+
+  async function saveProfile(event: React.FormEvent) {
+    event.preventDefault()
+    setSaving(true)
+    setMessage(null)
+    const saved = await onUpdateProfile(profile)
+    setSaving(false)
+    setMessage(saved ? 'Perfil actualizado.' : 'No se pudo actualizar. Revisa tu contraseña actual.')
+    if (saved) setProfile((current) => ({ ...current, currentPassword: '', newPassword: '' }))
+  }
   return (
     <header
       className={`${styles.header} ${signingOut ? styles.signingOut : ''}`}
@@ -67,13 +93,39 @@ export function AppHeader({
         >
           Dashboard
         </button>
-        <span className={styles.email} title={email}>
-          {email}
+        <span className={styles.teacher} title={`${nombre} · ${email}`}>
+          Docente: <strong>{nombre}</strong>
         </span>
+        <button type="button" className={styles.settingsButton} aria-label="Abrir ajustes del perfil"
+          title="Ajustes" onClick={() => setSettingsOpen(true)}>⚙</button>
         <button type="button" className={styles.signOut} onClick={onSignOut}>
           Salir
         </button>
       </div>
+
+      {settingsOpen && (
+        <div className={styles.settingsBackdrop} role="presentation" onMouseDown={() => setSettingsOpen(false)}>
+          <section className={styles.settingsPanel} role="dialog" aria-modal="true" aria-labelledby="settings-title"
+            onMouseDown={(event) => event.stopPropagation()}>
+            <div className={styles.settingsHeading}>
+              <div><span>PERFIL DOCENTE</span><h2 id="settings-title">Ajustes de cuenta</h2></div>
+              <button type="button" onClick={() => setSettingsOpen(false)} aria-label="Cerrar ajustes">×</button>
+            </div>
+            <form className={styles.settingsForm} onSubmit={saveProfile}>
+              <label>Nombre del docente<input required value={profile.nombre} onChange={(e) => setProfile({ ...profile, nombre: e.target.value })} /></label>
+              <label>Sección o tutoría<input value={profile.seccion} placeholder="Ej. Tutor de 3.º B" onChange={(e) => setProfile({ ...profile, seccion: e.target.value })} /></label>
+              <label>Correo actual<input required type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} /></label>
+              <div className={styles.passwordGrid}>
+                <label>Contraseña actual<input type="password" autoComplete="current-password" value={profile.currentPassword} onChange={(e) => setProfile({ ...profile, currentPassword: e.target.value })} /></label>
+                <label>Nueva contraseña<input type="password" minLength={8} autoComplete="new-password" value={profile.newPassword} onChange={(e) => setProfile({ ...profile, newPassword: e.target.value })} /></label>
+              </div>
+              <p className={styles.settingsHelp}>La contraseña actual solo es necesaria si cambias el correo o la contraseña.</p>
+              {message && <p className={styles.settingsMessage} role="status">{message}</p>}
+              <button className={styles.saveButton} disabled={saving}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>
+            </form>
+          </section>
+        </div>
+      )}
     </header>
   )
 }

@@ -8,9 +8,10 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { AuthScreen, ArrowIcon, KeyIcon, PersonIcon, WarningIcon } from '../auth-screen'
 import styles from '../auth-screen/AuthScreen.module.css'
+import type { Registration } from '../../auth'
 
 export interface RegistroProps {
-  onSubmit: (credentials: { email: string; password: string }) => void
+  onSubmit: (credentials: Registration) => void
   pending?: boolean
   /** Last failure, already in Spanish — from the server, or the local check. */
   error?: string | null
@@ -30,6 +31,8 @@ export function Registro({
   showCurtain,
 }: RegistroProps) {
   const [email, setEmail] = useState('')
+  const [nombre, setNombre] = useState('')
+  const [seccion, setSeccion] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
@@ -47,7 +50,7 @@ export function Registro({
       return
     }
     setLocalError(null)
-    onSubmit({ email: email.trim(), password })
+    onSubmit({ nombre: nombre.trim(), seccion: seccion.trim(), email: email.trim(), password })
   }
 
   const shownError = localError ?? error
@@ -60,6 +63,26 @@ export function Registro({
       showCurtain={showCurtain}
     >
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="registro-nombre">Nombre del docente</label>
+          <div className={styles.inputWrap}>
+            <input className={styles.input} id="registro-nombre" name="nombre" autoComplete="name"
+              placeholder="Ej. María López" value={nombre} disabled={pending} required
+              onChange={(event) => setNombre(event.target.value)} />
+            <PersonIcon />
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="registro-seccion">Sección o tutoría <span>(opcional)</span></label>
+          <div className={styles.inputWrap}>
+            <input className={styles.input} id="registro-seccion" name="seccion"
+              placeholder="Ej. Tutor de 3.º B" value={seccion} disabled={pending}
+              onChange={(event) => setSeccion(event.target.value)} />
+            <PersonIcon />
+          </div>
+        </div>
+
         <div className={styles.field}>
           <label className={styles.label} htmlFor="registro-email">
             ID de Explorador

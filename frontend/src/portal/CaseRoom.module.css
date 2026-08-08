@@ -18,7 +18,7 @@
 .roomTitle {
   margin: 0;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -27,7 +27,7 @@
 
 .roomHint {
   margin-top: 3px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.35;
   color: #c4ccd7;
 }
@@ -36,7 +36,7 @@
   flex: none;
   padding: 4px 7px;
   font-family: var(--label);
-  font-size: 9px;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--text-soft);
   background: #1d2532;
@@ -69,12 +69,12 @@
 
 .waiting strong {
   font-family: var(--display);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .waiting p {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.4;
   color: var(--text-soft);
 }
@@ -84,7 +84,7 @@
   background: rgb(110 231 168 / 8%);
   border: 1px solid rgb(110 231 168 / 25%);
   color: var(--success);
-  font-size: 11px;
+  font-size: var(--text-sm);
 }
 
 .liveStrip > span:first-child {
@@ -127,14 +127,14 @@
 .messageAuthor,
 .messageMeta time {
   font-family: var(--label);
-  font-size: 9px;
+  font-size: var(--text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #9da8b8;
 }
 
 .message p {
-  font-size: 13px;
+  font-size: var(--text-md);
   line-height: 1.42;
   color: #f1f3f6;
   overflow-wrap: anywhere;
@@ -142,7 +142,7 @@
 
 .empty {
   padding: 10px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: #c0c8d4;
   background: #121822;
@@ -153,7 +153,7 @@
 .typing {
   min-height: 14px;
   margin: 0;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-style: italic;
   color: #aeb8c6;
 }

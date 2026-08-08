@@ -867,3 +867,56 @@
 .startButton,
 .backButton,
 .bannerButton { min-height: 42px; }
+
+/* Escala tipográfica de Búrix: la mono queda para rótulos breves; el texto
+   de lectura nunca baja de 13px en escritorio ni móvil. */
+.roomDock :global(.eyebrow),
+.lobbyKicker,
+.lobbyCode,
+.forixCasePicker,
+.roomPeopleBar strong,
+.roomPeopleBar button,
+.inviteToggle { font-size: clamp(12px, 0.15vw + 11px, 13px); }
+
+.lobbyPanelTop strong,
+.lobbyPanelTitle span,
+.lobbyStatus strong,
+.lobbyParticipants li,
+.lobbyParticipants li small,
+.historyButton { font-size: clamp(13px, 0.18vw + 12px, 14px); }
+
+.lobbyPanelTop span,
+.lobbyPanelTitle small,
+.aggregatePresence,
+.lobbyStatus span:last-child,
+.lobbyFootnote,
+.participants li,
+.rosterHint,
+.inviteHint,
+.inviteSuccess,
+.inviteError { font-size: clamp(14px, 0.2vw + 13px, 16px); }
+
+.lobbyPanel,
+.lobbyStatus,
+.lobbyInvite { padding: clamp(14px, 2vw, 18px); }
+
+.lobbyParticipants li,
+.aggregatePresence { min-height: 42px; }
+
+.startButton,
+.backButton,
+.historyButton,
+.inviteRow button { min-height: 46px; }
+
+.inviteInput,
+.inviteSelect { min-height: 44px; font-size: 16px; }
+
+@media (max-width: 700px) {
+  .lobbyCard { padding: 20px 16px; }
+  .lobbyCard h2 { font-size: clamp(30px, 9vw, 40px); line-height: 1.05; }
+  .lobbyPanelTop, .lobbyPanelTitle { align-items: flex-start; }
+  .lobbyPanelTitle small { max-width: 15ch; text-align: right; }
+  .roomDock :global(.eyebrow) { font-size: 12px; }
+  .roomPeopleBar { gap: 12px; padding: 13px 0; }
+  .roomPeopleBar strong { line-height: 1.4; }
+}

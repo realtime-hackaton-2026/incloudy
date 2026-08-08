@@ -65,6 +65,9 @@ export function CaseChat({ token, caseId }: CaseChatProps) {
         <input
           type="text"
           value={draft}
+          // A placeholder is not an accessible name: it disappears as soon
+          // as anyone types, leaving the field unnamed for a screen reader.
+          aria-label="Pregunta para el asistente sobre este caso"
           placeholder="Pregunta algo sobre este caso…"
           disabled={status === 'asking'}
           onChange={(event) => setDraft(event.target.value)}

@@ -24,6 +24,7 @@
 }
 
 .dismiss {
+  position: relative;
   flex: none;
   width: 22px;
   height: 22px;
@@ -37,6 +38,19 @@
   transition:
     color var(--micro) var(--ease),
     border-color var(--micro) var(--ease);
+}
+
+/* A 22px circle is the right size to look at and the wrong size to hit.
+   This grows the touch target to the project's 44px minimum without
+   changing anything you can see. */
+.dismiss::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 .dismiss:hover {

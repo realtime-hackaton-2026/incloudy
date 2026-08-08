@@ -631,6 +631,9 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
             <input
               className={styles.input}
               type="email"
+              // The placeholder is an example address, not a name — and it
+              // vanishes on the first keystroke.
+              aria-label="Correo del docente a invitar"
               placeholder="correo@ejemplo.com"
               value={collaboratorEmail}
               disabled={invitePending}
@@ -639,6 +642,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
             />
             <select
               className={styles.input}
+              aria-label="Rol del colaborador"
               value={collaboratorRole}
               disabled={invitePending}
               onChange={(event) => setCollaboratorRole(event.target.value as CollaboratorRole)}

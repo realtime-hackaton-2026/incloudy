@@ -118,7 +118,7 @@ function RoomChannel({
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
 }) {
   const [portalError, setPortalError] = useState<string | null>(null)
-  const { messages, send, presence, status, me, typing, sendTyping } = useChannel<ChatMessage>({
+  const { messages, send, presence, status, me, typing, sendTyping, setMetadata } = useChannel<ChatMessage>({
     channelId,
     history: 30,
     metadata: { role: 'docente', surface: 'case-collaboration' },
@@ -142,17 +142,31 @@ function RoomChannel({
   // Memoized on its own: rebuilt inline it was a fresh array every render,
   // which made `presenceState` below re-memo every time and fire the
   // `onPresenceChange` effect on every render instead of on real changes.
+  // Portal does not ship sender usernames on standard channels — display data
+  // is joined app-side. We carry ours in presence metadata, and fall back to
+  // a derived label when a teammate has not published theirs yet.
   const participants = useMemo(
     () =>
       presence?.kind === 'detailed'
         ? presence.participants.map((participant) => ({
             id: participant.id,
-            username: participant.username,
+            username: participant.username
+              ?? (typeof participant.metadata?.username === 'string' ? participant.metadata.username : undefined),
             anon: participant.anon,
           }))
         : [],
     [presence],
   )
+  // Publish the current teacher's name once the verified identity arrives, so
+  // teammates' rosters show real names instead of "Docente · abcd".
+  const identityShared = useRef(false)
+  useEffect(() => {
+    const username = me?.claims?.username
+    if (typeof username === 'string' && !identityShared.current) {
+      identityShared.current = true
+      setMetadata?.({ role: 'docente', surface: 'case-collaboration', username })
+    }
+  }, [me?.claims?.username, setMetadata])
   const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,

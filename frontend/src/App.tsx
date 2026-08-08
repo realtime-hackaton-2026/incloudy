@@ -209,18 +209,13 @@ function MapOverview({ token, ownerId }: { token: string; ownerId: string | null
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
   const [avatarRevision, setAvatarRevision] = useState(0)
 
-  useEffect(() => {
-    if (cases.length === 0) return
-    if (!selectedCaseId || !cases.some((item) => item.id === selectedCaseId)) {
-      setSelectedCaseId(cases[0].id)
-    }
-  }, [cases, selectedCaseId])
-
   if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
   if (cases.length === 0) {
     return <p className="app-restoring">Crea tu primera aventura para ver el mapa.</p>
   }
 
+  // Derived, not synced: a stale or empty id simply resolves to the first
+  // case, so nothing needs an effect to keep the selection valid.
   const selected = cases.find((item) => item.id === selectedCaseId) ?? cases[0]
   return (
     <>

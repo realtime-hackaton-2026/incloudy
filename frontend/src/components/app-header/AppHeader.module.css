@@ -195,31 +195,34 @@
     justify-content: flex-start;
   }
 
-  .dashboardLink {
-  padding: 8px 12px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--parchment);
-  background: rgb(230 201 149 / 6%);
-  border: 1px solid rgb(230 201 149 / 22%);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color var(--micro) var(--ease), border-color var(--micro) var(--ease), transform var(--micro) var(--ease);
-}
-
-.dashboardLink:hover {
-  background: rgb(230 201 149 / 11%);
-  border-color: rgb(230 201 149 / 38%);
-  transform: translateY(-1px);
-}
-
-.dashboardLinkActive {
-  background: var(--parchment);
-  color: var(--ink);
-  border-color: var(--parchment-hi);
-}
-
-.email {
+  .email {
     max-width: 14ch;
+  }
+}
+
+/* Phones: the user block (email + panel + salir) stops fitting next to the
+   brand. The email is the first thing a session can lose — hide it. */
+@media (max-width: 520px) {
+  .header {
+    gap: 12px;
+    padding: 12px 0 10px;
+    margin-bottom: 20px;
+  }
+
+  .email {
+    display: none;
+  }
+
+  .navItem {
+    padding: 8px 10px 10px;
+  }
+
+  .navItem::after {
+    left: 10px;
+    right: 10px;
+  }
+
+  .signOut {
+    padding: 6px 10px;
   }
 }

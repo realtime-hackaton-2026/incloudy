@@ -372,6 +372,56 @@
   color: var(--muted);
 }
 
+.stationEditButton {
+  position: absolute;
+  top: 16px;
+  right: 58px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 10px;
+  font-family: var(--label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #171b20;
+  background: rgb(255 255 255 / 42%);
+  border: 1px solid rgb(21 40 53 / 28%);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color var(--micro) var(--ease), transform var(--micro) var(--ease);
+}
+
+.stationEditButton svg {
+  width: 15px;
+  height: 15px;
+  fill: currentcolor;
+}
+
+.stationEditButton:hover {
+  background: rgb(255 255 255 / 72%);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 560px) {
+  .stationEditButton {
+    width: 32px;
+    padding: 5px;
+    justify-content: center;
+  }
+
+  .stationEditButton span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
 /* A locked-station attempt or any other save failure — the backend's own
    Spanish message, framed so it reads as a real notice rather than a
    stray line of red text at the bottom of the form. */

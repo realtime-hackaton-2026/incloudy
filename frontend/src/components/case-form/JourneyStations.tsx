@@ -312,14 +312,17 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
           {editable && (
             <button
               type="button"
-              className="btn-secondary"
+              className={styles.stationEditButton}
               onClick={() => {
                 setEditingAnswer(true)
                 setShowResult(false)
                 setSaveState('idle')
               }}
             >
-              Editar decisión
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4l11-11-4-4L4 16v4Zm13.5-16.5 3 3-1.5 1.5-3-3 1.5-1.5Z" />
+              </svg>
+              <span>Editar decisión</span>
             </button>
           )}
           {editable && station.id === 'compartir' && onFinish ? (

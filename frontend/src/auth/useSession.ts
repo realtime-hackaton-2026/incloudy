@@ -7,20 +7,24 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { AuthError, fetchCurrentUser, requestToken } from './api'
+import { registerAccount, fetchCurrentUser, requestToken } from './api'
 import type { Credentials } from './api'
+import { decodeUserId } from './jwt'
+import { ApiError } from '../lib/http'
 
 const TOKEN_KEY = 'incloudy.token'
 
 export interface Session {
   token: string
   email: string
+  /** From the token's `sub` claim. Null only if a token ever fails to decode. */
+  userId: string | null
 }
 
 export type SessionStatus =
   /** Checking a token left over from a previous visit. Nothing to show yet. */
   | 'restoring'
-  /** Waiting on the login screen. */
+  /** Waiting on the login or registro screen. */
   | 'anonymous'
   /** Credentials sent, no answer yet. */
   | 'signing-in'
@@ -30,9 +34,10 @@ export type SessionStatus =
 export interface SessionState {
   session: Session | null
   status: SessionStatus
-  /** Last sign-in failure, in Spanish, or null. Cleared on the next attempt. */
+  /** Last sign-in/registro failure, in Spanish, or null. Cleared on the next attempt. */
   error: string | null
   signIn: (credentials: Credentials) => Promise<void>
+  signUp: (credentials: Credentials) => Promise<void>
   signOut: () => void
 }
 
@@ -56,7 +61,7 @@ export function useSession(): SessionState {
     fetchCurrentUser(token)
       .then((email) => {
         if (!active) return
-        setSession({ token, email })
+        setSession({ token, email, userId: decodeUserId(token) })
         setStatus('active')
       })
       .catch(() => {
@@ -78,12 +83,24 @@ export function useSession(): SessionState {
     try {
       const token = await requestToken(credentials)
       storeToken(token)
-      setSession({ token, email: credentials.email })
+      setSession({ token, email: credentials.email, userId: decodeUserId(token) })
       setStatus('active')
     } catch (cause) {
-      setError(
-        cause instanceof AuthError ? cause.message : 'No se pudo iniciar sesión.',
-      )
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo iniciar sesión.')
+      setStatus('anonymous')
+    }
+  }, [])
+
+  const signUp = useCallback(async (credentials: Credentials) => {
+    setStatus('signing-in')
+    setError(null)
+    try {
+      const token = await registerAccount(credentials)
+      storeToken(token)
+      setSession({ token, email: credentials.email, userId: decodeUserId(token) })
+      setStatus('active')
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo crear la cuenta.')
       setStatus('anonymous')
     }
   }, [])
@@ -95,7 +112,7 @@ export function useSession(): SessionState {
     setStatus('anonymous')
   }, [])
 
-  return { session, status, error, signIn, signOut }
+  return { session, status, error, signIn, signUp, signOut }
 }
 
 // Private browsing and locked-down browsers make localStorage throw rather than

@@ -119,7 +119,7 @@ function RoomChannel({
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
 }) {
   const [portalError, setPortalError] = useState<string | null>(null)
-  const { messages, send, presence, status, me, typing, sendTyping, setMetadata } = useChannel<ChatMessage>({
+  const { messages, send, presence, status, me, typing, sendTyping } = useChannel<ChatMessage>({
     channelId,
     history: 30,
     metadata: { role: 'docente', surface: 'case-collaboration' },
@@ -143,9 +143,10 @@ function RoomChannel({
   // Memoized on its own: rebuilt inline it was a fresh array every render,
   // which made `presenceState` below re-memo every time and fire the
   // `onPresenceChange` effect on every render instead of on real changes.
-  // Portal does not ship sender usernames on standard channels — display data
-  // is joined app-side. We carry ours in presence metadata, and fall back to
-  // a derived label when a teammate has not published theirs yet.
+  // Portal does not ship sender usernames on standard channels — display
+  // data is joined app-side. The platform also rejects mid-session metadata
+  // updates (frame `meta` → `not_permitted`), so names can only arrive in the
+  // handshake metadata of a peer; until then the UI falls back to "Docente · id".
   const participants = useMemo(
     () =>
       presence?.kind === 'detailed'
@@ -158,28 +159,14 @@ function RoomChannel({
         : [],
     [presence],
   )
-  /*
-   * `canPublish` mirrors the backend's own `publish` grant (see
-   * `services/portal.py`) — a lector, or anyone in a closed case, never has
-   * it. `setMetadata` sends a `meta` frame, and the wire protocol gates
-   * upstream frames identically to publishes, so attempting it without the
-   * grant is a guaranteed `not_permitted` — not a possible failure to
-   * handle, a certain one to avoid. Reading a claim already on `me` costs
-   * nothing extra; re-deriving the rule client-side would just be the same
-   * logic kept in sync by hand in two languages.
-   */
+  // Mirrors the backend's own `publish` grant (see `services/portal.py`):
+  // a lector, or anyone in a closed case, never has it. Gates the composer
+  // and typing indicators, so no send is attempted that the socket would
+  // refuse. Note: `setMetadata` also sends an upstream frame and Portal
+  // rejects mid-session `meta` frames on this environment, so identity is
+  // never pushed through presence metadata — the roster falls back to
+  // "Docente · id" until names are joined app-side.
   const canPublish = me?.claims?.canPublish === true
-
-  // Publish the current teacher's name once the verified identity arrives, so
-  // teammates' rosters show real names instead of "Docente · abcd".
-  const identityShared = useRef(false)
-  useEffect(() => {
-    const username = me?.claims?.username
-    if (typeof username === 'string' && canPublish && !identityShared.current) {
-      identityShared.current = true
-      setMetadata?.({ role: 'docente', surface: 'case-collaboration', username })
-    }
-  }, [me?.claims?.username, canPublish, setMetadata])
   const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,

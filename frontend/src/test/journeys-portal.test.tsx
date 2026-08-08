@@ -504,10 +504,13 @@ describe('CaseRoom', () => {
  *
  * A lector, or anyone in a closed case, has no `publish` grant on Portal —
  * confirmed against the backend's own claim in `test_portal_reader_session_
- * cannot_publish` (backend/tests/test_core.py). Sending a `meta` frame
- * (identity sharing) or a persistent publish (chat, ask-Búrix) without that
- * grant is refused with `not_permitted`: not a possible failure to handle,
- * a certain one to avoid by never attempting it.
+ * cannot_publish` (backend/tests/test_core.py). Persistent publishes (chat,
+ * ask-Búrix) and typing indicators without that grant are refused with
+ * `not_permitted`: not a possible failure to handle, a certain one to avoid
+ * by never attempting it. Identity is never shared through presence metadata
+ * either — the platform refuses mid-session `meta` frames even with the
+ * publish grant (observed live: `not_permitted: upstream frame 'meta'`), so
+ * the roster falls back to "Docente · id" until names are joined app-side.
  */
 describe('CaseRoom — a session without the publish grant', () => {
   function readOnlyChannel(overrides: Record<string, unknown> = {}) {
@@ -596,7 +599,7 @@ describe('CaseRoom — a session without the publish grant', () => {
 })
 
 describe('CaseRoom — a session with the publish grant', () => {
-  it('still shares identity and leaves the composer usable — the gate is not just always-off', async () => {
+  it('leaves the composer usable without ever sending the meta frame — Portal rejects it mid-session', async () => {
     mockFetch(() =>
       jsonResponse({
         token: 'ptok',
@@ -620,11 +623,13 @@ describe('CaseRoom — a session with the publish grant', () => {
     })
 
     render(<CaseRoom token="tok" caseId="case-1" />)
-    await waitFor(() => expect(setMetadata).toHaveBeenCalledWith({
-      role: 'docente',
-      surface: 'case-collaboration',
-      username: 'Ana',
-    }))
+    await waitFor(() =>
+      expect(screen.getByTestId('case-room')).toHaveAttribute('data-state', 'ready'),
+    )
+    // The effect that used to share identity has had its one chance — give
+    // it a beat, then assert it stayed silent even with the publish grant.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(setMetadata).not.toHaveBeenCalled()
 
     expect(screen.queryByTestId('case-room-read-only')).toBeNull()
     expect(screen.getByPlaceholderText(/comparte una observación/i)).not.toBeDisabled()

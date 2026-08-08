@@ -22,6 +22,7 @@ export interface CaseRoomProps {
   minimumParticipants?: number
   /** Last confirmed room count, retained while a background tab reconnects. */
   persistentPresenceCount?: number
+  participantNames?: Record<string, string>
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
   /** Keeps the Portal channel mounted while the visual room/lobby is elsewhere. */
   hideUi?: boolean
@@ -45,6 +46,7 @@ export function CaseRoom({
   caseId,
   minimumParticipants = 2,
   persistentPresenceCount = 0,
+  participantNames = {},
   hideUi = false,
   startSessionNonce = 0,
   closeSessionNonce = 0,
@@ -92,6 +94,7 @@ export function CaseRoom({
         channelId={session.channelId}
         minimumParticipants={minimumParticipants}
         persistentPresenceCount={persistentPresenceCount}
+        participantNames={participantNames}
         hideUi={hideUi}
         startSessionNonce={startSessionNonce}
         closeSessionNonce={closeSessionNonce}
@@ -108,6 +111,7 @@ function RoomChannel({
   channelId,
   minimumParticipants,
   persistentPresenceCount,
+  participantNames,
   hideUi,
   startSessionNonce,
   closeSessionNonce,
@@ -119,6 +123,7 @@ function RoomChannel({
   channelId: string
   minimumParticipants: number
   persistentPresenceCount: number
+  participantNames: Record<string, string>
   hideUi: boolean
   startSessionNonce: number
   closeSessionNonce: number
@@ -435,7 +440,7 @@ function RoomChannel({
           <ul className={styles.historyMessages}>
             {previousMessages.map((message) => (
               <li key={message.id}>
-                <strong>{messageAuthorLabel(message, me?.id, me?.claims?.username)}</strong>
+                <strong>{messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}</strong>
                 <RichText text={messageBody(message.content)} />
                 <time>{formatTime(message.timestamp)}</time>
               </li>
@@ -452,7 +457,7 @@ function RoomChannel({
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
                 <span className={styles.messageAuthor}>
-                  {messageAuthorLabel(message, me?.id, me?.claims?.username)}
+                  {messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}
                 </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
@@ -528,6 +533,7 @@ function messageBody(content: ChatMessage | string) {
 
 function messageAuthorLabel(
   message: { content: ChatMessage | string; sender: { id: string; username?: string } },
+  participantNames: Record<string, string>,
   meId?: string,
   meName?: unknown,
 ) {
@@ -536,9 +542,9 @@ function messageAuthorLabel(
   if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
   if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
   const verifiedMeName = typeof meName === 'string' ? meName : undefined
-  const teacherName = meId && message.sender.id === meId
+  const teacherName = participantNames[message.sender.id] ?? (meId && message.sender.id === meId
     ? verifiedMeName ?? message.sender.username
-    : message.sender.username
+    : message.sender.username)
   return teacherName ? `Docente · ${teacherName}` : `Docente · ${message.sender.id.slice(-4)}`
 }
 

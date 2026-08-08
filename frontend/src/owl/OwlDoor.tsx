@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { joinCase, listCases } from '../cases/api'
-import type { Case } from '../cases/api'
+import { joinCase, listCaseParticipants, listCases } from '../cases/api'
+import type { Case, CaseParticipant } from '../cases/api'
 import { ApiError } from '../lib/http'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
@@ -37,15 +37,28 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
   const [startSessionNonce, setStartSessionNonce] = useState(0)
   const [closeSessionNonce, setCloseSessionNonce] = useState(0)
   const [burixCases, setBurixCases] = useState<Case[]>([])
+  const [roomMembers, setRoomMembers] = useState<CaseParticipant[]>([])
+  const memberNames = Object.fromEntries(roomMembers.map((member) => [member.userId, member.nombre]))
+  const visibleParticipantsById = new Map(
+    roomMembers.map((member) => [member.userId, { id: member.userId, username: member.nombre }]),
+  )
+  for (const participant of presence.participants) {
+    visibleParticipantsById.set(participant.id, {
+      ...participant,
+      username: memberNames[participant.id] ?? participant.username,
+    })
+  }
+  const visibleParticipants = [...visibleParticipantsById.values()]
+  const visibleCount = Math.max(presence.count, visibleParticipants.length)
   const station = stationFor(stage)
   const portalReady = presence.status === 'ready'
   const portalBlocked = presence.status === 'blocked' || presence.status === 'error' || Boolean(presence.error)
-  const canOpen = portalReady && presence.count >= 2
+  const canOpen = portalReady && visibleCount >= 2
   const presenceLabel = !portalReady
     ? portalBlocked
       ? presence.error ?? 'Portal no ha podido conectar'
       : 'Conectando con Portal…'
-    : `${presence.count} ${presence.count === 1 ? 'docente conectado' : 'docentes conectados'}`
+    : `${visibleCount} ${visibleCount === 1 ? 'docente conectado' : 'docentes conectados'}`
 
   const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
     setPresence((current) => {
@@ -70,8 +83,10 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
     let active = true
     let timer: ReturnType<typeof setInterval> | null = null
     const refresh = () => {
-      void listCases(token).then((cases) => {
-        if (active) setBurixCases(cases.filter((item) => item.burixShared))
+      void Promise.all([listCases(token), listCaseParticipants(token, caseId)]).then(([cases, members]) => {
+        if (!active) return
+        setBurixCases(cases.filter((item) => item.burixShared))
+        setRoomMembers(members)
       }).catch(() => {})
     }
     refresh()
@@ -80,7 +95,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
       active = false
       if (timer) clearInterval(timer)
     }
-  }, [token])
+  }, [caseId, token])
 
   function openBurixCase(selectedCaseId: string) {
     if (!selectedCaseId || selectedCaseId === caseId) return
@@ -159,7 +174,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
                   <span>Caso de {studentName}</span>
                   <small>Código {joinCode}</small>
                 </button>
-                <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
+                <strong>{portalReady ? `${visibleCount}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.roomHeaderActions}>
                 {sessionActive && (
@@ -181,9 +196,9 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
 
             {rosterOpen && (
               <div className={styles.inlineRoster}>
-                {presence.detailed && presence.participants.length > 0 ? (
+                {visibleParticipants.length > 0 ? (
                   <ul className={styles.participants}>
-                    {presence.participants.map((participant) => (
+                    {visibleParticipants.map((participant) => (
                       <li key={participant.id}>
                         <span className={styles.participantDot} />
                         <span>{participant.username ?? `Docente · ${participant.id.slice(-4)}`}</span>
@@ -202,7 +217,8 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
           token={token}
           caseId={caseId}
           minimumParticipants={2}
-          persistentPresenceCount={presence.count}
+          persistentPresenceCount={visibleCount}
+          participantNames={memberNames}
           hideUi={!roomOpen}
           startSessionNonce={startSessionNonce}
           closeSessionNonce={closeSessionNonce}
@@ -218,7 +234,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
           <span className={styles.activeBannerDot} />
           <div className={styles.activeBannerCopy}>
             <strong>Caso de {studentName}</strong>
-            <span>{joinCode} · {portalReady ? `${presence.count}/5 docentes` : presenceLabel}</span>
+            <span>{joinCode} · {portalReady ? `${visibleCount}/5 docentes` : presenceLabel}</span>
           </div>
         </button>
       )}

@@ -159,7 +159,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
       </header>
 
       <fieldset className={styles.section} disabled={!isOwner}>
-        <legend className={styles.sectionTitle}>Alumno ficticio</legend>
+        <legend className={styles.sectionTitle}>Alumno</legend>
         <label className={styles.field}>
           Nombre
           <input
@@ -249,7 +249,11 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
         </ul>
 
         {isOwner && (
-          <button type="button" className={styles.addStation} onClick={addStation}>
+          <button
+            type="button"
+            className={`btn-secondary ${styles.addStation}`}
+            onClick={addStation}
+          >
             + Agregar estación
           </button>
         )}
@@ -281,7 +285,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
               onChange={(event) => setCollaboratorEmail(event.target.value)}
               required
             />
-            <button type="submit" disabled={invitePending}>
+            <button type="submit" className="btn-secondary" disabled={invitePending}>
               {invitePending ? 'Invitando…' : 'Invitar'}
             </button>
           </form>
@@ -295,13 +299,17 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
 
       {isOwner && (
         <div className={styles.footer}>
-          <button type="button" className={styles.deleteButton} onClick={() => setPendingDelete(true)}>
+          <button
+            type="button"
+            className={`btn-secondary ${styles.deleteButton}`}
+            onClick={() => setPendingDelete(true)}
+          >
             Eliminar caso
           </button>
           {current.status !== 'publicado' && (
             <button
               type="button"
-              className={styles.publishButton}
+              className={`btn-primary ${styles.publishButton}`}
               onClick={() => setPendingPublish(true)}
             >
               Publicar caso

@@ -58,12 +58,12 @@ export function ConfirmDialog({
         </h2>
         {description && <div className={styles.description}>{description}</div>}
         <div className={styles.actions}>
-          <button type="button" className={styles.cancel} onClick={onCancel} disabled={pending}>
+          <button type="button" className="btn-secondary" onClick={onCancel} disabled={pending}>
             {cancelLabel}
           </button>
           <button
             type="button"
-            className={tone === 'danger' ? styles.confirmDanger : styles.confirm}
+            className={tone === 'danger' ? `btn-primary ${styles.confirmDanger}` : 'btn-primary'}
             onClick={onConfirm}
             disabled={pending}
           >

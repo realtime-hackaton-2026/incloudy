@@ -224,6 +224,10 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     await answerUnexpectedEvent(eventId, optionId)
   }
 
+  function personalizeCaseText(value: string) {
+    return value.replace(/\bAlex\b/g, current.alumno.nombre || 'el alumno')
+  }
+
   async function handleForixShare() {
     setSharingWithForix(true)
     setForixShareError(null)
@@ -257,7 +261,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         {activeEvents.map((event) => (
           <article key={event.id} className={styles.interactionCard}>
             <p className={styles.stationIntro}>
-              {event.icono} {event.texto}
+              {event.icono} {personalizeCaseText(event.texto)}
             </p>
             <div className={styles.stationOptions}>
               {event.opciones.map((option) => (
@@ -303,6 +307,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     return (
       <StationCard
         station={templateStation}
+        student={current.alumno}
         answer={current.respuestas.find((r) => r.estacionId === templateStation.id) ?? null}
         editable={isEditor}
         onAnswer={answerStation}
@@ -317,7 +322,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       <div className={styles.mapOnly} data-testid="case-map-only">
         <div className={styles.mapOnlyHeader}>
           <div>
-            <span className={styles.mapOnlyKicker}>Caso de Alex</span>
+            <span className={styles.mapOnlyKicker}>Caso en estudio</span>
             <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
           </div>
           <div className={styles.mapOnlyStats}>

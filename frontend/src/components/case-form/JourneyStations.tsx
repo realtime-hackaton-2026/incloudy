@@ -10,11 +10,12 @@ import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../lib/http'
 import type { QuestionType, StationOption, TemplateStation } from '../../journeys'
-import type { StationAnswer } from '../../cases'
+import type { StationAnswer, Student } from '../../cases'
 import styles from './CaseForm.module.css'
 
 export interface StationCardProps {
   station: TemplateStation
+  student: Student
   answer: StationAnswer | null
   editable: boolean
   onAnswer: (
@@ -37,7 +38,21 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
 }
 
-function renderInteraction(station: TemplateStation, selected: string[]): ReactNode {
+function personalizeText(value: unknown, student: Student): string {
+  return String(value ?? '').replace(/\bAlex\b/g, student.nombre || 'el alumno')
+}
+
+function caseIntroduction(student: Student): string {
+  const name = student.nombre.trim() || 'El alumno'
+  const details = [
+    student.edad ? `${student.edad} años` : null,
+    student.curso?.trim() || null,
+  ].filter(Boolean).join(' · ')
+  const description = student.descripcion.trim() || 'Este caso todavía no tiene una descripción.'
+  return `${name}${details ? ` · ${details}` : ''}. ${description}`
+}
+
+function renderInteraction(station: TemplateStation, selected: string[], student: Student): ReactNode {
   const picked = selectedOptions(station, selected)
 
   if (station.id === 'explorar') {
@@ -49,9 +64,9 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
           return (
             <article key={option.id} className={styles.interactionCard}>
               <strong>{option.icono} {option.texto}</strong>
-              {typeof evidence === 'string' && <p>{evidence}</p>}
+              {typeof evidence === 'string' && <p>{personalizeText(evidence, student)}</p>}
               {typeof contrast === 'string' && (
-                <p className={styles.contrast}>🔶 Otra lectura posible: {contrast}</p>
+                <p className={styles.contrast}>🔶 Otra lectura posible: {personalizeText(contrast, student)}</p>
               )}
               <span className={styles.cost}>−{String(optionContent(option, 'coste_dias') ?? 0)} día</span>
             </article>
@@ -73,7 +88,7 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
                 const item = asRecord(voice)
                 return (
                   <p key={index} className={styles.voice}>
-                    <b>{String(item.autor ?? 'Voz')}:</b> “{String(item.texto ?? '')}”
+                    <b>{personalizeText(item.autor ?? 'Voz', student)}:</b> “{personalizeText(item.texto ?? '', student)}”
                   </p>
                 )
               })}
@@ -96,7 +111,7 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
           <article key={option.id} className={styles.interactionCard}>
             <strong>{option.icono} {option.texto}</strong>
             {typeof optionContent(option, 'descripcion') === 'string' && (
-              <p>{String(optionContent(option, 'descripcion'))}</p>
+              <p>{personalizeText(optionContent(option, 'descripcion'), student)}</p>
             )}
             {typeof optionContent(option, 'alineada_con') === 'string' && (
               <p className={styles.alignment}>
@@ -140,10 +155,10 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
             <strong>{option.icono} {option.texto}</strong>
             <p>La reacción dependerá de la coherencia entre tu hipótesis, la intervención y los datos.</p>
             {typeof optionContent(option, 'reaccion_coherente') === 'string' && (
-              <p className={styles.reaction}>✓ {String(optionContent(option, 'reaccion_coherente'))}</p>
+              <p className={styles.reaction}>✓ {personalizeText(optionContent(option, 'reaccion_coherente'), student)}</p>
             )}
             {typeof optionContent(option, 'reaccion_incoherente') === 'string' && (
-              <p className={styles.contrast}>↔ {String(optionContent(option, 'reaccion_incoherente'))}</p>
+              <p className={styles.contrast}>↔ {personalizeText(optionContent(option, 'reaccion_incoherente'), student)}</p>
             )}
           </article>
         ))}
@@ -154,7 +169,7 @@ function renderInteraction(station: TemplateStation, selected: string[]): ReactN
   return null
 }
 
-export function StationCard({ station, answer, editable, onAnswer, onContinue, onFinish }: StationCardProps) {
+export function StationCard({ station, student, answer, editable, onAnswer, onContinue, onFinish }: StationCardProps) {
   const [selected, setSelected] = useState<string[]>(answer?.opcionesSeleccionadas ?? [])
   const [comentario, setComentario] = useState(answer?.comentario ?? '')
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -189,7 +204,7 @@ export function StationCard({ station, answer, editable, onAnswer, onContinue, o
   }
 
   const done = answer?.completado ?? false
-  const interaction = renderInteraction(station, selected)
+  const interaction = renderInteraction(station, selected, student)
 
   return (
     <form
@@ -211,11 +226,13 @@ export function StationCard({ station, answer, editable, onAnswer, onContinue, o
 
       {typeof station.contenido?.introduccion === 'string' && (
         <p className={styles.stationIntro}>
-          {station.id === 'orientar'
+          {station.id === 'explorar'
+            ? caseIntroduction(student)
+            : station.id === 'orientar'
             ? selected.length >= 2
-              ? String(station.contenido.mensaje_dos_o_mas_pistas ?? station.contenido.introduccion)
-              : String(station.contenido.mensaje_pocas_pistas ?? station.contenido.introduccion)
-            : station.contenido.introduccion}
+              ? personalizeText(station.contenido.mensaje_dos_o_mas_pistas ?? station.contenido.introduccion, student)
+              : personalizeText(station.contenido.mensaje_pocas_pistas ?? station.contenido.introduccion, student)
+            : personalizeText(station.contenido.introduccion, student)}
         </p>
       )}
 

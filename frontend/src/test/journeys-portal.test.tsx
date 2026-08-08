@@ -155,7 +155,7 @@ describe('CaseRoom', () => {
       send,
       presence: { kind: 'aggregate', count: 3, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping,
     })
@@ -194,7 +194,7 @@ describe('CaseRoom', () => {
       send,
       presence: { kind: 'aggregate', count: 1, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -229,7 +229,7 @@ describe('CaseRoom', () => {
       send,
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -258,7 +258,7 @@ describe('CaseRoom', () => {
       send: vi.fn(),
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -294,7 +294,7 @@ describe('CaseRoom', () => {
       send: vi.fn(),
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: ['u-2'],
       sendTyping: vi.fn(),
     })
@@ -321,7 +321,7 @@ describe('CaseRoom', () => {
       send,
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -360,7 +360,7 @@ describe('CaseRoom', () => {
       send,
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -404,7 +404,7 @@ describe('CaseRoom', () => {
       send: vi.fn(),
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -437,7 +437,7 @@ describe('CaseRoom', () => {
       send: vi.fn(),
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     })
@@ -469,7 +469,7 @@ describe('CaseRoom', () => {
       messages,
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',
-      me: { id: 'u-1', anon: false, claims: {} },
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
       typing: [],
       sendTyping: vi.fn(),
     }
@@ -497,4 +497,136 @@ describe('CaseRoom', () => {
     view.rerender(<CaseRoom token="tok" caseId="case-1" />)
     expect(await screen.findByTestId('burix-bubble')).toHaveTextContent('Tomo nota: parece que el reto es lo que está en juego.')
   }, 12_000)
+})
+
+/*
+ * ── Read-only sessions (`canPublish: false`) ──────────────────────────────
+ *
+ * A lector, or anyone in a closed case, has no `publish` grant on Portal —
+ * confirmed against the backend's own claim in `test_portal_reader_session_
+ * cannot_publish` (backend/tests/test_core.py). Sending a `meta` frame
+ * (identity sharing) or a persistent publish (chat, ask-Búrix) without that
+ * grant is refused with `not_permitted`: not a possible failure to handle,
+ * a certain one to avoid by never attempting it.
+ */
+describe('CaseRoom — a session without the publish grant', () => {
+  function readOnlyChannel(overrides: Record<string, unknown> = {}) {
+    return {
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+        { id: 'm1', content: { body: 'Hola equipo' }, sender: { id: 'u-2', anon: false } },
+      ],
+      send: vi.fn(() => Promise.resolve({ id: 'm2', timestamp: Date.now() })),
+      setMetadata: vi.fn(),
+      presence: { kind: 'aggregate', count: 3, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: { username: 'Lectora' } },
+      typing: [],
+      sendTyping: vi.fn(),
+      ...overrides,
+    }
+  }
+
+  it('never sends the identity-sharing meta frame — the guaranteed not_permitted this bug was', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    const channel = readOnlyChannel()
+    useChannelMock.mockReturnValue(channel)
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+    await waitFor(() =>
+      expect(screen.getByTestId('case-room')).toHaveAttribute('data-state', 'ready'),
+    )
+    // The effect that used to fire unconditionally has had its one chance —
+    // give it a beat, then assert it stayed silent.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(channel.setMetadata).not.toHaveBeenCalled()
+  })
+
+  it('locks the composer and explains why, instead of accepting text a send would refuse', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    useChannelMock.mockReturnValue(readOnlyChannel())
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+    await waitFor(() =>
+      expect(screen.getByTestId('case-room')).toHaveAttribute('data-state', 'ready'),
+    )
+
+    expect(screen.getByTestId('case-room-read-only')).toHaveTextContent(/no tienes permiso/i)
+    expect(screen.getByPlaceholderText('Solo lectura')).toBeDisabled()
+    expect(screen.getByRole('button', { name: /enviar/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /preguntar a búrix/i })).toBeDisabled()
+    // The room itself is still fully readable.
+    expect(screen.getByText('Hola equipo')).toBeInTheDocument()
+  })
+
+  it('does not type-notify either — sendTyping is also a publish', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    const channel = readOnlyChannel()
+    useChannelMock.mockReturnValue(channel)
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+    await waitFor(() =>
+      expect(screen.getByTestId('case-room')).toHaveAttribute('data-state', 'ready'),
+    )
+    // The field is disabled, so this exercises handleDraftChange defensively
+    // rather than through a user interaction that couldn't reach it anyway.
+    expect(channel.sendTyping).not.toHaveBeenCalled()
+  })
+})
+
+describe('CaseRoom — a session with the publish grant', () => {
+  it('still shares identity and leaves the composer usable — the gate is not just always-off', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    const setMetadata = vi.fn()
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+      ],
+      send: vi.fn(() => Promise.resolve({ id: 'm2', timestamp: Date.now() })),
+      setMetadata,
+      presence: { kind: 'aggregate', count: 3, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: { username: 'Ana', canPublish: true } },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+    await waitFor(() => expect(setMetadata).toHaveBeenCalledWith({
+      role: 'docente',
+      surface: 'case-collaboration',
+      username: 'Ana',
+    }))
+
+    expect(screen.queryByTestId('case-room-read-only')).toBeNull()
+    expect(screen.getByPlaceholderText(/comparte una observación/i)).not.toBeDisabled()
+  })
 })

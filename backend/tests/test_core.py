@@ -147,6 +147,66 @@ def test_portal_reader_session_cannot_publish(monkeypatch) -> None:
     asyncio.run(portal_service.create_case_session(user, case))
 
     assert requests[1][1]["channels"] == {"case-case-1": ["connect"]}
+    # Round-tripped into claims too: the frontend reads `me.claims` back from
+    # the SDK and has no other way to know its own permission before trying
+    # to use it — grants alone gate the socket but never reach the client.
+    assert requests[1][1]["claims"]["canPublish"] is False
+    assert requests[0][1]["claims"]["canPublish"] is False
+
+
+def test_portal_closed_case_session_cannot_publish(monkeypatch) -> None:
+    # A `publish`-eligible role in a closed case is still refused (§ the
+    # `role != "lector" and status != closed` rule in create_case_session) —
+    # this is the second half of that rule, not covered by the reader test.
+    requests: list[tuple[str, dict]] = []
+
+    async def fake_portal_post(path: str, payload: dict) -> dict:
+        requests.append((path, payload))
+        if path == "/v1/tokens":
+            return {"token": "portal-jwt", "expiresAt": "2026-08-08T00:00:00Z"}
+        return {"added": 1}
+
+    monkeypatch.setattr(portal_service, "portal_post", fake_portal_post)
+    monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "pk_test")
+    user = SimpleNamespace(id="owner", email="owner@example.com", nombre="Owner")
+    case = SimpleNamespace(
+        id="case-1",
+        profesor_id="owner",
+        colaboradores=[],
+        colaboradores_ids=[],
+        status=CaseStatus.closed,
+    )
+
+    asyncio.run(portal_service.create_case_session(user, case))
+
+    assert requests[1][1]["channels"] == {"case-case-1": ["connect"]}
+    assert requests[1][1]["claims"]["canPublish"] is False
+
+
+def test_portal_editor_session_can_publish(monkeypatch) -> None:
+    requests: list[tuple[str, dict]] = []
+
+    async def fake_portal_post(path: str, payload: dict) -> dict:
+        requests.append((path, payload))
+        if path == "/v1/tokens":
+            return {"token": "portal-jwt", "expiresAt": "2026-08-08T00:00:00Z"}
+        return {"added": 1}
+
+    monkeypatch.setattr(portal_service, "portal_post", fake_portal_post)
+    monkeypatch.setattr(portal_service.settings, "portal_publishable_key", "pk_test")
+    user = SimpleNamespace(id="owner", email="owner@example.com", nombre="Owner")
+    case = SimpleNamespace(
+        id="case-1",
+        profesor_id="owner",
+        colaboradores=[],
+        colaboradores_ids=[],
+        status=CaseStatus.draft,
+    )
+
+    asyncio.run(portal_service.create_case_session(user, case))
+
+    assert requests[1][1]["channels"] == {"case-case-1": ["connect", "publish"]}
+    assert requests[1][1]["claims"]["canPublish"] is True
 
 
 def test_portal_webhook_signature_is_verified(monkeypatch) -> None:

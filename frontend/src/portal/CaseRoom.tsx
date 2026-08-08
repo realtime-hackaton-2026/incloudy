@@ -158,16 +158,28 @@ function RoomChannel({
         : [],
     [presence],
   )
+  /*
+   * `canPublish` mirrors the backend's own `publish` grant (see
+   * `services/portal.py`) — a lector, or anyone in a closed case, never has
+   * it. `setMetadata` sends a `meta` frame, and the wire protocol gates
+   * upstream frames identically to publishes, so attempting it without the
+   * grant is a guaranteed `not_permitted` — not a possible failure to
+   * handle, a certain one to avoid. Reading a claim already on `me` costs
+   * nothing extra; re-deriving the rule client-side would just be the same
+   * logic kept in sync by hand in two languages.
+   */
+  const canPublish = me?.claims?.canPublish === true
+
   // Publish the current teacher's name once the verified identity arrives, so
   // teammates' rosters show real names instead of "Docente · abcd".
   const identityShared = useRef(false)
   useEffect(() => {
     const username = me?.claims?.username
-    if (typeof username === 'string' && !identityShared.current) {
+    if (typeof username === 'string' && canPublish && !identityShared.current) {
       identityShared.current = true
       setMetadata?.({ role: 'docente', surface: 'case-collaboration', username })
     }
-  }, [me?.claims?.username, setMetadata])
+  }, [me?.claims?.username, canPublish, setMetadata])
   const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,
@@ -242,7 +254,7 @@ function RoomChannel({
   async function handleSend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const text = draft.trim()
-    if (!text || !unlocked || !sessionActive) return
+    if (!text || !unlocked || !sessionActive || !canPublish) return
     setSending(true)
     try {
       await send({ content: { body: text } })
@@ -323,7 +335,7 @@ function RoomChannel({
 
   async function handleAskBurix() {
     const question = draft.trim()
-    if (!question || !unlocked || !sessionActive || askingAi) return
+    if (!question || !unlocked || !sessionActive || !canPublish || askingAi) return
     setDraft('')
     setAskingAi(true)
     setAiError(null)
@@ -340,11 +352,11 @@ function RoomChannel({
 
   function handleDraftChange(value: string) {
     setDraft(value)
-    if (value.trim() && unlocked && sessionActive) sendTyping()
+    if (value.trim() && unlocked && sessionActive && canPublish) sendTyping()
   }
 
   function handleShareAnalysis(analysis: string) {
-    if (!sessionActive || !unlocked) return
+    if (!sessionActive || !unlocked || !canPublish) return
     void send({ content: { type: 'burix_analysis', body: analysis } })
     setBurixOpen(false)
   }
@@ -446,19 +458,33 @@ function RoomChannel({
             {typing.length > 0 && (typing.length === 1 ? 'Alguien está escribiendo…' : `${typing.length} docentes están escribiendo…`)}
           </p>
 
+          {/* A lector (or anyone in a closed case) has no publish grant —
+              the input explains that instead of accepting text that a send
+              would then refuse. */}
+          {!canPublish && (
+            <p className={styles.state} data-testid="case-room-read-only">
+              Puedes leer la sala, pero no tienes permiso para escribir en ella.
+            </p>
+          )}
           <form className={styles.composer} onSubmit={handleSend}>
             <input
               type="text"
               value={draft}
               maxLength={1000}
-              placeholder={unlocked ? 'Comparte una observación del caso…' : 'Esperando al equipo…'}
-              disabled={sending || !unlocked}
+              placeholder={
+                !canPublish
+                  ? 'Solo lectura'
+                  : unlocked
+                    ? 'Comparte una observación del caso…'
+                    : 'Esperando al equipo…'
+              }
+              disabled={sending || !unlocked || !canPublish}
               onChange={(event) => handleDraftChange(event.target.value)}
             />
-            <button type="submit" className="btn-primary" disabled={sending || !unlocked || !draft.trim()}>
+            <button type="submit" className="btn-primary" disabled={sending || !unlocked || !canPublish || !draft.trim()}>
               {sending ? '…' : 'Enviar'}
             </button>
-            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !draft.trim()} onClick={() => void handleAskBurix()}>
+            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !canPublish || !draft.trim()} onClick={() => void handleAskBurix()}>
               {askingAi ? 'Pensando…' : 'Preguntar a Búrix'}
             </button>
           </form>

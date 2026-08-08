@@ -90,9 +90,20 @@ async def create_case_session(user: User, case: Case) -> PortalSessionResponse:
         raise HTTPException(status_code=403, detail="No tienes acceso a la sala")
     if case.status == CaseStatus.archived:
         raise HTTPException(status_code=409, detail="El caso está archivado")
-    claims = {"email": str(user.email), "role": role, "username": user.nombre}
+    can_publish = role != "lector" and case.status != CaseStatus.closed
+    # Mirrored into claims, not just `grants`: grants gate the socket, but the
+    # frontend reads `me.claims` back from the SDK and has no other way to
+    # know its own permission before attempting to use it. Presentation-only,
+    # per the SDK's own contract for claims — Portal still enforces `grants`
+    # as the real authorization on every send.
+    claims = {
+        "email": str(user.email),
+        "role": role,
+        "username": user.nombre,
+        "canPublish": can_publish,
+    }
     grants = ["connect"]
-    if role != "lector" and case.status != CaseStatus.closed:
+    if can_publish:
         grants.append("publish")
 
     await portal_post(

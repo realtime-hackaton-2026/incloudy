@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import mapArt from '../../assets/images/fondo.png'
+import mapArt from '../../assets/images/mapa-completo.webp'
 import { ProgressJourney } from '../progress-journey'
 import styles from './CaseMap.module.css'
 import { MAP_ASPECT_RATIO, STATIONS, stationFor, stationIndex } from './stations'
@@ -241,7 +241,10 @@ export function CaseMap({
             <div className={styles.missionOverlay} data-testid="case-map-mission">
               <div
                 className={styles.missionBackdrop}
-                style={{ backgroundImage: `url(${focusedStation.scene})` }}
+                style={{
+                  backgroundImage: `url(${focusedStation.scene})`,
+                  backgroundPosition: focusedStation.scenePosition,
+                }}
                 aria-hidden="true"
               />
               <div className={styles.missionShade} aria-hidden="true" />

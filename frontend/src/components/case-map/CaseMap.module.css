@@ -3,7 +3,7 @@
  * station states, camera, HUD and the wide-route escape from the app shell.
  *
  * Hard rule: the artwork itself is never modified. Everything here is scale,
- * position, masking, lighting and interaction layered *around* `fondo.png` —
+ * position, masking, lighting and interaction layered around the panorama —
  * the illustration stays 100% recognisable.
  */
 
@@ -98,12 +98,8 @@
 }
 
 /*
- * The environment the island sits in. Only the letterbox edges of the
- * artwork actually reveal it today: `fondo.png` ships as 24-bit RGB with
- * the black baked in and no alpha channel, so the interior stays opaque no
- * matter what is painted behind it. Re-exporting the map with a real alpha
- * channel is what makes this gradient do its job — until then it at least
- * stops the frame from being one more slab of black.
+ * The full panorama now fills the frame; this colour remains as a graceful
+ * fallback while the WebP loads.
  */
 .frame {
   position: relative;
@@ -261,19 +257,24 @@
 .hotspotLabel {
   position: absolute;
   left: 50%;
-  bottom: 130%;
-  padding: 4px 9px;
+  bottom: 145%;
+  padding: 7px 12px;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: clamp(8px, 0.85vw, 12px);
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--text);
-  background: rgb(12 25 35 / 88%);
-  border: 1px solid rgb(230 201 149 / 30%);
-  border-radius: 6px;
-  opacity: 0;
-  transform: translate(-50%, 6px);
+  color: #fff4d4;
+  text-shadow: 0 1px 0 #3a2108;
+  background: linear-gradient(180deg, #87551f 0%, #57300d 100%);
+  border: 2px solid #2d1907;
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 230 169 / 38%),
+    0 4px 9px rgb(0 0 0 / 52%);
+  opacity: 1;
+  transform: translate(-50%, 0);
   pointer-events: none;
   transition:
     opacity var(--micro) var(--ease),
@@ -287,6 +288,19 @@
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+.hotspotLabel::before,
+.hotspotLabel::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  width: 3px;
+  height: 10px;
+  background: #3b2109;
+}
+
+.hotspotLabel::before { left: 22%; }
+.hotspotLabel::after { right: 22%; }
 
 /* --- The case's position ----------------------------------------------- */
 

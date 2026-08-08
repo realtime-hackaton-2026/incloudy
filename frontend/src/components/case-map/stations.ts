@@ -9,11 +9,7 @@
  * redrawn, these labels move with it.
  */
 
-import acompanarScene from '../../assets/missions/acompanar.webp'
-import actuarScene from '../../assets/missions/actuar.webp'
-import compartirScene from '../../assets/missions/compartir.webp'
-import explorarScene from '../../assets/missions/explorar.webp'
-import orientarScene from '../../assets/missions/orientar.webp'
+import panorama from '../../assets/images/mapa-completo.webp'
 
 /**
  * The five sequential stages a case moves through. One path, not a map to roam.
@@ -39,51 +35,58 @@ export interface Station {
   y: number
   /** Close-up illustration of the same place. */
   scene: string
+  /** Recorte del panorama que identifica visualmente esta estación. */
+  scenePosition: string
 }
 
-/** Intrinsic size of fondo.png, used to hold the frame's shape while the art loads. */
-export const MAP_ASPECT_RATIO = '1672 / 941'
+/** Proporción del panorama WebP, usada para reservar el espacio antes de cargarlo. */
+export const MAP_ASPECT_RATIO = '1365 / 768'
 
 export const STATIONS: readonly Station[] = [
   {
     stage: 'explorar',
     label: 'Explorar',
     place: 'en la selva',
-    x: 21.8,
-    y: 42.8,
-    scene: explorarScene,
+    x: 22,
+    y: 34,
+    scene: panorama,
+    scenePosition: 'left center',
   },
   {
     stage: 'orientar',
     label: 'Orientar',
     place: 'en la montaña',
-    x: 49.8,
-    y: 26.2,
-    scene: orientarScene,
+    x: 50,
+    y: 24,
+    scene: panorama,
+    scenePosition: '50% 18%',
   },
   {
     stage: 'actuar',
     label: 'Actuar',
     place: 'en la escuela',
-    x: 79.1,
-    y: 44.0,
-    scene: actuarScene,
+    x: 81,
+    y: 31,
+    scene: panorama,
+    scenePosition: 'right top',
   },
   {
     stage: 'acompanar',
     label: 'Acompañar',
     place: 'en el bosque',
-    x: 17.5,
-    y: 70.9,
-    scene: acompanarScene,
+    x: 20,
+    y: 67,
+    scene: panorama,
+    scenePosition: 'left bottom',
   },
   {
     stage: 'compartir',
     label: 'Compartir',
     place: 'en la aldea',
-    x: 63.4,
-    y: 70.9,
-    scene: compartirScene,
+    x: 75,
+    y: 68,
+    scene: panorama,
+    scenePosition: 'right bottom',
   },
 ]
 

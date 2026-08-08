@@ -360,6 +360,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <CaseMap
           stage={stage}
           wide
+          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
           onLockedAttempt={(blocked, mustFinishFirst) =>
             setLockedNotice(lockedStation(blocked.label, mustFinishFirst?.label ?? null))
           }
@@ -475,7 +476,11 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
 
         <OwlTip tipId="map-guide" />
 
-        <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
+        <CaseMap
+          stage={stage}
+          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
+          renderStationPanel={template ? renderStationPanel : undefined}
+        />
 
         {renderUnexpectedEvents()}
 

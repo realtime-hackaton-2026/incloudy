@@ -17,7 +17,7 @@ import { MAP_ASPECT_RATIO, STATIONS, stationFor, stationIndex } from './stations
 import type { CaseStage, Station } from './stations'
 
 /** How far the camera pushes in on a selected station. */
-const CAMERA_ZOOM = 1.08
+const CAMERA_ZOOM = 1.28
 
 /**
  * Where a station stands relative to the case's current position.
@@ -55,6 +55,8 @@ export interface CaseMapProps {
    * a bare "bloqueada".
    */
   onLockedAttempt?: (station: Station, mustFinishFirst: Station | null) => void
+  /** Estaciones con una respuesta guardada, aunque luego se hayan editado. */
+  completedStages?: readonly CaseStage[]
   className?: string
   /**
    * Lets the map break out of the app's reading-width shell. The map is the
@@ -78,6 +80,7 @@ export function CaseMap({
   highlightStage = null,
   onHoverStage,
   onLockedAttempt,
+  completedStages = [],
   className,
   wide = false,
   renderStationPanel,
@@ -93,6 +96,12 @@ export function CaseMap({
   // A custom panel makes the map interactive on its own — a preview HUD
   // with only "Explorar →" still needs onSelectStage to mean anything.
   const interactive = Boolean(onSelectStage) || Boolean(renderStationPanel)
+  const completed = new Set(completedStages)
+
+  function stateFor(next: CaseStage): StationState {
+    if (completed.has(next)) return 'completed'
+    return stationStateAt(stationIndex(next), activeIndex)
+  }
 
   // With the origin pinned to the station, that point is the one thing the
   // zoom leaves untouched — so the HUD below can use the same coordinates.
@@ -113,7 +122,7 @@ export function CaseMap({
     // A locked station has nothing to open: the server would reject the
     // answer with a 409 anyway, so the map refuses the click here rather
     // than presenting a form that cannot be submitted.
-    if (next !== null && stationStateAt(stationIndex(next), activeIndex) === 'locked') return
+    if (next !== null && stateFor(next) === 'locked') return
     setFocused(next)
     onHoverStage?.(next)
   }
@@ -168,15 +177,12 @@ export function CaseMap({
             // Three states, not two. `reached` used to cover the current
             // station as well as the finished ones, so "where I am" and
             // "where I have been" looked identical on the map.
-            const state = stationStateAt(index, activeIndex)
+            const state = stateFor(station.stage)
             const locked = state === 'locked'
             const isActive = station.stage === stage
             const classes = [styles.hotspot]
             if (state === 'completed') classes.push(styles.completed)
             if (state === 'available') classes.push(styles.available)
-            // The pin already marks the current station; a bead there would
-            // collide with it.
-            if (isActive) classes.push(styles.underPin)
             if (locked) classes.push(styles.hotspotLocked)
             if (lit?.stage === station.stage) classes.push(styles.hotspotHighlighted)
 
@@ -213,7 +219,12 @@ export function CaseMap({
                 aria-label={`${station.label} ${station.place}${STATE_SUFFIX[state]}`}
                 data-station-state={state}
               >
-                <span className={styles.hotspotLabel}>{station.label}</span>
+                <span className={styles.hotspotLabel}>
+                  {station.label}
+                  <small className={styles.hotspotStatus}>
+                    {state === 'completed' ? '✓ Completada · editar' : state === 'locked' ? 'Bloqueada' : 'Abrir estación'}
+                  </small>
+                </span>
               </button>
             )
           })}

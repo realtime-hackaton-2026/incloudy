@@ -19,7 +19,6 @@ import { DebateRoom } from '../../debate'
 import { AvatarPicker, useAvatar } from '../../avatar'
 import { OwlSays, OwlTip, journeyProgress, lockedStation } from '../../guide'
 import type { Guidance } from '../../guide'
-import { OwlDoor } from '../../owl'
 import { XpCounter } from '../../reward'
 import { ConfirmDialog } from '../confirm-dialog'
 import { StationCard } from './JourneyStations'
@@ -405,16 +404,6 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           }
           renderStationPanel={template ? renderStationPanel : undefined}
         />
-        <OwlDoor
-          token={token}
-          caseId={caseId}
-          joinCode={current.joinCode}
-          studentName={current.alumno.nombre}
-          studentAge={current.alumno.edad}
-          studentCourse={current.alumno.curso}
-          studentDescription={current.alumno.descripcion}
-          stage={stage}
-        />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">
@@ -638,6 +627,13 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Colaboradores</h3>
           <ul className={styles.collaborators}>
+            <li className={`${styles.collaborator} ${styles.caseOwner}`}>
+              <div className={styles.collaboratorIdentity}>
+                <strong>Docente · {participantById.get(current.profesorId)?.nombre ?? 'Propietario'}</strong>
+                <span>{participantById.get(current.profesorId)?.email ?? 'Correo no disponible'}</span>
+                <small>Creó este caso · Propietario</small>
+              </div>
+            </li>
             {current.colaboradores.map((collaborator) => (
               <li key={collaborator.userId} className={styles.collaborator}>
                 <div className={styles.collaboratorIdentity}>
@@ -653,9 +649,6 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
                 </button>
               </li>
             ))}
-            {current.colaboradores.length === 0 && (
-              <li className={styles.state}>Nadie más tiene acceso todavía.</li>
-            )}
           </ul>
           <form className={styles.inviteForm} onSubmit={handleInvite}>
             <input

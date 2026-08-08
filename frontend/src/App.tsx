@@ -13,6 +13,8 @@ import { Registro } from './components/registro'
 import { Scene } from './components/scene'
 import { Dashboard } from './dashboard/Dashboard'
 import type { SceneVariant } from './components/scene'
+import { toCaseStage } from './components/case-map'
+import { OwlDoor } from './owl'
 
 type AuthScreenName = 'login' | 'registro'
 type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' } | { name: 'dashboard' }
@@ -199,7 +201,44 @@ function App() {
         {view.name === 'map-demo' && <MapOverview token={session.token} ownerId={session.userId} />}
         {view.name === 'dashboard' && <Dashboard token={session.token} />}
       </main>
+
+      {view.name !== 'dashboard' && (
+        <PersistentRoomAccess
+          token={session.token}
+          currentCaseId={view.name === 'case' ? view.caseId : null}
+        />
+      )}
     </>
+  )
+}
+
+function PersistentRoomAccess({ token, currentCaseId }: { token: string; currentCaseId: string | null }) {
+  const { cases, status } = useCases(token)
+
+  useEffect(() => {
+    if (!currentCaseId) return
+    localStorage.setItem('burix-active-room-case', currentCaseId)
+  }, [currentCaseId])
+
+  if (status === 'loading' || cases.length === 0) return null
+
+  const activeCaseId = currentCaseId ?? localStorage.getItem('burix-active-room-case')
+  const current = cases.find((item) => item.id === currentCaseId)
+  const remembered = cases.find((item) => item.id === activeCaseId)
+  const roomCase = current ?? remembered ?? cases.find((item) => item.burixShared) ?? cases[0]
+
+  return (
+    <OwlDoor
+      key={roomCase.id}
+      token={token}
+      caseId={roomCase.id}
+      joinCode={roomCase.joinCode}
+      studentName={roomCase.alumno.nombre || 'Alumno sin nombre'}
+      studentAge={roomCase.alumno.edad}
+      studentCourse={roomCase.alumno.curso}
+      studentDescription={roomCase.alumno.descripcion}
+      stage={toCaseStage(roomCase.estadoInteractivo.estacionActual)}
+    />
   )
 }
 

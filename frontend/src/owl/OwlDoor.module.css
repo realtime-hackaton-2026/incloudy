@@ -641,12 +641,12 @@
   gap: 3px 10px;
   max-width: 100%;
   color: var(--text-soft);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .caseStudentDetails span {
   color: var(--parchment-hi);
-  font: 700 11px/1.35 var(--label);
+  font: 700 13px/1.4 var(--label);
 }
 
 .caseStudentDetails p {
@@ -654,7 +654,8 @@
   flex-basis: 100%;
   margin: 2px 0 0;
   overflow: hidden;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;

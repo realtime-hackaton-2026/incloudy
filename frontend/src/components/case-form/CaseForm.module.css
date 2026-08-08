@@ -557,6 +557,11 @@
   white-space: nowrap;
 }
 
+.caseOwner {
+  border: 1px solid color-mix(in srgb, var(--parchment) 32%, transparent);
+  background: color-mix(in srgb, var(--parchment) 8%, transparent);
+}
+
 .collaboratorIdentity span {
   color: var(--text-soft);
   font: 13px/1.35 var(--sans);

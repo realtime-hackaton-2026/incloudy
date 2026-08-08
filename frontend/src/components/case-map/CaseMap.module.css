@@ -28,6 +28,11 @@
   margin-left: 50%;
   margin-right: 0;
   transform: translateX(-50%);
+  /* Night air around the world: teal sky, forest middle, dark teal low —
+     the flat slab is only a fallback colour, never the mood. */
+  background:
+    radial-gradient(120% 70% at 50% 12%, rgb(114 188 208 / 16%), transparent 65%),
+    linear-gradient(180deg, #10252a 0%, #193f34 52%, #0f2122 100%);
 }
 
 @media (max-width: 900px) {
@@ -142,8 +147,8 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  border: 1px solid rgb(246 208 128 / 25%);
   background: radial-gradient(
     circle at 50% 30%,
     #315847 0%,
@@ -152,6 +157,7 @@
   );
   box-shadow:
     0 40px 80px -34px rgb(8 17 24 / 92%),
+    0 0 60px -16px rgb(114 188 208 / 22%),
     inset 0 1px 0 rgb(233 240 232 / 7%);
 }
 
@@ -833,7 +839,7 @@
 
   color: var(--text);
   background: rgb(245 240 218 / 96%);
-  border: 2px solid rgb(26 48 63 / 88%);
+  border: 2px solid var(--clay);
   box-shadow: 0 28px 70px rgb(0 0 0 / 62%);
 }
 

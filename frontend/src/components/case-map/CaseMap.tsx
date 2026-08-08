@@ -231,7 +231,7 @@ export function CaseMap({
 
           <div
             className={styles.marker}
-            style={{ left: `${active.x}%`, top: `${active.y}%` }}
+            style={{ left: `${active.x}%`, top: `${active.y - 5.2}%` }}
             aria-hidden="true"
           >
             <svg className={styles.pin} viewBox="0 0 24 32" fill="none">

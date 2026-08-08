@@ -212,6 +212,17 @@
   animation: availablePulse 2600ms ease-in-out infinite;
 }
 
+.available .hotspotLabel {
+  color: #2b1b06;
+  text-shadow: 0 1px 0 rgb(255 244 204 / 65%);
+  background: linear-gradient(180deg, #f0c86a 0%, #c9902c 100%);
+  border-color: #6c4310;
+}
+
+.available .hotspotStatus {
+  color: #3d2608;
+}
+
 @keyframes availablePulse {
   0%,
   100% {
@@ -235,6 +246,17 @@
   background: rgb(10 20 28 / 28%);
 }
 
+.hotspotLocked .hotspotLabel {
+  color: #dfd2ba;
+  background: linear-gradient(180deg, #67543c 0%, #423321 100%);
+  border-color: #2c2115;
+  box-shadow: 0 3px 7px rgb(0 0 0 / 35%);
+}
+
+.hotspotLocked .hotspotStatus {
+  color: #c5b79f;
+}
+
 .hotspotLocked:hover,
 .hotspotLocked:focus-visible {
   opacity: 0.8;
@@ -256,7 +278,7 @@
 .hotspotLabel {
   position: absolute;
   left: 50%;
-  bottom: 145%;
+  top: 132%;
   min-width: max-content;
   padding: 9px 14px;
   font-family: var(--label);
@@ -312,7 +334,7 @@
 .hotspotLabel::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   width: 3px;
   height: 10px;
   background: #3b2109;
@@ -325,7 +347,7 @@
 
 .marker {
   position: absolute;
-  transform: translate(-50%, -108%);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   color: var(--parchment);
   transition:
@@ -335,7 +357,7 @@
 
 .pin {
   display: block;
-  width: clamp(26px, 3.4vw, 44px);
+  width: clamp(26px, 3vw, 42px);
   height: auto;
   filter: drop-shadow(0 4px 8px rgb(0 0 0 / 75%));
 }
@@ -807,7 +829,7 @@
   }
 
   .hotspotLabel {
-    bottom: 135%;
+    top: 128%;
     max-width: 116px;
     min-width: 0;
     padding: 7px 9px;

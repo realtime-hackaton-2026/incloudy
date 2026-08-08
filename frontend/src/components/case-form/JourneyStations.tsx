@@ -1,15 +1,15 @@
 /*
- * frontend/src/components/case-form/JourneyStations.tsx // one journey
- * station's real form — options, a comment, and its own save. Station order
- * isn't enforced here; the server is authoritative on unlocking and already
- * returns a specific, Spanish, show-as-is message on a locked one, which
- * this renders as a themed warning rather than a plain error line.
+ * frontend/src/components/case-form/JourneyStations.tsx
+ * The five BRÚJULA stations share one answer shell, but each station exposes
+ * the narrative interaction attached to its choices: evidence and contrasts,
+ * voices, intervention details, follow-up indicators, and stakeholder
+ * reactions. The source content lives in the JourneyTemplate.
  */
 
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../lib/http'
-import type { QuestionType, TemplateStation } from '../../journeys'
+import type { QuestionType, StationOption, TemplateStation } from '../../journeys'
 import type { StationAnswer } from '../../cases'
 import styles from './CaseForm.module.css'
 
@@ -21,6 +21,135 @@ export interface StationCardProps {
     orden: number,
     input: { opcionesSeleccionadas: string[]; comentario?: string },
   ) => Promise<void>
+}
+
+function optionContent(option: StationOption, key: string): unknown {
+  return option.contenido?.[key]
+}
+
+function selectedOptions(station: TemplateStation, selected: string[]) {
+  return station.opciones.filter((option) => selected.includes(option.id))
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+}
+
+function renderInteraction(station: TemplateStation, selected: string[]): ReactNode {
+  const picked = selectedOptions(station, selected)
+
+  if (station.id === 'explorar') {
+    return (
+      <div className={styles.interactionStack}>
+        {picked.map((option) => {
+          const evidence = optionContent(option, 'evidencia')
+          const contrast = optionContent(option, 'lectura_alternativa')
+          return (
+            <article key={option.id} className={styles.interactionCard}>
+              <strong>{option.icono} {option.texto}</strong>
+              {typeof evidence === 'string' && <p>{evidence}</p>}
+              {typeof contrast === 'string' && (
+                <p className={styles.contrast}>🔶 Otra lectura posible: {contrast}</p>
+              )}
+              <span className={styles.cost}>−{String(optionContent(option, 'coste_dias') ?? 0)} día</span>
+            </article>
+          )
+        })}
+      </div>
+    )
+  }
+
+  if (station.id === 'orientar') {
+    return (
+      <div className={styles.interactionStack}>
+        {picked.map((option) => {
+          const voices = optionContent(option, 'voces')
+          return (
+            <article key={option.id} className={styles.interactionCard}>
+              <strong>{option.icono} {option.texto}</strong>
+              {Array.isArray(voices) && voices.map((voice, index) => {
+                const item = asRecord(voice)
+                return (
+                  <p key={index} className={styles.voice}>
+                    <b>{String(item.autor ?? 'Voz')}:</b> “{String(item.texto ?? '')}”
+                  </p>
+                )
+              })}
+            </article>
+          )
+        })}
+        {!picked.length && (
+          <p className={styles.interactionHint}>
+            Las voces asociadas aparecerán cuando sostengas una hipótesis.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (station.id === 'actuar') {
+    return (
+      <div className={styles.interactionStack}>
+        {picked.map((option) => (
+          <article key={option.id} className={styles.interactionCard}>
+            <strong>{option.icono} {option.texto}</strong>
+            {typeof optionContent(option, 'descripcion') === 'string' && (
+              <p>{String(optionContent(option, 'descripcion'))}</p>
+            )}
+            {typeof optionContent(option, 'alineada_con') === 'string' && (
+              <p className={styles.alignment}>
+                🎯 Alineada con: {String(optionContent(option, 'alineada_con'))}
+              </p>
+            )}
+            <span className={styles.cost}>−{String(optionContent(option, 'coste_dias') ?? 0)} día</span>
+          </article>
+        ))}
+      </div>
+    )
+  }
+
+  if (station.id === 'acompanar') {
+    const indicators = station.contenido?.indicadores
+    return (
+      <div className={styles.interactionStack}>
+        {Array.isArray(indicators) && (
+          <div className={styles.indicators}>
+            <span>Indicadores</span>
+            <div>
+              {indicators.map((indicator) => <b key={String(indicator)}>{String(indicator)}</b>)}
+            </div>
+          </div>
+        )}
+        {picked.map((option) => (
+          <article key={option.id} className={styles.interactionCard}>
+            <strong>{option.icono} {option.texto}</strong>
+            <p>Impacto previsto en confianza: {String(optionContent(option, 'confianza') ?? 0)}</p>
+          </article>
+        ))}
+      </div>
+    )
+  }
+
+  if (station.id === 'compartir') {
+    return (
+      <div className={styles.interactionStack}>
+        {picked.map((option) => (
+          <article key={option.id} className={styles.interactionCard}>
+            <strong>{option.icono} {option.texto}</strong>
+            <p>La reacción dependerá de la coherencia entre tu hipótesis, la intervención y los datos.</p>
+            {typeof optionContent(option, 'reaccion_coherente') === 'string' && (
+              <p className={styles.reaction}>✓ {String(optionContent(option, 'reaccion_coherente'))}</p>
+            )}
+            {typeof optionContent(option, 'reaccion_incoherente') === 'string' && (
+              <p className={styles.contrast}>↔ {String(optionContent(option, 'reaccion_incoherente'))}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    )
+  }
+
+  return null
 }
 
 export function StationCard({ station, answer, editable, onAnswer }: StationCardProps) {
@@ -55,6 +184,7 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
   }
 
   const done = answer?.completado ?? false
+  const interaction = renderInteraction(station, selected)
 
   return (
     <form
@@ -64,19 +194,19 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
       onSubmit={handleSubmit}
     >
       <div className={styles.stationCardHeader}>
-        <span className={styles.stationCardBadge}>
-          {String(station.orden).padStart(2, '0')}
-        </span>
+        <span className={styles.stationCardBadge}>{String(station.orden).padStart(2, '0')}</span>
         <div>
           <h4 className={styles.stationCardTitle}>{station.titulo}</h4>
-          {station.subtitulo && (
-            <p className={styles.stationCardSubtitle}>{station.subtitulo}</p>
-          )}
+          {station.subtitulo && <p className={styles.stationCardSubtitle}>{station.subtitulo}</p>}
         </div>
         {done && <span className={styles.stationCardDone}>Completada</span>}
       </div>
 
       {station.descripcion && <p className={styles.stationCardBody}>{station.descripcion}</p>}
+
+      {typeof station.contenido?.introduccion === 'string' && (
+        <p className={styles.stationIntro}>{station.contenido.introduccion}</p>
+      )}
 
       <div
         className={styles.stationOptions}
@@ -84,7 +214,7 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
         aria-label={station.titulo}
       >
         {station.opciones.map((option) => (
-          <label key={option.id} className={styles.stationOption}>
+          <label key={option.id} className={`${styles.stationOption} ${selected.includes(option.id) ? styles.stationOptionSelected : ''}`}>
             <input
               type={station.tipo === 'multiple' ? 'checkbox' : 'radio'}
               name={`station-${station.id}`}
@@ -92,10 +222,15 @@ export function StationCard({ station, answer, editable, onAnswer }: StationCard
               disabled={!editable}
               onChange={() => toggle(option.id)}
             />
-            <span>{option.texto}</span>
+            <span>
+              {option.icono && <span className={styles.optionIcon}>{option.icono}</span>}
+              {option.texto}
+            </span>
           </label>
         ))}
       </div>
+
+      {interaction}
 
       <label className={styles.field}>
         Comentario (opcional)

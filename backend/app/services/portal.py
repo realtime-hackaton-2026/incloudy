@@ -18,8 +18,19 @@ def case_channel_id(case: Case) -> str:
 
 
 def is_portal_configured() -> bool:
-    keys = (settings.portal_secret_key, settings.portal_publishable_key)
-    return all(keys) and not any("reemplaza" in key.lower() for key in keys)
+    secret = settings.portal_secret_key.strip()
+    publishable = settings.portal_publishable_key.strip()
+    # Portal uses sk_* server credentials and pk_* browser credentials.
+    # Rejecting a swapped/placeholder key here turns a silent realtime failure
+    # into a useful 503 in the UI.
+    return (
+        secret.startswith("sk_")
+        and publishable.startswith("pk_")
+        and "reemplaza" not in secret.lower()
+        and "tu_clave" not in secret.lower()
+        and "reemplaza" not in publishable.lower()
+        and "tu_clave" not in publishable.lower()
+    )
 
 
 def ensure_portal_configured() -> None:

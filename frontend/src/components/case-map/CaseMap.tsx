@@ -123,12 +123,14 @@ export function CaseMap({
 
           {STATIONS.map((station, index) => {
             const reached = index <= activeIndex
+            const locked = index > activeIndex
             const isActive = station.stage === stage
             const classes = [styles.hotspot]
             if (reached) classes.push(styles.reached)
             // The pin already marks the current station; a bead there would
             // collide with it.
             if (isActive) classes.push(styles.underPin)
+            if (locked) classes.push(styles.hotspotLocked)
             if (lit?.stage === station.stage) classes.push(styles.hotspotHighlighted)
 
             return (
@@ -144,7 +146,7 @@ export function CaseMap({
                 // lettering.
                 style={{ left: `${station.x}%`, top: `${station.y - 5.2}%` }}
                 aria-current={isActive ? 'step' : undefined}
-                aria-label={`${station.label} ${station.place}`}
+                aria-label={`${station.label} ${station.place}${locked ? ' · bloqueada' : ''}`}
               >
                 <span className={styles.hotspotLabel}>{station.label}</span>
               </button>

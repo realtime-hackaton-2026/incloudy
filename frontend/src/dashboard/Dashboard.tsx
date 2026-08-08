@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useCases } from '../cases'
 import type { Case } from '../cases'
-import { CaseRoom } from '../portal'
+import { OwlDoor } from '../owl'
+import { toCaseStage } from '../components/case-map'
 import { listCaseComments, listCaseEvents } from './api'
 import type { CaseEvent, PortalComment } from './api'
 import styles from './Dashboard.module.css'
@@ -219,6 +220,9 @@ function DashboardCase({ token, item, activity, onLiveComment }: DashboardCasePr
             </div>
           ))}
         </div>
+        <button type="button" className="btn-secondary" onClick={() => { location.hash = `#/caso/${item.id}` }}>
+          Abrir recorrido e interactuar con la estación
+        </button>
       </section>
 
       <div className={styles.signalGrid}>
@@ -253,19 +257,20 @@ function DashboardCase({ token, item, activity, onLiveComment }: DashboardCasePr
         <div className={styles.chatIntro}>
           <p className="eyebrow">Colaboración en tiempo real</p>
           <h3>Sala del equipo</h3>
-          <p>La conversación vive junto al recorrido. Los comentarios también quedan registrados como actividad del caso.</p>
+          <p>Abre al búho para entrar en la sala privada del caso. Desde ahí puedes invitar a otra persona y conversar en tiempo real.</p>
         </div>
-        <CaseRoom
+        <OwlDoor
           token={token}
           caseId={item.id}
+          stage={toCaseStage(item.estadoInteractivo.estacionActual)}
           onMessage={(message) => {
             onLiveComment({
               id: message.id,
               messageId: message.id,
               caseId: item.id,
-              authorId: message.senderId,
-              content: { body: message.content },
-              portalTimestamp: message.timestamp,
+              authorId: message.sender.id,
+              content: { body: message.content.body },
+              portalTimestamp: new Date(message.timestamp).toISOString(),
             })
           }}
         />

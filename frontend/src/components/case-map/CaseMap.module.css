@@ -161,6 +161,20 @@
   border-color: rgb(241 216 166 / 85%);
 }
 
+.hotspotLocked {
+  opacity: 0.48;
+  border-style: dashed;
+  background: rgb(8 10 14 / 28%);
+}
+
+.hotspotLocked:hover,
+.hotspotLocked:focus-visible {
+  opacity: 0.8;
+  border-color: var(--muted);
+  background: rgb(8 10 14 / 52%);
+  box-shadow: none;
+}
+
 /* The current station: the pin stands here, so the bead gets out of the way.
    `animation: none` matters — the reveal above fills to opacity 1 and an
    animated value outranks this declaration, which would bring the bead back

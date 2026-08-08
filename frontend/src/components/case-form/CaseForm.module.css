@@ -462,3 +462,104 @@
     transform: none;
   }
 }
+
+
+/* Narrative interaction layer for the five BRÚJULA stations. */
+.stationIntro {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--gold, #e6c995);
+  color: var(--text-soft);
+  background: rgb(255 255 255 / 3%);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.stationOptionSelected {
+  border-color: rgb(230 201 149 / 45%);
+  background: rgb(230 201 149 / 8%);
+}
+
+.optionIcon {
+  margin-right: 7px;
+}
+
+.interactionStack {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.interactionCard {
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: rgb(0 0 0 / 8%);
+}
+
+.interactionCard p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.contrast {
+  color: #d8ad68 !important;
+}
+
+.reaction {
+  color: #a8d7b0 !important;
+}
+
+.alignment {
+  color: #d9c58e !important;
+}
+
+.voice {
+  font-size: 12px;
+}
+
+.cost {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.interactionHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.indicators {
+  padding: 9px 11px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 9px;
+}
+
+.indicators > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.indicators > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.indicators b {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 600;
+}

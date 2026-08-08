@@ -30,8 +30,8 @@
 
 .owl {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
 }
 
 .label {
@@ -76,5 +76,71 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.inviteBlock {
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 2%);
+}
+
+.inviteToggle {
+  padding: 0;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.inviteForm {
+  margin-top: 10px;
+}
+
+.inviteHint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.inviteRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 7px;
+}
+
+.inviteInput,
+.inviteSelect {
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text);
+  background: rgb(9 12 17 / 70%);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+.inviteSuccess,
+.inviteError {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.inviteSuccess {
+  color: var(--success, #7ccf9a);
+}
+
+.inviteError {
+  color: var(--danger);
+}
+
+@media (max-width: 700px) {
+  .inviteRow {
+    grid-template-columns: 1fr;
   }
 }

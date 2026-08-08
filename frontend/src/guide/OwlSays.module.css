@@ -1,0 +1,85 @@
+/*
+ * frontend/src/guide/OwlSays.module.css // the owl speaking in the moment,
+ * as opposed to OwlTip's one-off dismissible lesson.
+ */
+
+.says {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 5%);
+  animation: saysIn var(--small) var(--ease) both;
+}
+
+@keyframes saysIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mark {
+  flex: none;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* OwlSprite is an SVG: font-size does not constrain its intrinsic canvas. */
+.says svg.mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.bubble {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.dismiss {
+  margin-left: auto;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dismiss:hover {
+  color: var(--text);
+}
+
+/* Each role reads differently before a word is read. */
+.guide {
+  border-color: rgb(240 200 106 / 32%);
+}
+
+.celebrate {
+  border-color: rgb(240 200 106 / 45%);
+  background: rgb(240 200 106 / 9%);
+}
+
+.collaborate {
+  border-color: rgb(75 145 184 / 38%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .says {
+    animation: none;
+  }
+}

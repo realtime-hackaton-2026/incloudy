@@ -3,7 +3,7 @@
  * station states, camera, HUD and the wide-route escape from the app shell.
  *
  * Hard rule: the artwork itself is never modified. Everything here is scale,
- * position, masking, lighting and interaction layered *around* `fondo.png` —
+ * position, masking, lighting and interaction layered around the panorama —
  * the illustration stays 100% recognisable.
  */
 
@@ -21,12 +21,13 @@
  * way this trick goes wrong.
  */
 .wide {
-  width: min(100vw - var(--scrollbar, 0px), 1560px);
+  width: min(calc(100dvw - 32px), 1560px);
   max-width: none;
   margin-inline: auto;
   /* Pull back out of `.app`'s side padding, but never past the viewport. */
-  margin-left: calc(50% - min(50vw - var(--scrollbar, 0px) / 2, 780px));
+  margin-left: 50%;
   margin-right: 0;
+  transform: translateX(-50%);
 }
 
 @media (max-width: 900px) {
@@ -34,6 +35,7 @@
   .wide {
     width: 100%;
     margin-left: 0;
+    transform: none;
   }
 }
 
@@ -96,12 +98,8 @@
 }
 
 /*
- * The environment the island sits in. Only the letterbox edges of the
- * artwork actually reveal it today: `fondo.png` ships as 24-bit RGB with
- * the black baked in and no alpha channel, so the interior stays opaque no
- * matter what is painted behind it. Re-exporting the map with a real alpha
- * channel is what makes this gradient do its job — until then it at least
- * stops the frame from being one more slab of black.
+ * The full panorama now fills the frame; this colour remains as a graceful
+ * fallback while the WebP loads.
  */
 .frame {
   position: relative;
@@ -162,8 +160,7 @@
 .hotspot {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 3.4%;
-  min-width: 20px;
+  width: clamp(40px, 4.8%, 68px);
   aspect-ratio: 1;
   padding: 0;
   border: 2px solid rgb(255 255 255 / 55%);
@@ -259,23 +256,48 @@
 .hotspotLabel {
   position: absolute;
   left: 50%;
-  bottom: 130%;
-  padding: 4px 9px;
+  bottom: 145%;
+  min-width: max-content;
+  padding: 9px 14px;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: clamp(8px, 0.85vw, 12px);
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--text);
-  background: rgb(12 25 35 / 88%);
-  border: 1px solid rgb(230 201 149 / 30%);
-  border-radius: 6px;
-  opacity: 0;
-  transform: translate(-50%, 6px);
+  color: #fff4d4;
+  text-shadow: 0 1px 0 #3a2108;
+  background: linear-gradient(180deg, #87551f 0%, #57300d 100%);
+  border: 2px solid #2d1907;
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 230 169 / 38%),
+    0 4px 9px rgb(0 0 0 / 52%);
+  opacity: 1;
+  transform: translate(-50%, 0);
   pointer-events: none;
   transition:
     opacity var(--micro) var(--ease),
     transform var(--micro) var(--ease);
+}
+
+.hotspotStatus {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--label);
+  font-size: .72em;
+  font-weight: 700;
+  letter-spacing: .05em;
+  color: #f8d994;
+}
+
+.completed .hotspotLabel {
+  background: linear-gradient(180deg, #376f8f 0%, #20445f 100%);
+  border-color: #142f43;
+}
+
+.completed .hotspotStatus {
+  color: #d9f3ff;
 }
 
 /* The label lifts as it appears. */
@@ -285,6 +307,19 @@
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+.hotspotLabel::before,
+.hotspotLabel::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  width: 3px;
+  height: 10px;
+  background: #3b2109;
+}
+
+.hotspotLabel::before { left: 22%; }
+.hotspotLabel::after { right: 22%; }
 
 /* --- The case's position ----------------------------------------------- */
 
@@ -616,7 +651,10 @@
   position: absolute;
   inset: 0;
   z-index: 20;
-  overflow: auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(8px, 2.2vw, 24px);
   background: var(--bg);
   animation: missionIn 220ms var(--ease) both;
 }
@@ -630,7 +668,8 @@
   position: absolute;
   inset: 0;
   background-position: center;
-  background-size: cover;
+  background-size: 170% auto;
+  background-repeat: no-repeat;
   image-rendering: pixelated;
   transform: scale(1.015);
 }
@@ -662,10 +701,13 @@
 .missionPanel {
   position: relative;
   z-index: 1;
-  width: min(720px, calc(100% - 36px));
-  max-height: calc(100% - 36px);
-  overflow-y: auto;
-  margin: 18px auto;
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  height: min(760px, 100%);
+  max-height: 100%;
+  overflow: hidden;
+  margin: 0;
   padding: 16px;
 
   --text: #201a10;
@@ -726,7 +768,17 @@
 }
 
 .missionBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
   color: #171b20;
+}
+
+.missionBody::-webkit-scrollbar {
+  display: none;
 }
 
 /* Form controls (the "Comentario" textarea) carry hard-coded dark
@@ -750,6 +802,23 @@
 }
 
 @media (max-width: 720px) {
+  .hotspot {
+    width: clamp(42px, 9vw, 56px);
+  }
+
+  .hotspotLabel {
+    bottom: 135%;
+    max-width: 116px;
+    min-width: 0;
+    padding: 7px 9px;
+    font-size: 8px;
+    white-space: normal;
+  }
+
+  .missionBackdrop {
+    background-size: auto 125%;
+  }
+
   .missionPanel {
     width: calc(100% - 20px);
     max-height: calc(100% - 20px);

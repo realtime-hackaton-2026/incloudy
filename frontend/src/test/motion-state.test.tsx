@@ -236,7 +236,7 @@ describe('Double interaction does not corrupt state', () => {
 
     for (const name of hotspots) {
       const button = screen.getByRole('button', { name })
-      if (!(button as HTMLButtonElement).disabled) await user.click(button)
+      if (button.getAttribute('aria-disabled') !== 'true') await user.click(button)
       const focused = screen.getByTestId('case-map').getAttribute('data-focused-station')
       expect(STATIONS.filter((s) => s.stage === focused).length).toBeLessThanOrEqual(1)
     }
@@ -250,7 +250,9 @@ describe('Double interaction does not corrupt state', () => {
     render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
 
     const locked = screen.getByRole('button', { name: /compartir en la aldea/i })
-    expect(locked).toBeDisabled()
+    // aria-disabled, not disabled: the station must still be reachable so it
+    // can explain itself when tapped. Refusing to open is the handler's job.
+    expect(locked).toHaveAttribute('aria-disabled', 'true')
     expect(locked).toHaveAttribute('data-station-state', 'locked')
 
     await user.click(locked)

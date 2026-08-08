@@ -1,7 +1,10 @@
 /*
- * frontend/src/components/case-form/JourneyStations.tsx
- * The five BRÚJULA stations share one answer shell, but each station exposes
- * the narrative interaction attached to its choices: evidence and contrasts,
+ * frontend/src/components/case-form/JourneyStations.tsx // a station as a
+ * quest: the question first, then the consequence of the choice — never the
+ * whole form at once.
+ *
+ * The five BRÚJULA stations share one answer shell, but each exposes the
+ * narrative interaction attached to its choices: evidence and contrasts,
  * voices, intervention details, follow-up indicators, and stakeholder
  * reactions. The source content lives in the JourneyTemplate.
  */
@@ -214,11 +217,22 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const done = answer?.completado ?? false
   const interaction = renderInteraction(station, selected, student)
 
+  /*
+   * §8 — one decision at a time.
+   *
+   * A station opens as a question, not as a form to fill in: the consequence
+   * of the choice, the notebook comment and the way forward only appear once
+   * something has been chosen. Optional stations and already-answered ones
+   * skip the gate, since there is no decision left to wait for.
+   */
+  const revealFollowUp = selected.length > 0 || !station.obligatoria || done
+
   return (
     <form
       className={styles.stationCard}
       data-testid={`station-${station.id}`}
       data-state={done ? 'completed' : 'pending'}
+      data-step={revealFollowUp ? 'answering' : 'choosing'}
       onSubmit={handleSubmit}
     >
       <div className={styles.stationCardHeader}>
@@ -266,17 +280,23 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
         ))}
       </div>
 
-      {interaction}
+      {revealFollowUp && (
+        <div className={styles.stationFollowUp}>
+          {interaction}
 
-      <label className={styles.field}>
-        Comentario (opcional)
-        <textarea
-          className={styles.textarea}
-          value={comentario}
-          disabled={!editable || showResult}
-          onChange={(event) => setComentario(event.target.value)}
-        />
-      </label>
+          <label className={styles.field}>
+            Comentario (opcional)
+            <textarea
+              className={styles.textarea}
+              value={comentario}
+              // Both sides of the merge matter here: the comment waits for a
+              // choice (§8), and it locks once the station is answered.
+              disabled={!editable || showResult}
+              onChange={(event) => setComentario(event.target.value)}
+            />
+          </label>
+        </div>
+      )}
 
       {showResult && (
         <div className={styles.stationResult} role="status">
@@ -292,14 +312,17 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
           {editable && (
             <button
               type="button"
-              className="btn-secondary"
+              className={styles.stationEditButton}
               onClick={() => {
                 setEditingAnswer(true)
                 setShowResult(false)
                 setSaveState('idle')
               }}
             >
-              Editar decisión
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4l11-11-4-4L4 16v4Zm13.5-16.5 3 3-1.5 1.5-3-3 1.5-1.5Z" />
+              </svg>
+              <span>Editar decisión</span>
             </button>
           )}
           {editable && station.id === 'compartir' && onFinish ? (
@@ -326,7 +349,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
         </div>
       )}
 
-      {editable && !showResult && (
+      {editable && !showResult && revealFollowUp && (
         <div className={styles.stationCardFooter}>
           <button
             type="submit"

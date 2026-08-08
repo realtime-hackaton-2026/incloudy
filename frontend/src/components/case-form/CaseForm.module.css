@@ -330,6 +330,36 @@
   cursor: pointer;
 }
 
+/*
+ * Everything downstream of the decision (§8). It arrives as a consequence of
+ * choosing, so it fades in rather than being there all along — the movement
+ * is what tells the child their choice did something.
+ */
+.stationFollowUp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: followUpIn var(--small) var(--ease) both;
+}
+
+@keyframes followUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stationFollowUp {
+    animation: none;
+  }
+}
+
 .stationCardFooter {
   display: flex;
   align-items: center;
@@ -340,6 +370,56 @@
   font-family: var(--label);
   font-size: 11px;
   color: var(--muted);
+}
+
+.stationEditButton {
+  position: absolute;
+  top: 16px;
+  right: 58px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 10px;
+  font-family: var(--label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #171b20;
+  background: rgb(255 255 255 / 42%);
+  border: 1px solid rgb(21 40 53 / 28%);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color var(--micro) var(--ease), transform var(--micro) var(--ease);
+}
+
+.stationEditButton svg {
+  width: 15px;
+  height: 15px;
+  fill: currentcolor;
+}
+
+.stationEditButton:hover {
+  background: rgb(255 255 255 / 72%);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 560px) {
+  .stationEditButton {
+    width: 32px;
+    padding: 5px;
+    justify-content: center;
+  }
+
+  .stationEditButton span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
 }
 
 /* A locked-station attempt or any other save failure — the backend's own
@@ -575,6 +655,39 @@
   color: var(--text-soft);
   font-size: 11px;
   font-weight: 600;
+}
+
+/*
+ * §9 — the completion beat. The mark lands first, then the text follows it
+ * in. Small on purpose: this fires once per station, five times per case, so
+ * anything louder would wear out fast.
+ */
+.stationResultIcon {
+  display: inline-block;
+  animation: resultPop 560ms var(--ease) both;
+}
+
+@keyframes resultPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-12deg);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.25) rotate(4deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stationResultIcon {
+    animation: none;
+  }
 }
 
 .stationResult {

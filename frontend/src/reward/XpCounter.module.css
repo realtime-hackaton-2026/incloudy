@@ -1,0 +1,128 @@
+/*
+ * frontend/src/reward/XpCounter.module.css // the reward beat: a gain rises
+ * off the counter, the counter answers, a few sparks — and then quiet.
+ */
+
+.counter {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  transition: color var(--micro) var(--ease);
+}
+
+/* The counter acknowledges the gain rather than silently incrementing. */
+.counting .value {
+  color: var(--reward, #f0c86a);
+  animation: countPop 620ms var(--ease);
+}
+
+@keyframes countPop {
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.22);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/*
+ * The gain itself. It leaves the counter travelling upward, which is what
+ * makes the number feel collected rather than recalculated.
+ */
+.gain {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--reward, #f0c86a);
+  text-shadow: 0 0 10px rgb(240 200 106 / 60%);
+  pointer-events: none;
+  animation: gainRise 1500ms var(--ease) both;
+}
+
+@keyframes gainRise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.8);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -4px) scale(1.08);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -20px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -34px) scale(0.95);
+  }
+}
+
+/*
+ * Five sparks, not a confetti cannon (§17: rewarding but calm). Each takes
+ * its own angle from an inline custom property, so the burst never looks
+ * like the same five dots twice.
+ */
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--reward, #f0c86a);
+  box-shadow: 0 0 6px 1px rgb(240 200 106 / 70%);
+  pointer-events: none;
+  animation: sparkOut 780ms var(--ease) both;
+}
+
+@keyframes sparkOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.6);
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--sx), var(--sy)) scale(0.4);
+  }
+}
+
+/* Reduced motion keeps the reward, drops the travel: the number still
+   changes colour so the gain is never silent. */
+@media (prefers-reduced-motion: reduce) {
+  .counting .value {
+    animation: none;
+  }
+
+  .gain {
+    animation: none;
+    opacity: 1;
+    transform: translate(-50%, -20px);
+  }
+
+  .spark {
+    display: none;
+  }
+}

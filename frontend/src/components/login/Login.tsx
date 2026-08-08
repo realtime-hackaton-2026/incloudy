@@ -1,5 +1,5 @@
 /**
- * The first screen: nothing else renders until someone signs in.
+ * The gateway. Nothing else renders until someone signs in.
  *
  * Presentational, like the case map — it collects two fields and hands them
  * over. Whether that call hits the API, a mock or a demo fixture is the
@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { AuthScreen } from '../auth-screen'
+import { AuthScreen, ArrowIcon, KeyIcon, PersonIcon, WarningIcon } from '../auth-screen'
 import styles from '../auth-screen/AuthScreen.module.css'
 
 export interface LoginProps {
@@ -18,9 +18,18 @@ export interface LoginProps {
   /** Last failure, already in Spanish. */
   error?: string | null
   onSwitchToRegister: () => void
+  onFocusChange?: (focused: boolean) => void
+  showCurtain?: boolean
 }
 
-export function Login({ onSubmit, pending = false, error = null, onSwitchToRegister }: LoginProps) {
+export function Login({
+  onSubmit,
+  pending = false,
+  error = null,
+  onSwitchToRegister,
+  onFocusChange,
+  showCurtain,
+}: LoginProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -31,14 +40,17 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
   }
 
   return (
-    <AuthScreen tagline="Un lugar acogedor para aprender">
+    <AuthScreen
+      tagline="Sigue el caso"
+      onFocusChange={onFocusChange}
+      showCurtain={showCurtain}
+    >
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="login-email">
             ID de Explorador
           </label>
           <div className={styles.inputWrap}>
-            <PersonIcon />
             <input
               className={styles.input}
               id="login-email"
@@ -51,6 +63,7 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
               required
               onChange={(event) => setEmail(event.target.value)}
             />
+            <PersonIcon />
           </div>
         </div>
 
@@ -59,7 +72,6 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
             Código Secreto
           </label>
           <div className={styles.inputWrap}>
-            <KeyIcon />
             <input
               className={styles.input}
               id="login-password"
@@ -72,6 +84,7 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
               required
               onChange={(event) => setPassword(event.target.value)}
             />
+            <KeyIcon />
           </div>
         </div>
 
@@ -86,8 +99,8 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
 
         <div className={styles.actions}>
           <button className={styles.submit} type="submit" disabled={pending}>
-            <LoginIcon />
             {pending ? 'Entrando…' : 'Entrar al mapa'}
+            <ArrowIcon />
           </button>
           <button className={styles.help} type="button" onClick={onSwitchToRegister}>
             ¿No tienes cuenta? Regístrate
@@ -95,53 +108,5 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
         </div>
       </form>
     </AuthScreen>
-  )
-}
-
-/*
- * The mockup pulled these from the Material Symbols web font. Inlining them
- * drops a render-blocking request and keeps the form readable offline.
- */
-
-function PersonIcon() {
-  return (
-    <svg className={styles.icon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5Z" />
-    </svg>
-  )
-}
-
-function KeyIcon() {
-  return (
-    <svg className={styles.icon} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M15 3a6 6 0 1 0-5.7 8L7 13.3V16H4v3h5.7l6-6A6 6 0 0 0 15 3Zm1.5 5.5a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6Z" />
-    </svg>
-  )
-}
-
-function LoginIcon() {
-  return (
-    <svg
-      className={styles.submitIcon}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M11 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-8v-2h8V5h-8V3Z" />
-      <path d="m10.6 7.4 4.6 4.6-4.6 4.6-1.4-1.4 2.2-2.2H3v-2h8.4L9.2 8.8l1.4-1.4Z" />
-    </svg>
-  )
-}
-
-function WarningIcon() {
-  return (
-    <svg
-      className={styles.errorIcon}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 2 1 21h22L12 2Zm1 14v2h-2v-2h2Zm0-7v5h-2V9h2Z" />
-    </svg>
   )
 }

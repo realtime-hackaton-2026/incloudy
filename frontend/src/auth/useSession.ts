@@ -36,8 +36,11 @@ export interface SessionState {
   status: SessionStatus
   /** Last sign-in/registro failure, in Spanish, or null. Cleared on the next attempt. */
   error: string | null
-  signIn: (credentials: Credentials) => Promise<void>
-  signUp: (credentials: Credentials) => Promise<void>
+  /** Resolves true when the session started — the caller uses that to play
+      the entrance transition, which an effect watching `session` could not
+      tell apart from restoring a stored token on reload. */
+  signIn: (credentials: Credentials) => Promise<boolean>
+  signUp: (credentials: Credentials) => Promise<boolean>
   signOut: () => void
 }
 
@@ -85,9 +88,11 @@ export function useSession(): SessionState {
       storeToken(token)
       setSession({ token, email: credentials.email, userId: decodeUserId(token) })
       setStatus('active')
+      return true
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'No se pudo iniciar sesión.')
       setStatus('anonymous')
+      return false
     }
   }, [])
 
@@ -99,9 +104,11 @@ export function useSession(): SessionState {
       storeToken(token)
       setSession({ token, email: credentials.email, userId: decodeUserId(token) })
       setStatus('active')
+      return true
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'No se pudo crear la cuenta.')
       setStatus('anonymous')
+      return false
     }
   }, [])
 

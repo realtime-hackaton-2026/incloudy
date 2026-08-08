@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useSession } from './auth'
+import type { Credentials } from './auth'
+import { AppHeader } from './components/app-header'
+import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
 import { CaseList } from './components/case-list'
 import { CaseMap } from './components/case-map'
 import type { CaseStage } from './components/case-map'
+import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
+import { MapEnvironment } from './components/map-environment'
 import { Registro } from './components/registro'
 
 type AuthScreenName = 'login' | 'registro'
 type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' }
+
+/** How long the login → casos transition runs. Matches --cinematic. */
+const ENTRANCE_MS = 1600
 
 /*
  * Every screen has a URL (#/casos, #/caso/:id, #/mapa, #/login, #/registro)
@@ -36,8 +44,15 @@ function authScreenFromHash(hash: string): AuthScreenName {
 
 function App() {
   const { session, status, error, signIn, signUp, signOut } = useSession()
-  const [authScreen, setAuthScreen] = useState<AuthScreenName>(() => authScreenFromHash(location.hash))
+  const [authScreen, setAuthScreen] = useState<AuthScreenName>(() =>
+    authScreenFromHash(location.hash),
+  )
   const [view, setView] = useState<View>(() => viewFromHash(location.hash))
+  // True only while the entrance transition plays, so the map sharpening and
+  // the veil stay in step with each other.
+  const [entering, setEntering] = useState(false)
+  // A focused field darkens the world behind the panel — see AuthScreen.
+  const [authFocused, setAuthFocused] = useState(false)
 
   useEffect(() => {
     function onHashChange() {
@@ -58,113 +73,118 @@ function App() {
     }
   }, [session, view])
 
+  useEffect(() => {
+    if (!entering) return
+    const timer = setTimeout(() => setEntering(false), ENTRANCE_MS)
+    return () => clearTimeout(timer)
+  }, [entering])
+
   // Demo only: the map has no real case wired in yet. The five fixed stages
   // here and the backend's freeform `estaciones` checklist are two
   // unreconciled data models — see docs/memoria.md for why this waits.
   const [demoStage, setDemoStage] = useState<CaseStage>('explorar')
 
+  /** Only a fresh sign-in plays the entrance; restoring a token must not. */
+  async function enterWorld(
+    credentials: Credentials,
+    authenticate: (credentials: Credentials) => Promise<boolean>,
+  ) {
+    if (await authenticate(credentials)) setEntering(true)
+  }
+
   // A stored token is being checked. Rendering the login here would flash it
   // away half a second later for anyone already signed in.
   if (status === 'restoring') {
-    return <p className="app-restoring">Recuperando tu sesión…</p>
-  }
-
-  if (!session) {
-    return authScreen === 'login' ? (
-      <Login
-        onSubmit={signIn}
-        pending={status === 'signing-in'}
-        error={error}
-        onSwitchToRegister={() => {
-          location.hash = '#/registro'
-        }}
-      />
-    ) : (
-      <Registro
-        onSubmit={signUp}
-        pending={status === 'signing-in'}
-        error={error}
-        onSwitchToLogin={() => {
-          location.hash = '#/login'
-        }}
-      />
+    return (
+      <>
+        <MapEnvironment depth="ambient" />
+        <p className="app-restoring">Recuperando tu sesión…</p>
+      </>
     )
   }
 
-  return (
-    <main className="app">
-      <header className="app-header">
-        <h1>incloudy</h1>
-        <p>Sigue a tus alumnos caso por caso, estación por estación.</p>
-        <span className="app-session">
-          {session.email}
-          <button
-            type="button"
-            className="app-signout"
-            onClick={() => {
-              signOut()
+  if (!session) {
+    return (
+      <>
+        <MapEnvironment
+          depth="full"
+          // Scene 02 on a cold open; a focused field pushes the world back
+          // so the panel owns the attention.
+          phase={authFocused ? 'idle' : 'entering'}
+        />
+        {authScreen === 'login' ? (
+          <Login
+            onSubmit={(credentials) => enterWorld(credentials, signIn)}
+            pending={status === 'signing-in'}
+            error={error}
+            onFocusChange={setAuthFocused}
+            onSwitchToRegister={() => {
+              location.hash = '#/registro'
+            }}
+          />
+        ) : (
+          <Registro
+            onSubmit={(credentials) => enterWorld(credentials, signUp)}
+            pending={status === 'signing-in'}
+            error={error}
+            onFocusChange={setAuthFocused}
+            onSwitchToLogin={() => {
               location.hash = '#/login'
             }}
-          >
-            Salir
-          </button>
-        </span>
-      </header>
+          />
+        )}
+      </>
+    )
+  }
 
-      <nav className="app-nav">
-        <button
-          type="button"
-          className={view.name === 'cases' || view.name === 'case' ? 'app-nav-active' : ''}
-          onClick={() => {
-            location.hash = '#/casos'
-          }}
-        >
-          Tus casos
-        </button>
-        <button
-          type="button"
-          className={view.name === 'map-demo' ? 'app-nav-active' : ''}
-          onClick={() => {
-            location.hash = '#/mapa'
-          }}
-        >
-          Mapa (demo)
-        </button>
-      </nav>
+  const route: RouteName = view.name === 'map-demo' ? 'mapa' : 'casos'
 
-      {view.name === 'cases' && (
-        <CaseList
-          token={session.token}
-          ownerId={session.userId}
-          onOpen={(caseId) => {
-            location.hash = `#/caso/${caseId}`
+  return (
+    <>
+      <MapEnvironment depth="ambient" phase={entering ? 'sharpening' : 'idle'} />
+      {entering && <CinematicOverlay />}
+
+      <main className="app">
+        <AppHeader
+          active={route}
+          email={session.email}
+          onNavigate={(next) => {
+            location.hash = next === 'mapa' ? '#/mapa' : '#/casos'
+          }}
+          onSignOut={() => {
+            signOut()
+            location.hash = '#/login'
           }}
         />
-      )}
-      {view.name === 'case' && (
-        <CaseForm
-          key={view.caseId}
-          token={session.token}
-          caseId={view.caseId}
-          ownerId={session.userId}
-          onBack={() => {
-            location.hash = '#/casos'
-          }}
-          onDeleted={() => {
-            location.hash = '#/casos'
-          }}
-        />
-      )}
-      {view.name === 'map-demo' && (
-        <>
-          <p className="app-demo-note">
-            Vista de demostración: todavía no refleja un caso real. Elige una estación para
-            moverla.
-          </p>
+
+        {view.name === 'cases' && (
+          <CaseList
+            token={session.token}
+            ownerId={session.userId}
+            onOpen={(caseId) => {
+              location.hash = `#/caso/${caseId}`
+            }}
+          />
+        )}
+        {view.name === 'case' && (
+          <CaseForm
+            key={view.caseId}
+            token={session.token}
+            caseId={view.caseId}
+            ownerId={session.userId}
+            onBack={() => {
+              location.hash = '#/casos'
+            }}
+            onDeleted={() => {
+              location.hash = '#/casos'
+            }}
+          />
+        )}
+        {view.name === 'map-demo' && (
           <CaseMap stage={demoStage} onSelectStage={setDemoStage} />
-        </>
-      )}
-    </main>
+        )}
+      </main>
+    </>
   )
 }
 

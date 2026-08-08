@@ -1,52 +1,63 @@
 /**
- * The wood-and-paper panel shared by Login and Registro.
+ * The panel shared by Login and Registro, and the login's entrance
+ * choreography.
  *
- * Split out once a second screen needed the exact same chrome — same
- * backdrop, same double pixel border, same branding block — so nudging the
- * frame means touching one file instead of two drifting copies.
+ * The world behind it belongs to `MapEnvironment` at the app root — this
+ * component only floats inside it. That is what keeps "entering incloudy"
+ * from feeling like two separate pages with matching wallpaper.
  */
 
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import mapArt from '../../assets/images/fondo.png'
 import logo from '../../assets/images/logo.webp'
 import styles from './AuthScreen.module.css'
 
 export interface AuthScreenProps {
   tagline: string
   children: ReactNode
+  /**
+   * Fires while any field is focused. The caller darkens the world behind
+   * the panel to match — the focus transition is a composition change, not
+   * just a border colour.
+   */
+  onFocusChange?: (focused: boolean) => void
+  /** Scene 01 (black, then a point of light) only plays on a cold open. */
+  showCurtain?: boolean
 }
 
-export function AuthScreen({ tagline, children }: AuthScreenProps) {
+export function AuthScreen({
+  tagline,
+  children,
+  onFocusChange,
+  showCurtain = true,
+}: AuthScreenProps) {
+  const [focused, setFocused] = useState(false)
+
+  function handleFocus(next: boolean) {
+    setFocused(next)
+    onFocusChange?.(next)
+  }
+
   return (
     <div className={styles.screen}>
+      {showCurtain && <div className={styles.curtain} aria-hidden="true" />}
+
       <div
-        className={styles.backdrop}
-        style={{ backgroundImage: `url(${mapArt})` }}
-        aria-hidden="true"
-      />
-      <div className={styles.veil} aria-hidden="true" />
-
-      <div className={styles.panel}>
-        <div className={styles.paper}>
-          <span className={`${styles.corner} ${styles.cornerTopLeft}`} aria-hidden="true" />
-          <span className={`${styles.corner} ${styles.cornerTopRight}`} aria-hidden="true" />
-          <span
-            className={`${styles.corner} ${styles.cornerBottomLeft}`}
-            aria-hidden="true"
-          />
-          <span
-            className={`${styles.corner} ${styles.cornerBottomRight}`}
-            aria-hidden="true"
-          />
-
-          <div className={styles.branding}>
-            <img className={styles.logo} src={logo} alt="" />
-            <h1 className={styles.wordmark}>incloudy</h1>
-            <p className={styles.tagline}>{tagline}</p>
-          </div>
-
-          {children}
+        className={`${styles.panel} ${focused ? styles.panelFocused : ''}`}
+        // Focus events bubble, so one pair of handlers on the panel covers
+        // every field inside it without each form wiring them up.
+        onFocus={() => handleFocus(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) handleFocus(false)
+        }}
+      >
+        <div className={styles.branding}>
+          <img className={styles.logo} src={logo} alt="" />
+          <span className={styles.wordmark}>incloudy</span>
+          <span className={styles.tagline}>{tagline}</span>
         </div>
+
+        {children}
       </div>
     </div>
   )

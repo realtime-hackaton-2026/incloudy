@@ -99,7 +99,9 @@
 }
 
 .navItemActive {
-  color: var(--text);
+  color: #f7fbff;
+  background: var(--primary);
+  border-radius: 999px;
 }
 
 .navItemActive::after {
@@ -148,9 +150,10 @@
 }
 
 .dashboardLinkActive {
-  background: var(--parchment);
-  color: var(--ink);
-  border-color: var(--parchment-hi);
+  background: var(--primary);
+  color: #f7fbff;
+  border-color: var(--map-blue);
+  box-shadow: 0 0 0 2px rgb(114 188 208 / 18%);
 }
 
 .teacher {
@@ -284,14 +287,14 @@
   }
 
   .brand { gap: 0; font-size: 0; }
-  .mark { width: 34px; height: 34px; border-radius: 50%; }
-  .nav { gap: 1px; }
-  .navItem { min-height: 36px; padding: 7px 8px 9px; font-size: 10px; letter-spacing: .07em; }
+  .mark { width: 30px; height: 30px; border-radius: 50%; }
+  .nav { gap: 4px; }
+  .navItem { min-height: 34px; padding: 7px 7px 9px; font-size: 9px; letter-spacing: .055em; }
   .navItem::after { left: 9px; right: 9px; bottom: 4px; }
   .dashboardLink { min-height: 34px; padding: 6px 8px; font-size: 0; border-radius: 999px; }
-  .dashboardLink::before { content: 'Panel'; font-size: 10px; }
-  .settingsButton { width: 34px; height: 34px; border-radius: 50%; font-size: 15px; }
-  .signOut { width: 34px; height: 34px; padding: 0; overflow: hidden; font-size: 0; border-radius: 50%; }
+  .dashboardLink::before { content: 'Dashboard'; font-size: 9px; }
+  .settingsButton { width: 32px; height: 32px; border-radius: 50%; font-size: 14px; }
+  .signOut { width: 32px; height: 32px; padding: 0; overflow: hidden; font-size: 0; border-radius: 50%; }
   .signOut::before { content: '↪'; font-size: 17px; }
 
   .passwordGrid { grid-template-columns: 1fr; }

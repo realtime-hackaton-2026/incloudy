@@ -971,10 +971,10 @@
 
   .hotspotLabel {
     top: 122%;
-    max-width: 104px;
+    max-width: 92px;
     min-width: 0;
-    padding: 6px 7px;
-    font-size: clamp(10px, 2.7vw, 12px);
+    padding: 5px 6px;
+    font-size: clamp(9px, 2.45vw, 11px);
     line-height: 1.15;
     letter-spacing: 0.045em;
     white-space: normal;
@@ -982,8 +982,16 @@
 
   .hotspotStatus {
     margin-top: 3px;
-    font-size: clamp(8px, 2.2vw, 10px);
+    font-size: clamp(7px, 2vw, 9px);
     line-height: 1.2;
+  }
+
+  .hotspotLocked { opacity: 1; }
+
+  .avatarMarker {
+    width: clamp(34px, 9vw, 42px);
+    border-width: 2px;
+    box-shadow: 0 0 0 3px rgb(240 200 106 / 22%), 0 0 16px 4px rgb(240 200 106 / 34%);
   }
 
   .missionBackdrop {

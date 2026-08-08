@@ -9,7 +9,7 @@
 
 import { useMemo } from 'react'
 import type { CSSProperties } from 'react'
-import mapArt from '../../assets/images/fondo.png'
+import mapArt from '../../assets/images/mapa-completo.webp'
 import styles from './Scene.module.css'
 
 export type SceneVariant = 'gate' | 'journal' | 'world'

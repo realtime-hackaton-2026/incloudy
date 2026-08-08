@@ -32,12 +32,12 @@ beforeEach(() => {
 
 describe('Invariant 1 — the canonical map asset', () => {
   it('is the only image the map renders, and is never swapped out', async () => {
-    const mapArt = (await import('../assets/images/fondo.png')).default
+    const mapArt = (await import('../assets/images/mapa-completo.webp')).default
     render(<CaseMap stage="explorar" />)
     const img = screen.getByRole('img', { name: /mapa del caso/i })
     expect(img).toHaveAttribute('src', mapArt)
     // Guards against a refactor quietly pointing the map at something else.
-    expect(String(mapArt)).toMatch(/fondo/)
+    expect(String(mapArt)).toMatch(/mapa-completo/)
   })
 })
 

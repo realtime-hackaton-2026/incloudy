@@ -22,23 +22,33 @@ export interface ProgressJourneyProps {
 }
 
 export function ProgressJourney({ nodes, activeIndex, onSelect }: ProgressJourneyProps) {
+  /*
+   * Clamp at the boundary. A caller handing us a stale or garbage index must
+   * not produce an impossible bar — an unclamped index of -100 rendered a
+   * width of -2000%, which a property test caught. Invalid input is
+   * normalised here rather than trusted, and the node markers below use the
+   * same clamped value so the bar and the dots can never disagree.
+   */
+  const safeIndex = Number.isFinite(activeIndex)
+    ? Math.min(Math.max(Math.trunc(activeIndex), 0), Math.max(nodes.length - 1, 0))
+    : 0
   // The track spans the node centres, which sit at 10% and 90% of the row —
   // so a full journey fills 80% of the width, not 100%.
-  const span = nodes.length > 1 ? (activeIndex / (nodes.length - 1)) * 80 : 0
+  const span = nodes.length > 1 ? (safeIndex / (nodes.length - 1)) * 80 : 0
 
   return (
     <div
       className={styles.journey}
       role="group"
-      aria-label={`Aventura ${activeIndex + 1} de ${nodes.length}`}
+      aria-label={`Aventura ${safeIndex + 1} de ${nodes.length}`}
     >
       <span className={styles.track} aria-hidden="true" />
       <span className={styles.fill} style={{ width: `${span}%` }} aria-hidden="true" />
 
       {nodes.map((node, index) => {
         const classes = [styles.node]
-        if (index < activeIndex) classes.push(styles.reached)
-        if (index === activeIndex) classes.push(styles.current)
+        if (index < safeIndex) classes.push(styles.reached)
+        if (index === safeIndex) classes.push(styles.current)
 
         return (
           <button

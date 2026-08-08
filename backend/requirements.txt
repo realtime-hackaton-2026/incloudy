@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+motor==3.6.1
+beanie==1.29.0
+pydantic
+pydantic-settings
+email-validator
+PyJWT
+bcrypt
+python-multipart
+httpx

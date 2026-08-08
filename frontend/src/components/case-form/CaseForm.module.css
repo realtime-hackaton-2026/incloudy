@@ -61,6 +61,48 @@
 
 /* --- Header ------------------------------------------------------------ */
 
+.mapOnly {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mapOnlyHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 28px;
+  padding: 8px 4px 2px;
+}
+
+.mapOnlyHeader > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.mapOnlyHeader strong {
+  font-family: var(--display);
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.05;
+  color: var(--text);
+}
+
+.mapOnlyKicker {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.mapOnlyStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--text-soft);
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;

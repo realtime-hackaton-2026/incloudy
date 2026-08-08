@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from './auth'
 import type { Credentials } from './auth'
 import { useCases } from './cases'
+import { avatarById, readAvatarId } from './avatar'
 import { AppHeader } from './components/app-header'
 import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
@@ -205,22 +206,79 @@ function App() {
  */
 function MapOverview({ token, ownerId }: { token: string; ownerId: string | null }) {
   const { cases, status } = useCases(token)
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
+  const [avatarRevision, setAvatarRevision] = useState(0)
+
+  useEffect(() => {
+    if (cases.length === 0) return
+    if (!selectedCaseId || !cases.some((item) => item.id === selectedCaseId)) {
+      setSelectedCaseId(cases[0].id)
+    }
+  }, [cases, selectedCaseId])
+
   if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
   if (cases.length === 0) {
     return <p className="app-restoring">Crea tu primera aventura para ver el mapa.</p>
   }
 
-  const latest = cases[0]
+  const selected = cases.find((item) => item.id === selectedCaseId) ?? cases[0]
   return (
-    <CaseForm
-      key={latest.id}
-      token={token}
-      caseId={latest.id}
-      ownerId={ownerId}
-      onBack={() => {}}
-      onDeleted={() => {}}
-      mapOnly
-    />
+    <>
+      <section className="map-case-selector" aria-labelledby="map-case-selector-title" data-avatar-revision={avatarRevision}>
+        <div className="map-case-selector__heading">
+          <div>
+            <span>Recorridos disponibles</span>
+            <h1 id="map-case-selector-title">Selecciona un caso</h1>
+          </div>
+          <strong>{cases.length} {cases.length === 1 ? 'caso' : 'casos'}</strong>
+        </div>
+        <div className="map-case-selector__list" role="listbox" aria-label="Casos del mapa">
+          {cases.map((item) => {
+            const active = item.id === selected.id
+            const shared = ownerId !== null && item.profesorId !== ownerId
+            const avatar = avatarById(readAvatarId(item.id))
+            return (
+              <article key={item.id} className={`map-case-option ${active ? 'map-case-option--active' : ''}`}>
+                <button
+                  type="button"
+                  className="map-case-option__select"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => setSelectedCaseId(item.id)}
+                >
+                  <img src={avatar.src} alt="" />
+                  <span>
+                    <strong>{item.alumno.nombre || 'Alumno sin nombre'}</strong>
+                    <small>{shared ? 'Compartido contigo' : `${item.progreso.porcentaje}% completado`}</small>
+                  </span>
+                </button>
+                {!shared && (
+                  <button
+                    type="button"
+                    className="map-case-option__edit"
+                    onClick={() => { location.hash = `#/caso/${item.id}` }}
+                    aria-label={`Editar el caso de ${item.alumno.nombre || 'este alumno'}`}
+                  >
+                    ✎ Editar
+                  </button>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <CaseForm
+        key={selected.id}
+        token={token}
+        caseId={selected.id}
+        ownerId={ownerId}
+        onBack={() => {}}
+        onDeleted={() => {}}
+        onAvatarChange={() => setAvatarRevision((value) => value + 1)}
+        mapOnly
+      />
+    </>
   )
 }
 

@@ -362,6 +362,28 @@
   filter: drop-shadow(0 4px 8px rgb(0 0 0 / 75%));
 }
 
+.avatarMarker {
+  display: grid;
+  place-items: center;
+  width: clamp(42px, 4.8vw, 68px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 3px solid var(--parchment-hi);
+  border-radius: 50%;
+  background: var(--surface-deep);
+  box-shadow:
+    0 0 0 5px rgb(240 200 106 / 25%),
+    0 0 26px 8px rgb(240 200 106 / 42%),
+    0 8px 18px rgb(0 0 0 / 55%);
+}
+
+.markerAvatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
 .pulse {
   position: absolute;
   left: 50%;

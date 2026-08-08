@@ -57,6 +57,8 @@ export interface CaseMapProps {
   onLockedAttempt?: (station: Station, mustFinishFirst: Station | null) => void
   /** Estaciones con una respuesta guardada, aunque luego se hayan editado. */
   completedStages?: readonly CaseStage[]
+  /** Personaje que funciona como marcador GPS de la estación actual. */
+  markerAvatar?: { src: string; name: string }
   className?: string
   /**
    * Lets the map break out of the app's reading-width shell. The map is the
@@ -81,6 +83,7 @@ export function CaseMap({
   onHoverStage,
   onLockedAttempt,
   completedStages = [],
+  markerAvatar,
   className,
   wide = false,
   renderStationPanel,
@@ -234,7 +237,11 @@ export function CaseMap({
             style={{ left: `${active.x}%`, top: `${active.y - 5.2}%` }}
             aria-hidden="true"
           >
-            <svg className={styles.pin} viewBox="0 0 24 32" fill="none">
+            {markerAvatar ? (
+              <span className={styles.avatarMarker}>
+                <img src={markerAvatar.src} alt="" className={styles.markerAvatarImage} />
+              </span>
+            ) : <svg className={styles.pin} viewBox="0 0 24 32" fill="none">
               <path
                 d="M12 1c5 0 9 3.9 9 8.8 0 6.6-9 20.2-9 20.2S3 16.4 3 9.8C3 4.9 7 1 12 1Z"
                 fill="currentColor"
@@ -242,7 +249,7 @@ export function CaseMap({
                 strokeWidth="2"
               />
               <circle cx="12" cy="9.6" r="3.4" fill="#10131a" />
-            </svg>
+            </svg>}
             <span className={styles.pulse} />
           </div>
         </div>

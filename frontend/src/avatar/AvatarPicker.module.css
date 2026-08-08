@@ -60,7 +60,10 @@
 
 .button[data-state='selected'] .thumb {
   border-color: var(--parchment);
-  box-shadow: 0 0 0 3px rgb(230 201 149 / 22%);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow:
+    0 0 0 4px rgb(230 201 149 / 28%),
+    0 0 22px 7px rgb(240 200 106 / 38%);
 }
 
 .name {

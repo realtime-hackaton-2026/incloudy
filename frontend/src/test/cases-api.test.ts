@@ -14,6 +14,7 @@ import {
   createCase,
   generateSummary,
   getCase,
+  joinCase,
   publishCase,
   updateStudent,
   updateSummary,
@@ -41,6 +42,7 @@ function mockFetch(handler: (input: RequestInfo | URL, init?: RequestInit) => Re
 const CASE_WIRE = {
   _id: 'case-1',
   profesor_id: 'u-1',
+  join_code: 'ROOM42',
   colaboradores: [{ user_id: 'u-2', role: 'editor' }],
   colaboradores_ids: ['u-2'],
   template_id: 'tmpl-1',
@@ -62,6 +64,7 @@ const CASE_WIRE = {
     confianza_equipo: 50,
     xp_total: 100,
     pistas_recogidas: ['voz_alumno'],
+    imprevistos_resueltos: [],
     hipotesis_sostenida: null,
     estrategia_elegida: null,
     seguimiento_elegido: null,
@@ -78,6 +81,7 @@ describe('getCase', () => {
     expect(result).toEqual({
       id: 'case-1',
       profesorId: 'u-1',
+      joinCode: 'ROOM42',
       colaboradores: [{ userId: 'u-2', role: 'editor' }],
       colaboradoresIds: ['u-2'],
       templateId: 'tmpl-1',
@@ -99,6 +103,7 @@ describe('getCase', () => {
         confianzaEquipo: 50,
         xpTotal: 100,
         pistasRecogidas: ['voz_alumno'],
+        imprevistosResueltos: [],
         hipotesisSostenida: null,
         estrategiaElegida: null,
         seguimientoElegido: null,
@@ -113,6 +118,18 @@ describe('getCase', () => {
     mockFetch(() => jsonResponse({ ...CASE_WIRE, _id: undefined, id: 'case-2' }))
     const result = await getCase('tok', 'case-2')
     expect(result.id).toBe('case-2')
+  })
+})
+
+describe('joinCase', () => {
+  it('normalizes and submits the six-character room code', async () => {
+    const fetchMock = mockFetch(() => jsonResponse(CASE_WIRE))
+    const joined = await joinCase('tok', 'room42')
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(String(url)).toMatch(/\/cases\/join$/)
+    expect((init as RequestInit).method).toBe('POST')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ code: 'ROOM42' })
+    expect(joined.joinCode).toBe('ROOM42')
   })
 })
 

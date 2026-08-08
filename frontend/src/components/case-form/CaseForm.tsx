@@ -314,7 +314,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
         <OwlTip tipId="map-guide" />
         <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
-        <OwlDoor token={token} caseId={caseId} stage={stage} />
+        <OwlDoor token={token} caseId={caseId} joinCode={current.joinCode} stage={stage} />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">

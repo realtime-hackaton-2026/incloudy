@@ -7,7 +7,9 @@
  */
 
 import { useState } from 'react'
-import { CASE_STATUS_LABELS, useCases } from '../../cases'
+import type { FormEvent } from 'react'
+import { CASE_STATUS_LABELS, joinCase, useCases } from '../../cases'
+import { ApiError } from '../../lib/http'
 import type { Case } from '../../cases'
 import { STATIONS, toCaseStage } from '../case-map'
 import { ConfirmDialog } from '../confirm-dialog'
@@ -24,6 +26,26 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   const [creating, setCreating] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [joinOpen, setJoinOpen] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
+  const [joining, setJoining] = useState(false)
+  const [joinError, setJoinError] = useState<string | null>(null)
+
+  async function handleJoin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const code = joinCode.trim().toUpperCase()
+    if (code.length !== 6) return
+    setJoining(true)
+    setJoinError(null)
+    try {
+      const joined = await joinCase(token, code)
+      onOpen(joined.id)
+    } catch (cause) {
+      setJoinError(cause instanceof ApiError ? cause.message : 'No se pudo entrar en la sala.')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   async function handleCreate() {
     setCreating(true)
@@ -60,15 +82,41 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
           <span className="eyebrow">Tu diario de aventuras</span>
           <p className={styles.lede}>Cada historia empieza en un lugar del mapa.</p>
         </div>
-        <button
-          type="button"
-          className={`btn-primary ${styles.newButton}`}
-          onClick={handleCreate}
-          disabled={creating}
-        >
-          {creating ? 'Creando…' : '+ Nueva aventura'}
-        </button>
+        <div className={styles.introActions}>
+          <button type="button" className="btn-secondary" onClick={() => setJoinOpen((open) => !open)}>
+            {joinOpen ? 'Cancelar' : 'Unirse con código'}
+          </button>
+          <button
+            type="button"
+            className={`btn-primary ${styles.newButton}`}
+            onClick={handleCreate}
+            disabled={creating}
+          >
+            {creating ? 'Creando…' : '+ Nueva aventura'}
+          </button>
+        </div>
       </div>
+
+      {joinOpen && (
+        <form className={styles.joinForm} onSubmit={handleJoin}>
+          <div>
+            <strong>Entrar en una sala docente</strong>
+            <span>Pide al propietario el código de seis caracteres.</span>
+          </div>
+          <input
+            value={joinCode}
+            onChange={(event) => setJoinCode(event.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase())}
+            placeholder="ABC123"
+            aria-label="Código de la sala"
+            autoComplete="off"
+            maxLength={6}
+          />
+          <button type="submit" className="btn-primary" disabled={joining || joinCode.length !== 6}>
+            {joining ? 'Entrando…' : 'Entrar'}
+          </button>
+          {joinError && <p className={styles.joinError} role="alert">{joinError}</p>}
+        </form>
+      )}
 
       {status === 'loading' && <p className={styles.state}>Abriendo el diario…</p>}
       {status === 'error' && (

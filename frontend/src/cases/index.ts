@@ -7,6 +7,7 @@ export {
   deleteCase,
   generateSummary,
   getCase,
+  joinCase,
   listCases,
   publishCase,
   removeCollaborator,

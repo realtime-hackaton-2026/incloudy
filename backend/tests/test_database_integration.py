@@ -24,6 +24,7 @@ from app.models import (
 )
 from app.routers import cases as cases_router
 from app.schemas import (
+    CaseJoinRequest,
     StationResponseRequest,
     TeacherNoteCreateRequest,
     UnexpectedEventResponseRequest,
@@ -31,6 +32,43 @@ from app.schemas import (
 from app.services.cases import get_editable_case
 from app.services.seeds import ensure_seed_content
 from app.services.webhooks import process_portal_webhook
+
+
+@pytest.mark.asyncio
+async def test_teacher_can_join_existing_case_with_room_code() -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_join_code,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+            TeacherNote,
+        ],
+    )
+    owner = User(nombre="María", email="owner@example.com", hashed_password="hash")
+    guest = User(nombre="Luis", email="guest@example.com", hashed_password="hash")
+    await owner.insert()
+    await guest.insert()
+    case = Case(
+        profesor_id=str(owner.id),
+        join_code="TEAM42",
+        alumno=Student(nombre="Caso compartido"),
+    )
+    await case.insert()
+
+    joined = await cases_router.join_case(CaseJoinRequest(code="team42"), guest)
+    joined_again = await cases_router.join_case(CaseJoinRequest(code="TEAM42"), guest)
+
+    assert joined.id == case.id
+    assert joined_again.id == case.id
+    assert [item.user_id for item in joined_again.colaboradores] == [str(guest.id)]
+    assert joined_again.colaboradores[0].role == CollaboratorRole.commenter
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,5 @@
 from datetime import timedelta
+import secrets
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
@@ -25,6 +26,7 @@ from ..models import (
 )
 from ..schemas import (
     CaseCreate,
+    CaseJoinRequest,
     CaseUpdate,
     CollaboratorRequest,
     CollaboratorResponse,
@@ -55,6 +57,46 @@ from ..services.reports import build_case_pdf
 from ..ws import manager
 
 router = APIRouter()
+
+JOIN_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+async def new_join_code() -> str:
+    while True:
+        candidate = "".join(secrets.choice(JOIN_CODE_ALPHABET) for _ in range(6))
+        if await Case.find_one(Case.join_code == candidate) is None:
+            return candidate
+
+
+async def ensure_join_code(case: Case) -> str:
+    """Persist a stable, human-friendly room code, including for legacy cases."""
+    if case.join_code:
+        return case.join_code
+
+    legacy_code = str(case.id)[-6:].upper()
+    collision = await Case.find_one(Case.join_code == legacy_code)
+    if collision is None or collision.id == case.id:
+        case.join_code = legacy_code
+        await case.save()
+        return legacy_code
+
+    case.join_code = await new_join_code()
+    await case.save()
+    return case.join_code
+
+
+async def find_case_by_join_code(code: str) -> Case | None:
+    case = await Case.find_one(Case.join_code == code)
+    if case is not None:
+        return case
+
+    # Compatibility for codes displayed before join_code was persisted.
+    legacy_cases = await Case.find({"join_code": None}).to_list()
+    matches = [item for item in legacy_cases if str(item.id)[-6:].upper() == code]
+    if len(matches) != 1:
+        return None
+    await ensure_join_code(matches[0])
+    return matches[0]
 
 
 def ensure_case_is_editable(case: Case) -> None:
@@ -111,7 +153,7 @@ async def save_generated_summary(
 @router.get("")
 async def list_cases(current_user: User = Depends(get_current_user)) -> list[Case]:
     user_id = str(current_user.id)
-    return await Case.find(
+    cases = await Case.find(
         {
             "$or": [
                 {"profesor_id": user_id},
@@ -120,6 +162,9 @@ async def list_cases(current_user: User = Depends(get_current_user)) -> list[Cas
             ]
         }
     ).sort("-updated_at").to_list()
+    for case in cases:
+        await ensure_join_code(case)
+    return cases
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -131,6 +176,7 @@ async def create_case(
     total_required = sum(station.obligatoria for station in template.estaciones)
     case = Case(
         profesor_id=str(current_user.id),
+        join_code=await new_join_code(),
         template_id=str(template.id),
         template_version=template.version,
         alumno=body.alumno,
@@ -147,12 +193,50 @@ async def create_case(
     return case
 
 
+@router.post("/join")
+async def join_case(
+    body: CaseJoinRequest,
+    current_user: User = Depends(get_current_user),
+) -> Case:
+    code = body.code.strip().upper()
+    case = await find_case_by_join_code(code)
+    if case is None:
+        raise HTTPException(status_code=404, detail="No existe una sala con ese código")
+    if case.status in {CaseStatus.closed, CaseStatus.archived}:
+        raise HTTPException(status_code=409, detail="Esta sala ya no acepta docentes")
+
+    user_id = str(current_user.id)
+    already_has_access = user_id == case.profesor_id or any(
+        collaborator.user_id == user_id for collaborator in case.colaboradores
+    ) or user_id in case.colaboradores_ids
+    if not already_has_access:
+        add_or_update_collaborator(case, user_id, CollaboratorRole.commenter)
+        case.updated_at = utcnow()
+        await case.save()
+        await record_event(
+            case,
+            user_id,
+            "colaborador_unido_por_codigo",
+            {"role": CollaboratorRole.commenter.value},
+        )
+        await create_notification(
+            case.profesor_id,
+            "colaborador_unido",
+            "Un docente se unió al caso",
+            f"{current_user.nombre} se unió al caso de {case.alumno.nombre}.",
+            str(case.id),
+        )
+    return case
+
+
 @router.get("/{case_id}")
 async def get_case(
     case_id: str,
     current_user: User = Depends(get_current_user),
 ) -> Case:
-    return await get_accessible_case(case_id, current_user)
+    case = await get_accessible_case(case_id, current_user)
+    await ensure_join_code(case)
+    return case
 
 
 @router.put("/{case_id}")

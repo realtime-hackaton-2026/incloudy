@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
-
 from ..auth import create_access_token, get_current_user, hash_password, verify_password
 from ..models import User
-from ..schemas import RegisterRequest, TokenResponse
+from ..schemas import RegisterRequest, TokenResponse, UserResponse
+from ..services.seeds import ensure_alex_case_for_user
 
 router = APIRouter()
 
@@ -14,8 +13,13 @@ async def register(body: RegisterRequest) -> TokenResponse:
     existing = await User.find_one(User.email == body.email)
     if existing is not None:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
-    user = User(email=body.email, hashed_password=hash_password(body.password))
+    user = User(
+        nombre=body.nombre,
+        email=body.email,
+        hashed_password=hash_password(body.password),
+    )
     await user.insert()
+    await ensure_alex_case_for_user(user)
     return TokenResponse(access_token=create_access_token(str(user.id)))
 
 
@@ -27,6 +31,10 @@ async def login(form: OAuth2PasswordRequestForm = Depends()) -> TokenResponse:
     return TokenResponse(access_token=create_access_token(str(user.id)))
 
 
-@router.get("/me", response_model=EmailStr)
-async def me(current_user: User = Depends(get_current_user)) -> EmailStr:
-    return current_user.email
+@router.get("/me", response_model=UserResponse)
+async def me(current_user: User = Depends(get_current_user)) -> UserResponse:
+    return UserResponse(
+        id=str(current_user.id),
+        nombre=current_user.nombre,
+        email=current_user.email,
+    )

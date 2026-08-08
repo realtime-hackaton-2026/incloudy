@@ -11,8 +11,8 @@
 }
 
 .panel {
-  width: min(34rem, 100%);
-  max-height: min(80vh, 40rem);
+  width: min(38rem, 100%);
+  height: min(80vh, 42rem);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -68,6 +68,15 @@
   color: var(--text);
 }
 
+.conversation {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .status {
   margin: 0;
   padding: 1rem;
@@ -104,35 +113,76 @@
   cursor: pointer;
 }
 
+.bubble {
+  align-self: flex-start;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--surface-raised);
+  border-radius: 0.85rem 0.85rem 0.85rem 0.25rem;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+
+.teacherBubble {
+  align-self: flex-end;
+  width: 85%;
+  background: color-mix(in srgb, var(--river-deep) 50%, transparent);
+  border-radius: 0.85rem 0.85rem 0.25rem 0.85rem;
+}
+
+.bubbleAuthor {
+  font: 700 0.6rem/1.4 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--river-hi);
+}
+
+.bubbleBody {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .meta {
   margin: 0;
   font-size: var(--text-xs);
   color: var(--text-soft);
 }
 
-.body {
-  overflow-y: auto;
-  padding: 0.9rem;
-  border: 1px solid var(--surface-raised);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
-  white-space: pre-wrap;
-  font-size: var(--text-sm);
-  line-height: 1.55;
+.bubbleShare {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--river);
+  border-radius: 0.5rem;
+  background: var(--river-deep);
   color: var(--text);
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
+.bubbleShare:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .ask {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-top: 0.25rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--surface-raised);
 }
@@ -175,42 +225,4 @@
   margin: 0;
   font-size: var(--text-xs);
   color: var(--clay);
-}
-
-.exchanges {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow-y: auto;
-  max-height: 12rem;
-}
-
-.exchange {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.exchangeQuestion {
-  margin: 0;
-  padding: 0.5rem 0.7rem;
-  border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
-  background: color-mix(in srgb, var(--river-deep) 45%, transparent);
-  font-size: var(--text-sm);
-  color: var(--text);
-}
-
-.exchangeAnswer {
-  margin: 0;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--surface-raised);
-  border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
-  font-size: var(--text-sm);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  color: var(--text);
 }

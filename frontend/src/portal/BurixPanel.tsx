@@ -1,14 +1,15 @@
 /*
- * frontend/src/portal/BurixPanel.tsx // private per-teacher AI analysis of a
- * case and its live room comments, shareable to the room as burix_analysis.
- * Also the place to ask Búrix about the student: it works solo, with the room
- * closed and without a publish grant, because the answer never hits a channel.
+ * frontend/src/portal/BurixPanel.tsx // private per-teacher conversation with
+ * Búrix: the case analysis is the opening message, follow-up questions hang
+ * below it. Works solo, with the room closed and without a publish grant,
+ * because the answer never hits a channel.
  */
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { FormEvent } from 'react'
 import { askAssistant, requestCaseAnalysis } from '../chat/api'
 import type { CaseAnalysis } from '../chat/api'
+import { RichText } from '../chat/RichText'
 import logo from '../assets/images/logo.webp'
 import styles from './BurixPanel.module.css'
 
@@ -90,58 +91,79 @@ export function BurixPanel({ token, caseId, open, onClose, onShare }: BurixPanel
         <div className={styles.heading}>
           <img className={styles.avatar} src={logo} alt="" />
           <div>
-            <span className={styles.eyebrow}>ANÁLISIS PRIVADO · IA DEL EQUIPO</span>
-            <h2 id="burix-title">Búrix analiza el caso</h2>
+            <span className={styles.eyebrow}>PRIVADO · BÚRIX Y TÚ</span>
+            <h2 id="burix-title">Conversa con Búrix</h2>
           </div>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar análisis de Búrix">×</button>
+          <button type="button" className={styles.close} onClick={onClose} aria-label="Cerrar conversación con Búrix">×</button>
         </div>
 
-        {state === 'loading' && (
-          <p className={styles.status} role="status" data-testid="burix-status">
-            Búrix está leyendo el caso y la sala…
-          </p>
-        )}
-
-        {state === 'error' && (
-          <div className={styles.error} role="alert">
-            <p>{error}</p>
-            <button type="button" className={styles.retry} onClick={() => {
-              lastCaseId.current = null
-              setState('loading')
-              setError(null)
-              void requestCaseAnalysis(token, caseId)
-                .then((result) => {
-                  setAnalysis(result)
-                  setState('ready')
-                })
-                .catch((cause: unknown) => {
-                  setState('error')
-                  setError(cause instanceof Error ? cause.message : 'Búrix no pudo analizar el caso.')
-                })
-            }}>
-              Reintentar
-            </button>
-          </div>
-        )}
-
-        {state === 'ready' && analysis && (
-          <>
-            <p className={styles.meta} data-testid="burix-meta">
-              Analizando {analysis.comentarios_analizados} {analysis.comentarios_analizados === 1 ? 'comentario' : 'comentarios'} de la sala en tiempo real
+        <div className={styles.conversation}>
+          {state === 'loading' && (
+            <p className={styles.status} role="status" data-testid="burix-status">
+              Búrix está leyendo el caso y la sala…
             </p>
-            <div className={styles.body} data-testid="burix-analysis">{analysis.analisis}</div>
-            <div className={styles.actions}>
-              <button type="button" className="btn-primary" disabled={sharing}
+          )}
+
+          {state === 'error' && (
+            <div className={styles.error} role="alert">
+              <p>{error}</p>
+              <button type="button" className={styles.retry} onClick={() => {
+                lastCaseId.current = null
+                setState('loading')
+                setError(null)
+                void requestCaseAnalysis(token, caseId)
+                  .then((result) => {
+                    setAnalysis(result)
+                    setState('ready')
+                  })
+                  .catch((cause: unknown) => {
+                    setState('error')
+                    setError(cause instanceof Error ? cause.message : 'Búrix no pudo analizar el caso.')
+                  })
+              }}>
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {state === 'ready' && analysis && (
+            <article className={`${styles.bubble} ${styles.burixBubble}`}>
+              <span className={styles.bubbleAuthor}>Búrix · análisis del caso</span>
+              <p className={styles.meta} data-testid="burix-meta">
+                {analysis.comentarios_analizados} {analysis.comentarios_analizados === 1 ? 'comentario' : 'comentarios'} de la sala
+              </p>
+              <div className={styles.bubbleBody} data-testid="burix-analysis">
+                <RichText text={analysis.analisis} />
+              </div>
+              <button type="button" className={styles.bubbleShare} disabled={sharing}
                 onClick={() => {
                   setSharing(true)
                   onShare(analysis.analisis)
                 }}>
                 {sharing ? 'Compartiendo…' : 'Compartir con la sala'}
               </button>
-              <button type="button" className="btn-secondary" onClick={onClose}>Cerrar</button>
+            </article>
+          )}
+
+          {exchanges.length > 0 && (
+            <div data-testid="burix-exchanges">
+              {exchanges.map((item) => (
+                <div key={`${item.pregunta}`} className={styles.exchange}>
+                  <article className={`${styles.bubble} ${styles.teacherBubble}`}>
+                    <span className={styles.bubbleAuthor}>Tú</span>
+                    <p className={styles.bubbleBody}>{item.pregunta}</p>
+                  </article>
+                  <article className={`${styles.bubble} ${styles.burixBubble}`}>
+                    <span className={styles.bubbleAuthor}>Búrix</span>
+                    <div className={styles.bubbleBody}>
+                      <RichText text={item.respuesta} />
+                    </div>
+                  </article>
+                </div>
+              ))}
             </div>
-          </>
-        )}
+          )}
+        </div>
 
         <form className={styles.ask} onSubmit={handleAsk}>
           <label htmlFor="burix-question" className={styles.askLabel}>
@@ -163,17 +185,6 @@ export function BurixPanel({ token, caseId, open, onClose, onShare }: BurixPanel
           <p className={styles.askHint}>Respuesta privada: nadie más en la sala la ve.</p>
           {askError && <p className={styles.askError} role="alert">{askError}</p>}
         </form>
-
-        {exchanges.length > 0 && (
-          <ul className={styles.exchanges} data-testid="burix-exchanges">
-            {exchanges.map((item) => (
-              <li key={`${item.pregunta}`} className={styles.exchange}>
-                <p className={styles.exchangeQuestion}>{item.pregunta}</p>
-                <p className={styles.exchangeAnswer}>{item.respuesta}</p>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
     </div>,
     document.body,

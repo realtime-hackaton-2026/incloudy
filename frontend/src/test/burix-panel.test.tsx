@@ -28,17 +28,17 @@ function routedFetch(routes: Record<string, () => Response>) {
 }
 
 describe('BurixPanel — private ask, works with the room closed', () => {
-  it('answers "datos de Pablo" privately without publishing anything', async () => {
+  it('answers "datos de Pablo" privately and renders markdown, not raw', async () => {
     const fetchMock = routedFetch({
       'POST /cases/case-1/analysis': () =>
         jsonResponse({
-          analisis: 'Diagnóstico hipotético.',
+          analisis: '### Diagnóstico hipotético\n\nMajo presenta **altas habilidades**.',
           comentarios_analizados: 0,
         }),
       'POST /chat': () =>
         jsonResponse({
           respuesta:
-            'Pablo tiene 9 años y cursa 3.º. Su descripción del caso indica…',
+            '**Pablo tiene 9 años y cursa 3.º**\n\n- Curso: sin especificar\n- Descripción: altas capacidades.',
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -56,12 +56,18 @@ describe('BurixPanel — private ask, works with the room closed', () => {
     )
 
     await screen.findByTestId('burix-analysis')
+    expect(screen.getByTestId('burix-analysis').textContent).toContain('Majo presenta')
+    expect(screen.getByText('Diagnóstico hipotético')).toBeTruthy()
+    expect(screen.getByText('altas habilidades')).toBeTruthy()
+    expect(screen.queryByText(/\*\*/)).toBeNull()
+
     const input = screen.getByRole('textbox', { name: 'Pregunta privada a Búrix' })
     await user.type(input, 'Me gustaría saber datos de Pablo')
     await user.click(screen.getByRole('button', { name: 'Preguntar' }))
 
-    const answer = await screen.findByText(/Pablo tiene 9 años y cursa 3\.º/)
-    expect(answer).toBeTruthy()
+    await screen.findByText(/Pablo tiene 9 años y cursa 3\.º/)
+    expect(screen.getByText('Curso: sin especificar')).toBeTruthy()
+    expect(screen.queryByText(/\*\*/)).toBeNull()
     expect(screen.getByText('Me gustaría saber datos de Pablo')).toBeTruthy()
     expect(screen.getByTestId('burix-exchanges').children.length).toBe(1)
     expect(onShare).not.toHaveBeenCalled()

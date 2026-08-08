@@ -153,8 +153,9 @@ sala. Estructura tu respuesta en secciones claras:
 - Lo que el equipo ha observado en la sala
 - Puntos a considerar
 - Próximos pasos sugeridos
-No emitas un diagnóstico médico; el estudiante es ficticio o anonimizado. Escribe en
-español, con tono profesional y cálido.
+Empieza directamente con la sección de diagnóstico: sin saludo, sin presentación y
+sin despedida. No emitas un diagnóstico médico; el estudiante es ficticio o
+anonimizado. Escribe en español, con tono profesional y cálido.
 
 {build_case_context(case, template)}
 

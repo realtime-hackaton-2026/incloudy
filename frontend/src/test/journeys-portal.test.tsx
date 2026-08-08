@@ -379,7 +379,7 @@ describe('CaseRoom', () => {
         body: expect.stringContaining('Diagnóstico hipotético'),
       },
     }))
-    expect(screen.queryByRole('dialog', { name: /búrix analiza el caso/i })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: /conversa con búrix/i })).toBeNull()
   })
 
   it('labels a shared Búrix analysis as an AI contribution', async () => {

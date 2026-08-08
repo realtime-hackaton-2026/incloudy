@@ -1,9 +1,11 @@
-/**
- * Progress as a journey.
+/*
+ * frontend/src/components/progress-journey/ProgressJourney.tsx // progress as
+ * a journey: nodes on a track, with the travelled part filling in.
  *
- * Deliberately generic over its nodes: the case map feeds it the five
- * stations today, but a case's own checklist could feed it just as well
- * without this component learning anything about either.
+ * Deliberately generic over its nodes: the case map feeds it the five stations
+ * today, but a case's own checklist could feed it just as well without this
+ * component learning anything about either. The index is clamped on the way
+ * in, so a stale caller can never render an impossible bar.
  */
 
 import styles from './ProgressJourney.module.css'

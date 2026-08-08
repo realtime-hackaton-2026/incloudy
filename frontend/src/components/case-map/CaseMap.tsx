@@ -1,12 +1,11 @@
-/**
- * The case map: one path through five stations, not a world to walk around.
+/*
+ * frontend/src/components/case-map/CaseMap.tsx // one path through five
+ * stations — completed, available, locked — with the camera, spotlight and
+ * HUD layered around an artwork that is never itself modified.
  *
- * Presentational on purpose — it takes a stage and draws it. Whoever renders
+ * Presentational on purpose: it takes a stage and draws it. Whoever renders
  * it decides where the stage comes from, so the same component works for a
  * static case history and for a live one moving under Portal events.
- *
- * The artwork is immutable. Everything cinematic here (camera, spotlight,
- * hotspots, HUD) is layered around `fondo.png`, never applied to it.
  */
 
 import { useEffect, useState } from 'react'

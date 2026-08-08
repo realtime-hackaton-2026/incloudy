@@ -1,9 +1,10 @@
 /*
- * The map as the application's canvas.
+ * frontend/src/components/case-map/CaseMap.module.css // the map as canvas:
+ * station states, camera, HUD and the wide-route escape from the app shell.
  *
- * Hard rule: the artwork itself is never modified. Everything here is
- * scale, position, masking, lighting and interaction layered *around*
- * `fondo.png` — the illustration stays 100% recognisable.
+ * Hard rule: the artwork itself is never modified. Everything here is scale,
+ * position, masking, lighting and interaction layered *around* `fondo.png` —
+ * the illustration stays 100% recognisable.
  */
 
 .wrapper {

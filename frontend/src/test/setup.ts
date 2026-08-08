@@ -1,3 +1,8 @@
+/*
+ * frontend/src/test/setup.ts // per-test cleanup and the two browser APIs
+ * jsdom lacks that the scene and HUD read on mount.
+ */
+
 import '@testing-library/jest-dom/vitest'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'

@@ -1,9 +1,11 @@
-/**
- * The ten mandatory invariants from the QA brief (§33).
+/*
+ * frontend/src/test/invariants.test.tsx // the ten mandatory invariants from
+ * the QA brief (§33) — map asset, session lifecycle, one active station,
+ * bounded progress, and animation never driving business state.
  *
- * An invariant must hold for *any* input, so most of these are property
- * tests rather than examples: fast-check generates the state, and the
- * assertion is the thing that must never be false.
+ * An invariant must hold for *any* input, so most of these are property tests
+ * rather than examples: fast-check generates the state, and the assertion is
+ * the thing that must never be false.
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'

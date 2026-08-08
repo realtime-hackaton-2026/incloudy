@@ -1,9 +1,11 @@
-/**
- * Property/fuzz tests (§29–32).
+/*
+ * frontend/src/test/fuzz.test.tsx // property tests (§29–32): hostile strings
+ * and out-of-range indices against the journey and the login.
  *
- * The goal is not coverage — it is finding the input nobody thought of.
- * Every property here is a "must never" the UI has to survive: no crash,
- * no `[object Object]`, no HTML execution, no impossible progress.
+ * The goal is not coverage — it is finding the input nobody thought of. Every
+ * property here is a "must never" the UI has to survive: no crash, no
+ * `[object Object]`, no HTML execution, no impossible progress. The clamp in
+ * ProgressJourney exists because this file found a -2000% bar.
  */
 
 import { describe, it } from 'vitest'

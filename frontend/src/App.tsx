@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useSession } from './auth'
 import type { Credentials } from './auth'
-import { AvatarPicker, useAvatar } from './avatar'
 import { useCases } from './cases'
-import { OwlTip } from './guide'
 import { AppHeader } from './components/app-header'
 import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
 import { CaseList } from './components/case-list'
-import { CaseMap, toCaseStage } from './components/case-map'
 import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
 import { Registro } from './components/registro'
 import { Scene } from './components/scene'
+import { Dashboard } from './dashboard/Dashboard'
 import type { SceneVariant } from './components/scene'
 
 type AuthScreenName = 'login' | 'registro'
-type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' }
+type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' } | { name: 'dashboard' }
 
 /** How long the login → casos transition runs. Matches --cinematic. */
 const ENTRANCE_MS = 1600
@@ -31,6 +29,7 @@ const ENTRANCE_MS = 1600
 function viewFromHash(hash: string): View {
   const [first, second] = hash.replace(/^#\/?/, '').split('/')
   if (first === 'mapa') return { name: 'map-demo' }
+  if (first === 'dashboard') return { name: 'dashboard' }
   if (first === 'caso' && second) return { name: 'case', caseId: second }
   return { name: 'cases' }
 }
@@ -38,6 +37,7 @@ function viewFromHash(hash: string): View {
 function hashFor(view: View): string {
   if (view.name === 'case') return `#/caso/${view.caseId}`
   if (view.name === 'map-demo') return '#/mapa'
+  if (view.name === 'dashboard') return '#/dashboard'
   return '#/casos'
 }
 
@@ -141,7 +141,7 @@ function App() {
     )
   }
 
-  const route: RouteName = view.name === 'map-demo' ? 'mapa' : 'casos'
+  const route: RouteName = view.name === 'map-demo' ? 'mapa' : view.name === 'dashboard' ? 'dashboard' : 'casos'
   // The map is the world; everything else happens at the explorer's desk.
   const scene: SceneVariant = view.name === 'map-demo' ? 'world' : 'journal'
 
@@ -160,7 +160,7 @@ function App() {
           active={route}
           email={session.email}
           onNavigate={(next) => {
-            location.hash = next === 'mapa' ? '#/mapa' : '#/casos'
+            location.hash = next === 'mapa' ? '#/mapa' : next === 'dashboard' ? '#/dashboard' : '#/casos'
           }}
           onSignOut={() => {
             signOut()
@@ -191,7 +191,8 @@ function App() {
             }}
           />
         )}
-        {view.name === 'map-demo' && <MapOverview token={session.token} />}
+        {view.name === 'map-demo' && <MapOverview token={session.token} ownerId={session.userId} />}
+        {view.name === 'dashboard' && <Dashboard token={session.token} />}
       </main>
     </>
   )
@@ -202,10 +203,8 @@ function App() {
  * touched case stands. Its own hooks so they only run while this route is
  * actually mounted, instead of every route paying for a second case fetch.
  */
-function MapOverview({ token }: { token: string }) {
+function MapOverview({ token, ownerId }: { token: string; ownerId: string | null }) {
   const { cases, status } = useCases(token)
-  const { avatarId, setAvatarId } = useAvatar()
-
   if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
   if (cases.length === 0) {
     return <p className="app-restoring">Crea tu primera aventura para ver el mapa.</p>
@@ -213,11 +212,15 @@ function MapOverview({ token }: { token: string }) {
 
   const latest = cases[0]
   return (
-    <>
-      <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
-      <OwlTip tipId="map-guide" />
-      <CaseMap stage={toCaseStage(latest.estadoInteractivo.estacionActual)} />
-    </>
+    <CaseForm
+      key={latest.id}
+      token={token}
+      caseId={latest.id}
+      ownerId={ownerId}
+      onBack={() => {}}
+      onDeleted={() => {}}
+      mapOnly
+    />
   )
 }
 

@@ -1,19 +1,18 @@
-/*
- * frontend/src/portal/client.ts // one Portal client per publishable key.
- * Construction is synchronous and opens no connection (confirmed in the
- * SDK's own docs), so memoizing here is just avoiding a second registry for
- * a project that only ever has one key.
+/**
+ * One Portal client per publishable key + room scope. A client owns its token
+ * source, so scoping it by channel prevents a previously mounted case from
+ * leaking its Portal credential into another case.
  */
-
 import { Portal } from '@portalsdk/core'
 
 const clients = new Map<string, Portal>()
 
-export function getPortalClient(apiKey: string): Portal {
-  let client = clients.get(apiKey)
+export function getPortalClient(apiKey: string, scope = 'default'): Portal {
+  const key = `${apiKey}:${scope}`
+  let client = clients.get(key)
   if (!client) {
     client = new Portal({ apiKey })
-    clients.set(apiKey, client)
+    clients.set(key, client)
   }
   return client
 }

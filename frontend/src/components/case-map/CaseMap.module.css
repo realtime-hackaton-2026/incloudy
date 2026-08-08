@@ -161,6 +161,20 @@
   border-color: rgb(241 216 166 / 85%);
 }
 
+.hotspotLocked {
+  opacity: 0.48;
+  border-style: dashed;
+  background: rgb(8 10 14 / 28%);
+}
+
+.hotspotLocked:hover,
+.hotspotLocked:focus-visible {
+  opacity: 0.8;
+  border-color: var(--muted);
+  background: rgb(8 10 14 / 52%);
+  box-shadow: none;
+}
+
 /* The current station: the pin stands here, so the bead gets out of the way.
    `animation: none` matters — the reveal above fills to opacity 1 and an
    animated value outranks this declaration, which would bring the bead back
@@ -523,5 +537,152 @@
   .hud::before {
     animation: none;
     transform: var(--hud-transform);
+  }
+}
+
+/* --- Full-screen mission mode ------------------------------------------ */
+.missionOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: auto;
+  background: #07090c;
+  animation: missionIn 220ms var(--ease) both;
+}
+
+@keyframes missionIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.missionBackdrop {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
+  transform: scale(1.015);
+}
+
+.missionShade {
+  position: absolute;
+  inset: 0;
+  background: rgb(6 8 12 / 48%);
+  backdrop-filter: blur(1px);
+}
+
+/*
+ * Light-theme island.
+ *
+ * This panel sits on cream paper, not the app's dark canvas, so the global
+ * (near-white) text/accent tokens are redefined locally to dark, accessible
+ * values (WCAG AA, 4.5:1+ against the cream background below). Every
+ * descendant — including StationCard and its children, which live in
+ * case-form's own CSS module — reads color from these same var() names, so
+ * the override cascades through the DOM as ordinary custom-property
+ * inheritance. That's deliberate: a previous attempt at this fix used
+ * cross-module selectors like `.missionBody :global(.stationCard) p`, but
+ * CSS Modules gives every class a unique hashed name per file, so
+ * `.stationCard` written inside CaseMap's stylesheet never matched the
+ * element rendered by case-form's stylesheet — the override silently did
+ * nothing, leaving light text on the light panel. CSS variables aren't
+ * scoped that way, so they don't have this problem.
+ */
+.missionPanel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, calc(100% - 36px));
+  max-height: calc(100% - 36px);
+  overflow-y: auto;
+  margin: 18px auto;
+  padding: 16px;
+
+  --text: #201a10;
+  --text-soft: #4b4232;
+  --muted: #5f574a;
+  --parchment: #7a4d17;
+  --parchment-hi: #5f3c11;
+  --hairline: rgb(32 26 16 / 16%);
+  --hairline-strong: rgb(32 26 16 / 28%);
+  --danger: #b3261e;
+  --danger-bg: rgb(179 38 30 / 10%);
+  --contrast-color: #7a4d17;
+  --reaction-color: #1f6b3a;
+  --alignment-color: #6b5511;
+
+  /* Boxed, tappable station options instead of bare rows of text — the
+     dark-canvas default relies on the page background for definition,
+     which disappears on this light panel. */
+  --option-min-height: 46px;
+  --option-padding: 10px 12px;
+  --option-border: 2px solid rgb(32 26 16 / 45%);
+  --option-radius: 6px;
+  --option-bg: rgb(255 255 255 / 45%);
+  --option-bg-hover: rgb(255 255 255 / 68%);
+  --option-border-selected: #7a4d17;
+  --option-bg-selected: rgb(230 201 149 / 45%);
+  --option-hover-lift: translateY(-1px);
+
+  color: var(--text);
+  background: rgb(245 240 218 / 96%);
+  border: 2px solid rgb(30 34 39 / 88%);
+  box-shadow: 0 28px 70px rgb(0 0 0 / 62%);
+}
+
+.missionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.missionStation {
+  font-family: var(--label);
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #171b20;
+}
+
+.missionClose {
+  width: 30px;
+  height: 30px;
+  color: #171b20;
+  background: transparent;
+  border: 1px solid rgb(23 27 32 / 28%);
+  cursor: pointer;
+}
+
+.missionBody {
+  color: #171b20;
+}
+
+/* Form controls (the "Comentario" textarea) carry hard-coded dark
+   backgrounds sized for the dark canvas — invisible-on-cream at best, and
+   now that --text is dark, dark-on-dark at worst. Tag selectors, unlike
+   class selectors, aren't renamed by CSS Modules, so they safely reach
+   into the case-form markup from here. */
+.missionBody textarea {
+  color: var(--text);
+  background: rgb(255 255 255 / 55%);
+  border-color: rgb(32 26 16 / 22%);
+}
+
+.missionBody textarea:focus {
+  background: rgb(255 255 255 / 82%);
+  border-color: rgb(122 77 23 / 55%);
+}
+
+.missionBody textarea::placeholder {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .missionPanel {
+    width: calc(100% - 20px);
+    max-height: calc(100% - 20px);
+    margin: 10px auto;
+    padding: 12px;
   }
 }

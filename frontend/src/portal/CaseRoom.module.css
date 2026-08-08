@@ -1,16 +1,16 @@
-.room {
+.roomBody {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid var(--hairline);
-  border-radius: 14px;
-  background: var(--surface);
+  border-radius: 13px;
+  background: #151b25;
 }
 
 .roomHeader {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -18,24 +18,92 @@
 .roomTitle {
   margin: 0;
   font-family: var(--label);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--parchment);
 }
 
-.presence {
-  font-family: var(--label);
+.roomHint {
+  margin-top: 3px;
   font-size: 11px;
-  color: var(--muted);
+  line-height: 1.35;
+  color: #c4ccd7;
+}
+
+.presence {
+  flex: none;
+  padding: 4px 7px;
+  font-family: var(--label);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  background: #1d2532;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+}
+
+.presenceReady {
+  color: var(--success);
+  border-color: rgb(110 231 168 / 25%);
+}
+
+.waiting,
+.liveStrip {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.waiting {
+  background: rgb(230 201 149 / 9%);
+  border: 1px solid rgb(230 201 149 / 28%);
+}
+
+.waitingIcon {
+  color: var(--parchment);
+}
+
+.waiting strong {
+  font-family: var(--display);
+  font-size: 12px;
+}
+
+.waiting p {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.liveStrip {
+  align-items: center;
+  background: rgb(110 231 168 / 8%);
+  border: 1px solid rgb(110 231 168 / 25%);
+  color: var(--success);
+  font-size: 11px;
+}
+
+.liveStrip > span:first-child {
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgb(110 231 168 / 60%);
+}
+
+.liveCopy {
+  color: var(--text-soft);
 }
 
 .messages {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 220px;
+  gap: 7px;
+  max-height: 270px;
   padding: 0;
   margin: 0;
   overflow-y: auto;
@@ -43,15 +111,89 @@
 }
 
 .message {
-  padding: 8px 10px;
-  font-size: 14px;
-  color: var(--text);
-  background: rgb(255 255 255 / 4%);
+  padding: 9px 10px;
+  background: #1b2330;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 10px;
+}
+
+.messageMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.messageAuthor,
+.messageMeta time {
+  font-family: var(--label);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9da8b8;
+}
+
+.message p {
+  font-size: 13px;
+  line-height: 1.42;
+  color: #f1f3f6;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #c0c8d4;
+  background: #121822;
+  border: 1px dashed rgb(255 255 255 / 16%);
   border-radius: 9px;
 }
 
-.messageAuthor {
-  margin-right: 6px;
+.typing {
+  min-height: 14px;
+  margin: 0;
+  font-size: 10px;
+  font-style: italic;
+  color: #aeb8c6;
+}
+
+.composer {
+  display: flex;
+  gap: 7px;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: #f3f5f8;
+  background: #0d131c;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 9px;
+}
+
+.composer input:focus {
+  border-color: rgb(230 201 149 / 72%);
+  box-shadow: 0 0 0 3px rgb(230 201 149 / 10%);
+}
+
+.composer button {
+  padding: 9px 12px;
+  font-size: 12px;
+  color: #17130d;
+  background: linear-gradient(180deg, #f1d8a6 0%, #d7b878 100%);
+  border-color: #f4dda9;
+}
+
+.composer button:hover:not(:disabled) {
+  background: #f1d8a6;
+}
+
+.state {
+  margin: 0;
   font-family: var(--label);
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -59,60 +201,20 @@
   color: var(--muted);
 }
 
-.empty {
-  font-family: var(--label);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.typing {
-  min-height: 14px;
-  margin: 0;
-  font-family: var(--label);
-  font-size: 11px;
-  font-style: italic;
-  color: var(--muted);
-}
-
-.composer {
-  display: flex;
-  gap: 8px;
-}
-
-.composer input {
-  flex: 1;
-  /* Inputs have an implicit min-width: auto that fights flex shrinking —
-     without this a long placeholder can push the button off narrow screens. */
-  min-width: 0;
-  padding: 10px 12px;
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--text);
-  background: rgb(9 12 17 / 70%);
-  border: 1px solid var(--hairline);
-  border-radius: 9px;
-}
-
-.composer input:focus {
-  /* No `outline: none` here — the global :focus-visible rule in styles.css
-     still needs to draw its ring for keyboard focus. This only adds the
-     border highlight on top, for every focus method. */
-  border-color: rgb(230 201 149 / 46%);
-}
-
-.state {
-  font-family: var(--label);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .stateError {
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: normal;
   text-transform: none;
   color: var(--danger);
+}
+
+.portalError {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.32);
+  color: #fecaca;
+  font-size: 0.82rem;
 }

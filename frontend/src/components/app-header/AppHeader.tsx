@@ -9,7 +9,7 @@
 import logo from '../../assets/images/logo.webp'
 import styles from './AppHeader.module.css'
 
-export type RouteName = 'casos' | 'mapa'
+export type RouteName = 'casos' | 'mapa' | 'dashboard'
 
 export interface AppHeaderProps {
   active: RouteName
@@ -59,6 +59,14 @@ export function AppHeader({
       </nav>
 
       <div className={styles.user}>
+        <button
+          type="button"
+          className={`${styles.dashboardLink} ${active === 'dashboard' ? styles.dashboardLinkActive : ''}`}
+          aria-current={active === 'dashboard' ? 'page' : undefined}
+          onClick={() => onNavigate('dashboard')}
+        >
+          Dashboard
+        </button>
         <span className={styles.email} title={email}>
           {email}
         </span>

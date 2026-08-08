@@ -1,0 +1,283 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.back {
+  align-self: flex-start;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--outline);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.back:hover {
+  color: var(--secondary);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 26px;
+  color: var(--primary);
+}
+
+.status {
+  padding: 2px 10px;
+  font-family: var(--label);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  background: var(--surface-dim);
+  border-radius: 999px;
+}
+
+.saveState {
+  margin-left: auto;
+  font-family: var(--label);
+  font-size: 13px;
+  color: var(--outline);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 3px solid var(--wood-dark);
+  background: var(--paper);
+}
+
+.section:disabled {
+  opacity: 0.7;
+}
+
+.sectionTitle {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.input,
+.textarea {
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  border: 3px solid var(--wood-dark);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.percent {
+  font-family: var(--label);
+  font-size: 13px;
+  color: var(--outline);
+}
+
+.progressBar {
+  height: 10px;
+  background: var(--surface-dim);
+  border: 1px solid var(--wood-dark);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--secondary);
+  transition: width 300ms ease;
+}
+
+.stations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.station {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stationTitle {
+  flex: 1;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 3px solid var(--wood-dark);
+}
+
+.stationTitle:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+.stationRemove {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--danger);
+  background: none;
+  border: 2px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.stationRemove:hover {
+  background: var(--danger-bg);
+}
+
+.addStation {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.addStation:hover {
+  filter: brightness(1.04);
+}
+
+.collaborators {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.collaborator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: 14px;
+  background: var(--surface-dim);
+}
+
+.collaborator button {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--danger);
+  background: none;
+  border: 1px solid var(--danger);
+  cursor: pointer;
+}
+
+.inviteForm {
+  display: flex;
+  gap: 8px;
+}
+
+.inviteForm .input {
+  flex: 1;
+}
+
+.inviteForm button {
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.inviteForm button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.deleteButton,
+.publishButton {
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 3px solid var(--wood-dark);
+}
+
+.deleteButton {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.publishButton {
+  margin-left: auto;
+  color: var(--primary);
+  background: var(--wood);
+}
+
+.state {
+  padding: 16px;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.stateError {
+  color: var(--danger);
+}
+
+:is(button, input, textarea):focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+}

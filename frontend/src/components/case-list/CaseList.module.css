@@ -1,0 +1,123 @@
+.wrapper {
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 24px;
+  color: var(--primary);
+}
+
+.newButton {
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.newButton:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.newButton:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.newButton:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.state {
+  padding: 16px;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.stateError {
+  color: var(--danger);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  border: 3px solid var(--wood-dark);
+  background: var(--paper);
+}
+
+.cardMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cardMain:hover {
+  background: rgb(195 169 133 / 12%);
+}
+
+.cardMain:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: -3px;
+}
+
+.cardName {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.cardMeta {
+  font-size: 13px;
+  color: var(--outline);
+}
+
+.cardDelete {
+  flex: none;
+  padding: 0 16px;
+  font-size: 13px;
+  color: var(--danger);
+  background: none;
+  border: none;
+  border-left: 3px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.cardDelete:hover {
+  background: var(--danger-bg);
+}
+
+.cardDelete:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: -3px;
+}

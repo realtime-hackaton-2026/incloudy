@@ -23,10 +23,6 @@
   }
 }
 
-.mapStage {
-  animation: riseIn var(--medium) var(--ease) 180ms both;
-}
-
 .intro {
   display: flex;
   flex-wrap: wrap;
@@ -76,13 +72,43 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 44px 24px;
+  gap: 14px;
+  padding: 48px 24px 44px;
   text-align: center;
-  border: 1px dashed var(--hairline-strong);
+  border: 1px dashed rgb(230 201 149 / 26%);
   border-radius: 16px;
-  background: rgb(21 25 34 / 55%);
+  background: rgb(28 23 18 / 55%);
   animation: riseIn var(--medium) var(--ease) 380ms both;
+}
+
+/* A closed notebook waiting to be opened. */
+.emptyBook {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 92px;
+  border-radius: 4px 8px 8px 4px;
+  background: linear-gradient(100deg, var(--wood-dark) 0 8px, var(--paper) 8px);
+  box-shadow: 0 14px 30px -12px rgb(0 0 0 / 80%);
+  animation: bookBreathe 6s ease-in-out infinite alternate;
+}
+
+@keyframes bookBreathe {
+  from {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+
+  to {
+    transform: translateY(-5px) rotate(1.5deg);
+  }
+}
+
+.emptyBookMark {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--wood-dark);
 }
 
 .emptyTitle {
@@ -91,7 +117,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--parchment);
 }
 
 .emptyBody {

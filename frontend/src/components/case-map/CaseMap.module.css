@@ -10,6 +10,64 @@
   width: 100%;
 }
 
+/*
+ * Staged reveal — "show first, explain second".
+ *
+ * The world arrives alone, then the markers, then the progress. Landing on
+ * everything at once gave the user no moment to simply look at the map,
+ * which is the one thing this screen exists for.
+ */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealMap {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.frame {
+  animation: revealMap 700ms var(--ease) both;
+}
+
+/* Step 02 — markers, once the world has had a beat on its own.
+   Opacity only: these are positioned with `transform: translate(-50%, …)`,
+   so animating transform here would fight their placement. */
+@keyframes revealFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hotspot,
+.marker {
+  animation: revealFade 420ms var(--ease) 700ms both;
+}
+
+/* Step 03 — the journey. */
+.caption {
+  animation: revealUp 420ms var(--ease) 980ms both;
+}
+
 .frame {
   position: relative;
   width: 100%;
@@ -103,8 +161,12 @@
   border-color: rgb(241 216 166 / 85%);
 }
 
-/* The current station: the pin stands here, so the bead gets out of the way. */
+/* The current station: the pin stands here, so the bead gets out of the way.
+   `animation: none` matters — the reveal above fills to opacity 1 and an
+   animated value outranks this declaration, which would bring the bead back
+   underneath the pin. */
 .underPin {
+  animation: none;
   opacity: 0;
   pointer-events: none;
 }
@@ -258,25 +320,34 @@
 }
 
 .hudMeta {
-  margin: 12px 0 4px;
-  font-family: var(--label);
-  font-size: 11px;
+  margin: 14px 0 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-soft);
 }
 
-.hudBar {
-  height: 4px;
+/* Beads, not a bar — a badge counts what you have collected. */
+.hudBeads {
+  display: flex;
+  gap: 7px;
   margin-bottom: 14px;
-  border-radius: 3px;
-  background: rgb(255 255 255 / 10%);
-  overflow: hidden;
 }
 
-.hudBarFill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--map-blue), var(--parchment));
-  transition: width var(--medium) var(--ease);
+.bead {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(255 255 255 / 26%);
+  background: transparent;
+}
+
+.beadDone {
+  background: var(--parchment);
+  border-color: var(--parchment-hi);
+  box-shadow: 0 0 10px rgb(230 201 149 / 55%);
 }
 
 .hudActions {

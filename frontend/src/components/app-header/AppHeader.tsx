@@ -19,11 +19,9 @@ export interface AppHeaderProps {
   onSignOut: () => void
 }
 
-const ROUTES: ReadonlyArray<{ name: RouteName; label: string; demo?: boolean }> = [
-  { name: 'casos', label: 'Casos' },
-  // "Demo" is a badge, not part of the name — the route is the map, it just
-  // is not wired to a real case yet.
-  { name: 'mapa', label: 'Mapa', demo: true },
+const ROUTES: ReadonlyArray<{ name: RouteName; label: string }> = [
+  { name: 'casos', label: 'Aventuras' },
+  { name: 'mapa', label: 'Mapa' },
 ]
 
 export function AppHeader({
@@ -50,7 +48,6 @@ export function AppHeader({
             onClick={() => onNavigate(route.name)}
           >
             {route.label}
-            {route.demo && <span className={styles.badge}>DEMO</span>}
           </button>
         ))}
       </nav>

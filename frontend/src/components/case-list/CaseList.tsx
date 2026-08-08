@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { useCases } from '../../cases'
 import type { Case } from '../../cases'
-import { CaseMap, STATIONS } from '../case-map'
+import { STATIONS } from '../case-map'
 import type { CaseStage } from '../case-map'
 import { ConfirmDialog } from '../confirm-dialog'
 import styles from './CaseList.module.css'
@@ -25,9 +25,6 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   const [creating, setCreating] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null)
   const [deleting, setDeleting] = useState(false)
-  // Which station is lit right now, and which card lit it.
-  const [litStage, setLitStage] = useState<CaseStage | null>(null)
-  const [litCaseId, setLitCaseId] = useState<string | null>(null)
 
   async function handleCreate() {
     setCreating(true)
@@ -53,37 +50,12 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
     }
   }
 
-  function lightFromCard(item: Case | null) {
-    setLitCaseId(item?.id ?? null)
-    setLitStage(item ? stageOf(item) : null)
-  }
-
-  function lightFromMap(stage: CaseStage | null) {
-    setLitStage(stage)
-    // Light the first case standing on that station, so the link is visibly
-    // mutual rather than one-directional.
-    const match = stage ? cases.find((item) => stageOf(item) === stage) : undefined
-    setLitCaseId(match?.id ?? null)
-  }
-
   return (
     <div className={styles.wrapper}>
-      <div className={styles.mapStage}>
-        <CaseMap
-          stage={litStage ?? 'explorar'}
-          highlightStage={litStage}
-          onHoverStage={lightFromMap}
-          onSelectStage={(stage) => {
-            const match = cases.find((item) => stageOf(item) === stage)
-            if (match) onOpen(match.id)
-          }}
-        />
-      </div>
-
       <div className={styles.intro}>
         <div className={styles.introText}>
-          <span className="eyebrow">Tus casos</span>
-          <p className={styles.lede}>Sigue cada historia por el mapa.</p>
+          <span className="eyebrow">Tu diario de aventuras</span>
+          <p className={styles.lede}>Cada historia empieza en un lugar del mapa.</p>
         </div>
         <button
           type="button"
@@ -91,11 +63,11 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
           onClick={handleCreate}
           disabled={creating}
         >
-          {creating ? 'Creando…' : '+ Nuevo caso'}
+          {creating ? 'Creando…' : '+ Nueva aventura'}
         </button>
       </div>
 
-      {status === 'loading' && <p className={styles.state}>Cargando casos…</p>}
+      {status === 'loading' && <p className={styles.state}>Abriendo el diario…</p>}
       {status === 'error' && (
         <p className={`${styles.state} ${styles.stateError}`} role="alert">
           {error}
@@ -104,9 +76,13 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
 
       {status === 'ready' && cases.length === 0 && (
         <div className={styles.empty}>
-          <span className={styles.emptyTitle}>Aún no hay casos</span>
+          <span className={styles.emptyBook} aria-hidden="true">
+            <span className={styles.emptyBookMark}>?</span>
+          </span>
+          <span className={styles.emptyTitle}>Tu diario de aventuras</span>
           <p className={styles.emptyBody}>
-            Tu mapa está esperando su primera historia.
+            Todavía no hay historias aquí. Crea la primera aventura para comenzar a
+            explorar.
           </p>
           <button
             type="button"
@@ -114,7 +90,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
             onClick={handleCreate}
             disabled={creating}
           >
-            {creating ? 'Creando…' : '+ Crear nuevo caso'}
+            {creating ? 'Creando…' : '+ Nueva aventura'}
           </button>
         </div>
       )}
@@ -129,32 +105,27 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
             const shared = ownerId !== null && item.profesorId !== ownerId
 
             return (
-              <li
-                key={item.id}
-                className={`${styles.card} ${litCaseId === item.id ? styles.cardLit : ''}`}
-                onMouseEnter={() => lightFromCard(item)}
-                onMouseLeave={() => lightFromCard(null)}
-              >
+              <li key={item.id} className={styles.card}>
                 <button
                   type="button"
                   className={styles.cardMain}
                   onClick={() => onOpen(item.id)}
                 >
                   <span className={styles.cardNumber}>
-                    Caso #{item.id.slice(-4).toUpperCase()}
+                    ✦ Aventura #{item.id.slice(-4).toUpperCase()}
                   </span>
                   <span className={styles.cardName}>{item.alumno.nombre}</span>
-                  <span className={styles.cardStations}>
-                    {total === 0
-                      ? 'Sin estaciones todavía'
-                      : `${done} de ${total} estaciones completadas`}
-                  </span>
 
                   <span className={styles.cardBar}>
                     <span className={styles.cardBarFill} style={{ width: `${percent}%` }} />
                   </span>
 
-                  <span className={styles.cardFooterLabel}>Última actividad</span>
+                  <span className={styles.cardStations}>
+                    {total === 0
+                      ? 'La aventura aún no empieza'
+                      : `${done} de ${total} aventuras completadas`}
+                  </span>
+
                   <span className={styles.cardActivity}>
                     {station ? `${station.label} ${station.place}` : '—'}
                   </span>
@@ -183,7 +154,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
                   type="button"
                   className={styles.cardDelete}
                   onClick={() => setPendingDelete(item)}
-                  aria-label={`Eliminar el caso de ${item.alumno.nombre}`}
+                  aria-label={`Eliminar la aventura de ${item.alumno.nombre}`}
                 >
                   ✕
                 </button>
@@ -195,7 +166,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        title={`¿Eliminar el caso de ${pendingDelete?.alumno.nombre ?? ''}?`}
+        title={`¿Eliminar la aventura de ${pendingDelete?.alumno.nombre ?? ''}?`}
         description="Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
         tone="danger"

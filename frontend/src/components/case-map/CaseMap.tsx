@@ -157,15 +157,21 @@ export function CaseMap({
             </span>
 
             <p className={styles.hudMeta}>
-              Etapa {stationIndex(focusedStation.stage) + 1} / {STATIONS.length}
+              Aventura {stationIndex(focusedStation.stage) + 1} de {STATIONS.length}
             </p>
-            <div className={styles.hudBar}>
-              <div
-                className={styles.hudBarFill}
-                style={{
-                  width: `${((stationIndex(focusedStation.stage) + 1) / STATIONS.length) * 100}%`,
-                }}
-              />
+            <div
+              className={styles.hudBeads}
+              role="img"
+              aria-label={`Aventura ${stationIndex(focusedStation.stage) + 1} de ${STATIONS.length}`}
+            >
+              {STATIONS.map((entry, index) => (
+                <span
+                  key={entry.stage}
+                  className={`${styles.bead} ${
+                    index <= stationIndex(focusedStation.stage) ? styles.beadDone : ''
+                  }`}
+                />
+              ))}
             </div>
 
             <div className={styles.hudActions}>
@@ -177,7 +183,7 @@ export function CaseMap({
                   focus(null)
                 }}
               >
-                Ver estación →
+                Explorar →
               </button>
               <button
                 type="button"
@@ -197,7 +203,7 @@ export function CaseMap({
           {active.label} <span className={styles.place}>{active.place}</span>
         </span>
         <span className={styles.hint}>
-          {focused ? 'Cierra la ficha para alejar' : 'Elige una estación del mapa'}
+          {focused ? 'Cierra para alejar' : 'Toca un lugar del mapa'}
         </span>
       </div>
 

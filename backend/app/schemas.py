@@ -53,7 +53,7 @@ class JourneyTemplateCreate(BaseModel):
 class CaseCreate(BaseModel):
     alumno: Student
     template_id: Optional[str] = None
-    privacy_acknowledged: Literal[True]
+    privacy_acknowledged: Literal[True] = True
 
     @model_validator(mode="after")
     def validate_fictional_student(self) -> "CaseCreate":

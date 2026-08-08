@@ -1,5 +1,5 @@
-export { fetchCurrentUser, registerAccount, requestToken } from './api'
-export type { Credentials } from './api'
+export { fetchCurrentUser, registerAccount, requestToken, updateCurrentUser } from './api'
+export type { Credentials, ProfileUpdate, Registration } from './api'
 export { useSession } from './useSession'
 export type { Session, SessionState, SessionStatus } from './useSession'
 export { ApiError } from '../lib/http'

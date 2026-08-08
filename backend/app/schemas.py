@@ -7,6 +7,7 @@ from .models import CollaboratorRole, Student, TemplateStation
 
 class RegisterRequest(BaseModel):
     nombre: str = Field(min_length=1, max_length=100)
+    seccion: Optional[str] = Field(default=None, max_length=120)
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
 
@@ -20,6 +21,15 @@ class UserResponse(BaseModel):
     id: str
     nombre: str
     email: EmailStr
+    seccion: Optional[str] = None
+
+
+class UserUpdateRequest(BaseModel):
+    nombre: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    seccion: Optional[str] = Field(default=None, max_length=120)
+    current_password: Optional[str] = Field(default=None, max_length=72)
+    new_password: Optional[str] = Field(default=None, min_length=8, max_length=72)
 
 
 class JourneyTemplateCreate(BaseModel):

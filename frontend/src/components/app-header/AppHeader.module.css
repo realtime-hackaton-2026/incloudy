@@ -151,11 +151,79 @@
   border-color: var(--parchment-hi);
 }
 
-.email {
+.teacher {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 22ch;
+  max-width: 25ch;
+  font-size: clamp(12px, 0.25vw + 10px, 14px);
+  color: var(--text-soft);
+}
+
+.teacher strong { color: var(--text); font-weight: 700; }
+
+.settingsButton {
+  width: 38px;
+  height: 38px;
+  color: var(--parchment-hi);
+  font-size: 17px;
+  background: rgb(230 201 149 / 8%);
+  border: 1px solid rgb(230 201 149 / 24%);
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.settingsBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(5 15 21 / 72%);
+  backdrop-filter: blur(8px);
+}
+
+.settingsPanel {
+  width: min(620px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  padding: clamp(22px, 4vw, 36px);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 42%);
+}
+
+.settingsHeading { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+.settingsHeading span { font: 700 11px/1.4 var(--label); letter-spacing: .16em; color: var(--parchment); }
+.settingsHeading h2 { margin: 5px 0 20px; font: 700 clamp(24px, 4vw, 34px)/1.15 var(--display); }
+.settingsHeading button { color: var(--text); font-size: 28px; background: none; border: 0; cursor: pointer; }
+.settingsForm { display: grid; gap: 16px; }
+.settingsForm label { display: grid; gap: 7px; font: 700 13px/1.4 var(--sans); color: var(--text); }
+.settingsForm input {
+  min-height: 46px;
+  padding: 10px 13px;
+  color: var(--text);
+  font: 400 16px/1.4 var(--sans);
+  background: var(--surface-deep);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9px;
+}
+.settingsForm input:focus { outline: 2px solid var(--parchment); outline-offset: 2px; }
+.passwordGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.settingsHelp, .settingsMessage { margin: 0; font-size: 13px; color: var(--text-soft); }
+.settingsMessage { color: var(--parchment-hi); }
+.saveButton {
+  min-height: 46px;
+  padding: 10px 18px;
+  font: 700 14px/1 var(--sans);
+  color: var(--on-warm);
+  background: var(--parchment);
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
 }
 
 .signOut {
@@ -195,7 +263,7 @@
     justify-content: flex-start;
   }
 
-  .email {
+  .teacher {
     max-width: 14ch;
   }
 }
@@ -209,9 +277,11 @@
     margin-bottom: 20px;
   }
 
-  .email {
+  .teacher {
     display: none;
   }
+
+  .passwordGrid { grid-template-columns: 1fr; }
 
   .navItem {
     padding: 8px 10px 10px;

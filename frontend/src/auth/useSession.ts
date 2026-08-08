@@ -6,8 +6,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { registerAccount, fetchCurrentUser, requestToken } from './api'
-import type { Credentials } from './api'
+import { registerAccount, fetchCurrentUser, requestToken, updateCurrentUser } from './api'
+import type { Credentials, ProfileUpdate, Registration } from './api'
 import { ApiError } from '../lib/http'
 
 const TOKEN_KEY = 'incloudy.token'
@@ -16,6 +16,8 @@ export interface Session {
   token: string
   email: string
   userId: string
+  nombre: string
+  seccion: string | null
 }
 
 export type SessionStatus =
@@ -37,7 +39,8 @@ export interface SessionState {
       the entrance transition, which an effect watching `session` could not
       tell apart from restoring a stored token on reload. */
   signIn: (credentials: Credentials) => Promise<boolean>
-  signUp: (credentials: Credentials) => Promise<boolean>
+  signUp: (credentials: Registration) => Promise<boolean>
+  updateProfile: (input: ProfileUpdate) => Promise<boolean>
   signOut: () => void
 }
 
@@ -61,7 +64,7 @@ export function useSession(): SessionState {
     fetchCurrentUser(token)
       .then((user) => {
         if (!active) return
-        setSession({ token, email: user.email, userId: user.id })
+        setSession({ token, email: user.email, userId: user.id, nombre: user.nombre, seccion: user.seccion })
         setStatus('active')
       })
       .catch(() => {
@@ -84,7 +87,7 @@ export function useSession(): SessionState {
       const token = await requestToken(credentials)
       const user = await fetchCurrentUser(token)
       storeToken(token)
-      setSession({ token, email: user.email, userId: user.id })
+      setSession({ token, email: user.email, userId: user.id, nombre: user.nombre, seccion: user.seccion })
       setStatus('active')
       return true
     } catch (cause) {
@@ -94,14 +97,14 @@ export function useSession(): SessionState {
     }
   }, [])
 
-  const signUp = useCallback(async (credentials: Credentials) => {
+  const signUp = useCallback(async (credentials: Registration) => {
     setStatus('signing-in')
     setError(null)
     try {
       const token = await registerAccount(credentials)
       const user = await fetchCurrentUser(token)
       storeToken(token)
-      setSession({ token, email: user.email, userId: user.id })
+      setSession({ token, email: user.email, userId: user.id, nombre: user.nombre, seccion: user.seccion })
       setStatus('active')
       return true
     } catch (cause) {
@@ -111,6 +114,19 @@ export function useSession(): SessionState {
     }
   }, [])
 
+  const updateProfile = useCallback(async (input: ProfileUpdate) => {
+    if (!session) return false
+    setError(null)
+    try {
+      const user = await updateCurrentUser(session.token, input)
+      setSession((current) => current ? { ...current, email: user.email, nombre: user.nombre, seccion: user.seccion } : current)
+      return true
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar el perfil.')
+      return false
+    }
+  }, [session])
+
   const signOut = useCallback(() => {
     clearStoredToken()
     setSession(null)
@@ -118,7 +134,7 @@ export function useSession(): SessionState {
     setStatus('anonymous')
   }, [])
 
-  return { session, status, error, signIn, signUp, signOut }
+  return { session, status, error, signIn, signUp, updateProfile, signOut }
 }
 
 // Private browsing and locked-down browsers make localStorage throw rather than

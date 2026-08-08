@@ -47,7 +47,7 @@ function authScreenFromHash(hash: string): AuthScreenName {
 }
 
 function App() {
-  const { session, status, error, signIn, signUp, signOut } = useSession()
+  const { session, status, error, signIn, signUp, updateProfile, signOut } = useSession()
   const [authScreen, setAuthScreen] = useState<AuthScreenName>(() =>
     authScreenFromHash(location.hash),
   )
@@ -89,9 +89,9 @@ function App() {
    * Signing in lands on the map, not on casos: the map is the reward for
    * entering, and it is the only screen that shows it.
    */
-  async function enterWorld(
-    credentials: Credentials,
-    authenticate: (credentials: Credentials) => Promise<boolean>,
+  async function enterWorld<T extends Credentials>(
+    credentials: T,
+    authenticate: (credentials: T) => Promise<boolean>,
   ) {
     if (!(await authenticate(credentials))) return
     location.hash = '#/mapa'
@@ -159,7 +159,10 @@ function App() {
       >
         <AppHeader
           active={route}
+          nombre={session.nombre}
           email={session.email}
+          seccion={session.seccion}
+          onUpdateProfile={updateProfile}
           onNavigate={(next) => {
             location.hash = next === 'mapa' ? '#/mapa' : next === 'dashboard' ? '#/dashboard' : '#/casos'
           }}

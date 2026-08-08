@@ -54,7 +54,8 @@ export function Registro({
 
   return (
     <AuthScreen
-      tagline="Crea tu cuenta"
+      tagline="Un lugar acogedor para aprender"
+      prompt="Empieza tu primera aventura"
       onFocusChange={onFocusChange}
       showCurtain={showCurtain}
     >

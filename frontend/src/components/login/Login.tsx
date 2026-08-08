@@ -41,7 +41,8 @@ export function Login({
 
   return (
     <AuthScreen
-      tagline="Sigue el caso"
+      tagline="Un lugar acogedor para aprender"
+      prompt="¿Listo para explorar?"
       onFocusChange={onFocusChange}
       showCurtain={showCurtain}
     >

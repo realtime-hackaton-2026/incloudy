@@ -14,6 +14,8 @@ import styles from './AuthScreen.module.css'
 
 export interface AuthScreenProps {
   tagline: string
+  /** The invitation above the form — "¿Listo para explorar?". */
+  prompt: string
   children: ReactNode
   /**
    * Fires while any field is focused. The caller darkens the world behind
@@ -27,6 +29,7 @@ export interface AuthScreenProps {
 
 export function AuthScreen({
   tagline,
+  prompt,
   children,
   onFocusChange,
   showCurtain = true,
@@ -55,6 +58,7 @@ export function AuthScreen({
           <img className={styles.logo} src={logo} alt="" />
           <span className={styles.wordmark}>incloudy</span>
           <span className={styles.tagline}>{tagline}</span>
+          <span className={styles.prompt}>{prompt}</span>
         </div>
 
         {children}

@@ -1,9 +1,10 @@
 /*
- * The entrance to the world.
+ * The explorer's notebook.
  *
- * The map is not a backdrop image behind a form — it is the environment
- * (rendered by MapEnvironment at the app root) and this card is a panel
- * floating inside it. Hence no background of its own beyond translucency.
+ * Rolled back to parchment on purpose: the card reading as an object lying
+ * in the world — not a modal floating over it — is what gave the original
+ * login its charm. Lighter than the original though, so it sits in the
+ * campsite rather than dominating it.
  */
 
 .screen {
@@ -17,48 +18,48 @@
   padding: 32px 24px;
 }
 
-/*
- * Scene 01 — black. A single warm point of light, then it opens out.
- * Covers the whole screen for the first ~400ms so the world is revealed
- * rather than simply painted.
- */
+/* Scene 01 — darkness. One firefly crosses, then the world fades up. */
 .curtain {
   position: fixed;
   inset: 0;
   z-index: 5;
   background: #05070a;
   pointer-events: none;
-  animation: curtainLift 900ms var(--ease) 260ms both;
+  animation: curtainLift 800ms var(--ease) 420ms both;
 }
 
 .curtain::after {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 4px;
+  top: 54%;
+  left: 22%;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--parchment-hi);
-  box-shadow: 0 0 24px 6px rgb(241 216 166 / 60%);
-  transform: translate(-50%, -50%);
-  animation: spark 620ms var(--ease) both;
+  background: var(--firefly);
+  box-shadow: 0 0 14px 4px rgb(255 233 168 / 70%);
+  animation: firstFirefly 1100ms ease-in-out both;
 }
 
-@keyframes spark {
+@keyframes firstFirefly {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.2);
+    transform: translate(0, 0) scale(0.4);
   }
 
-  40% {
+  25% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translate(40px, -18px) scale(1);
+  }
+
+  70% {
+    opacity: 0.9;
+    transform: translate(150px, -46px) scale(1);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(2.4);
+    transform: translate(230px, -70px) scale(0.7);
   }
 }
 
@@ -68,75 +69,32 @@
   }
 }
 
-/* --- Panel ------------------------------------------------------------- */
+/* --- Notebook ---------------------------------------------------------- */
 
 .panel {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 440px;
-  padding: 40px 40px 34px;
-  border-radius: 16px;
-  border: 1px solid var(--hairline);
-  background: var(--overlay);
-  backdrop-filter: blur(18px);
+  max-width: 400px;
+  padding: 30px 30px 26px;
+  border-radius: 10px;
+  background: var(--paper);
+  /* A warm rule down the spine side, like a stitched notebook edge. */
+  border: 1px solid var(--paper-edge);
+  border-left: 5px solid var(--wood-dark);
   box-shadow:
-    0 40px 90px -30px rgb(0 0 0 / 80%),
-    inset 0 1px 0 rgb(255 255 255 / 6%);
+    0 26px 60px -22px rgb(0 0 0 / 78%),
+    0 2px 0 0 rgb(255 255 255 / 40%) inset;
   transition:
-    border-color var(--small) var(--ease),
-    box-shadow var(--small) var(--ease),
-    background-color var(--small) var(--ease);
+    box-shadow var(--medium) var(--ease),
+    transform var(--medium) var(--ease);
 }
 
-/* Scene 04 — the card emerges from the centre with depth. */
-@keyframes cardIn {
+/* Scene 05 — the notebook rises into place. */
+@keyframes notebookIn {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.panel {
-  animation: cardIn 820ms var(--ease) 900ms both;
-}
-
-/*
- * Section 8 — focus is a composition change, not a border colour. The whole
- * card lifts and warms while a field is being filled; App dims the world
- * behind it at the same time.
- */
-.panelFocused {
-  border-color: rgb(230 201 149 / 30%);
-  background: rgb(20 25 34 / 86%);
-  box-shadow:
-    0 44px 100px -28px rgb(0 0 0 / 86%),
-    0 0 0 1px rgb(230 201 149 / 10%),
-    0 0 60px -12px rgb(230 201 149 / 22%),
-    inset 0 1px 0 rgb(255 255 255 / 8%);
-}
-
-/* --- Branding ---------------------------------------------------------- */
-
-.branding {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-/* Scene 03 — the logo arrives before the form it belongs to. */
-@keyframes logoIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(30px);
   }
 
   to {
@@ -145,31 +103,78 @@
   }
 }
 
+.panel {
+  animation: notebookIn 640ms var(--ease) 1820ms both;
+}
+
+/* The world leans in while a field is being filled. */
+.panelFocused {
+  transform: translateY(-2px);
+  box-shadow:
+    0 32px 70px -22px rgb(0 0 0 / 82%),
+    0 0 44px -8px rgb(255 200 120 / 34%),
+    0 2px 0 0 rgb(255 255 255 / 40%) inset;
+}
+
+/* --- Branding ---------------------------------------------------------- */
+
 .branding {
-  animation: logoIn var(--medium) var(--ease) 760ms both;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+/* Scene 04 — the logo settles before the notebook arrives under it. */
+@keyframes logoIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.branding {
+  animation: logoIn 520ms var(--ease) 1440ms both;
 }
 
 .logo {
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   image-rendering: pixelated;
 }
 
 .wordmark {
   font-family: var(--display);
-  font-size: 34px;
+  font-size: 30px;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text);
+  letter-spacing: -0.02em;
+  color: var(--primary);
 }
 
 .tagline {
   font-family: var(--label);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-soft);
+  color: var(--ink-soft);
+}
+
+/* The invitation, and the reason the form exists. */
+.prompt {
+  margin-top: 12px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
 }
 
 /* --- Form -------------------------------------------------------------- */
@@ -177,22 +182,22 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 15px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .label {
   font-family: var(--label);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: var(--text-soft);
+  color: var(--ink-soft);
   transition: color var(--micro) var(--ease);
 }
 
@@ -204,10 +209,10 @@
 
 .icon {
   position: absolute;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: var(--muted);
+  left: 12px;
+  width: 17px;
+  height: 17px;
+  color: var(--wood-dark);
   pointer-events: none;
   transition:
     color var(--micro) var(--ease),
@@ -216,45 +221,43 @@
 
 .input {
   width: 100%;
-  padding: 14px 14px 14px 44px;
+  /* 48px tall: comfortably past the 44px minimum target. */
+  min-height: 48px;
+  padding: 13px 13px 13px 40px;
   font: inherit;
   font-size: 15px;
-  color: var(--text);
-  background: rgb(9 12 17 / 70%);
-  border: 1px solid var(--hairline);
-  border-radius: 10px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--paper-edge);
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgb(58 50 38 / 8%);
   transition:
     border-color var(--micro) var(--ease),
-    background-color var(--micro) var(--ease),
-    transform var(--micro) var(--ease);
+    box-shadow var(--micro) var(--ease);
 }
 
 .input::placeholder {
-  color: var(--muted);
+  color: #a9a094;
 }
 
 .input:focus {
   outline: none;
-  /* The field itself rises a touch — see section 8. */
-  transform: translateY(-2px);
-  border-color: rgb(230 201 149 / 46%);
-  background: rgb(12 16 22 / 88%);
+  border-color: var(--wood-dark);
+  box-shadow:
+    inset 0 2px 4px rgb(58 50 38 / 6%),
+    0 0 0 3px rgb(224 201 163 / 45%);
 }
 
-/* The icon lights up for the field being filled. */
-.input:focus ~ .icon,
-.inputWrap:focus-within .icon {
-  color: var(--parchment);
-  filter: drop-shadow(0 0 6px rgb(230 201 149 / 45%));
+.field:focus-within .icon {
+  color: var(--ember);
 }
 
-.inputWrap:focus-within ~ .label,
 .field:focus-within .label {
-  color: var(--parchment);
+  color: var(--ink);
 }
 
 .input:disabled {
-  opacity: 0.55;
+  background: #f4f0e9;
   cursor: not-allowed;
 }
 
@@ -263,20 +266,20 @@
 .error {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  font-size: 14px;
-  color: var(--danger);
-  background: var(--danger-bg);
-  border: 1px solid rgb(255 107 107 / 34%);
-  border-radius: 10px;
+  gap: 9px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #8f2f2f;
+  background: #fbe9e5;
+  border: 1px solid #e8bfb6;
+  border-radius: 8px;
   animation: errorIn var(--small) var(--ease) both;
 }
 
 @keyframes errorIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-5px);
   }
 
   to {
@@ -287,8 +290,8 @@
 
 .errorIcon {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 /* --- Actions ----------------------------------------------------------- */
@@ -297,79 +300,82 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   margin-top: 6px;
 }
 
-/* The gateway into the world. */
 .submit {
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 15px 22px;
+  min-height: 52px;
   font-family: var(--display);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #10131a;
-  background: var(--parchment);
-  border: 1px solid var(--parchment-hi);
-  border-radius: 10px;
+  color: #3a2a16;
+  background: linear-gradient(180deg, var(--parchment-hi), var(--wood));
+  border: 1px solid var(--wood-dark);
+  border-radius: 9px;
   cursor: pointer;
+  box-shadow: 0 3px 0 0 var(--wood-dark);
   transition:
     transform var(--micro) var(--ease),
-    background-color var(--micro) var(--ease),
-    box-shadow var(--micro) var(--ease);
+    box-shadow var(--micro) var(--ease),
+    filter var(--micro) var(--ease);
 }
 
 .submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: var(--parchment-hi);
-  box-shadow: 0 12px 30px -10px rgb(230 201 149 / 45%);
+  filter: brightness(1.04);
+  box-shadow:
+    0 5px 0 0 var(--wood-dark),
+    0 12px 26px -10px rgb(255 157 92 / 55%);
 }
 
+/* Pressed: the button compresses onto its own shadow. */
 .submit:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(3px);
+  box-shadow: 0 0 0 0 var(--wood-dark);
 }
 
 .submit:disabled {
   cursor: progress;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .submitIcon {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   transition: transform var(--micro) var(--ease);
 }
 
-/* The arrow moves toward the world it opens. */
 .submit:hover:not(:disabled) .submitIcon {
   transform: translateX(4px);
 }
 
-/* Warm flash on click, before the route transition takes over. */
+/* Warm flash as the world opens. */
 .submit::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgb(255 255 255 / 90%), transparent 70%);
+  background: radial-gradient(circle at center, rgb(255 236 200 / 95%), transparent 70%);
   opacity: 0;
   pointer-events: none;
 }
 
 .submit:active:not(:disabled)::after {
-  animation: flash 420ms ease-out both;
+  animation: flash 460ms ease-out both;
 }
 
 @keyframes flash {
   0% {
-    opacity: 0.75;
+    opacity: 0.9;
   }
 
   100% {
@@ -378,10 +384,11 @@
 }
 
 .help {
-  padding: 0;
+  min-height: 44px;
+  padding: 0 8px;
   font-family: var(--label);
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 11px;
+  color: var(--ink-soft);
   background: none;
   border: none;
   cursor: pointer;
@@ -389,7 +396,9 @@
 }
 
 .help:hover {
-  color: var(--parchment);
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --- Small screens ----------------------------------------------------- */
@@ -400,15 +409,11 @@
   }
 
   .panel {
-    padding: 30px 22px 26px;
+    padding: 24px 20px 22px;
   }
 
   .wordmark {
-    font-size: 28px;
-  }
-
-  .branding {
-    margin-bottom: 22px;
+    font-size: 26px;
   }
 }
 
@@ -424,7 +429,7 @@
     animation: none;
   }
 
-  .input:focus,
+  .panelFocused,
   .submit:hover:not(:disabled) {
     transform: none;
   }

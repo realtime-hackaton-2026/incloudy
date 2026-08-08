@@ -170,10 +170,38 @@ describe('CaseRoom', () => {
     expect(screen.getByText('Hola equipo')).toBeInTheDocument()
     expect(screen.getByTestId('case-room-typing')).toHaveTextContent('')
 
-    await user.type(screen.getByPlaceholderText(/escribe un comentario/i), 'Ánimo!')
+    await user.type(screen.getByPlaceholderText(/comparte una observación/i), 'Ánimo!')
     expect(sendTyping).toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: /enviar/i }))
-    expect(send).toHaveBeenCalledWith({ content: 'Ánimo!' })
+    expect(send).toHaveBeenCalledWith({ content: { body: 'Ánimo!' } })
+  })
+
+  it('keeps the conversation locked until two teachers are online', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    const send = vi.fn()
+    useChannelMock.mockReturnValue({
+      messages: [],
+      send,
+      presence: { kind: 'aggregate', count: 1, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    expect(await screen.findByText(/falta 1 docente/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/esperando al segundo docente/i)).toBeDisabled()
+    expect(screen.getByRole('button', { name: /enviar/i })).toBeDisabled()
+    expect(send).not.toHaveBeenCalled()
   })
 
   it('announces when a teammate is typing', async () => {

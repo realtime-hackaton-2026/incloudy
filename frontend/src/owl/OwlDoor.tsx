@@ -1,17 +1,9 @@
-/*
- * The enlarged guide owl is also the visual door into the case's private
- * Portal room. The room is lazy: no realtime connection is opened until the
- * teacher asks to meet. From the same door the owner can invite a colleague.
- */
-
 import { useState } from 'react'
 import { addCollaborator } from '../cases/api'
 import type { CollaboratorRole } from '../cases/api'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
 import { CaseRoom } from '../portal'
-import type { ChatMessage } from '../portal'
-import type { Message } from '@portalsdk/core'
 import { OwlSprite } from './OwlSprite'
 import styles from './OwlDoor.module.css'
 
@@ -19,10 +11,9 @@ export interface OwlDoorProps {
   token: string
   caseId: string
   stage: CaseStage
-  onMessage?: (message: Message<ChatMessage>) => void
 }
 
-export function OwlDoor({ token, caseId, stage, onMessage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
   const [open, setOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [email, setEmail] = useState('')
@@ -42,12 +33,19 @@ export function OwlDoor({ token, caseId, stage, onMessage }: OwlDoorProps) {
       setInviteState('sent')
     } catch (cause) {
       setInviteState('error')
-      setInviteError(cause instanceof Error ? cause.message : 'No se pudo añadir al colaborador.')
+      setInviteError(cause instanceof Error ? cause.message : 'No se pudo añadir al docente.')
     }
   }
 
   return (
-    <div className={styles.wrapper} data-testid="owl-door" data-state={open ? 'open' : 'closed'}>
+    <aside className={styles.wrapper} data-testid="owl-door" data-state={open ? 'open' : 'closed'}>
+      {!open && (
+        <div className={styles.whisper} role="status">
+          <strong>¿Nos reunimos?</strong>
+          <span>Estoy aquí para que los docentes comentemos este caso juntos.</span>
+        </div>
+      )}
+
       <button
         type="button"
         className={styles.door}
@@ -55,17 +53,27 @@ export function OwlDoor({ token, caseId, stage, onMessage }: OwlDoorProps) {
         aria-expanded={open}
         aria-controls="owl-door-room"
       >
-        <OwlSprite className={styles.owl} />
-        <span className={styles.label}>
-          <span className={styles.title}>{open ? 'Cerrar la sala' : 'Reunirse con el equipo'}</span>
-          <span className={styles.subtitle}>{station.label} · {station.place}</span>
+        <span className={styles.owlHalo} aria-hidden="true">
+          <OwlSprite className={styles.owl} />
         </span>
-        <span className={styles.chevron} aria-hidden="true">{open ? '▾' : '▸'}</span>
+        <span className={styles.label}>
+          <span className={styles.title}>{open ? 'Cerrar sala docente' : 'Reunir al equipo'}</span>
+          <span className={styles.subtitle}>Búho · {station.label}</span>
+        </span>
+        <span className={styles.statusDot} aria-hidden="true" />
       </button>
 
       {open && (
         <div id="owl-door-room" className={styles.room}>
-          <CaseRoom token={token} caseId={caseId} onMessage={onMessage} />
+          <div className={styles.roomIntro}>
+            <span className="eyebrow">Sala docente · tiempo real</span>
+            <h2>Un mismo mapa, varias miradas.</h2>
+            <p>
+              Recorred el caso y dejad comentarios, hipótesis y observaciones sin salir del mapa.
+            </p>
+          </div>
+
+          <CaseRoom token={token} caseId={caseId} minimumParticipants={2} />
 
           <div className={styles.inviteBlock}>
             <button
@@ -73,12 +81,14 @@ export function OwlDoor({ token, caseId, stage, onMessage }: OwlDoorProps) {
               className={styles.inviteToggle}
               onClick={() => setInviteOpen((current) => !current)}
             >
-              {inviteOpen ? 'Cerrar invitación' : 'Invitar a otra persona'}
+              {inviteOpen ? 'Cerrar invitación' : 'Invitar a otro docente'}
             </button>
 
             {inviteOpen && (
               <div className={styles.inviteForm}>
-                <p className={styles.inviteHint}>Añade a un docente que ya tenga cuenta para que pueda entrar en esta sala privada.</p>
+                <p className={styles.inviteHint}>
+                  La conversación se habilita cuando haya al menos dos docentes conectados al caso.
+                </p>
                 <div className={styles.inviteRow}>
                   <input
                     className={styles.inviteInput}
@@ -87,22 +97,33 @@ export function OwlDoor({ token, caseId, stage, onMessage }: OwlDoorProps) {
                     placeholder="correo@colegio.edu"
                     onChange={(event) => setEmail(event.target.value)}
                   />
-                  <select className={styles.inviteSelect} value={role} onChange={(event) => setRole(event.target.value as CollaboratorRole)}>
+                  <select
+                    className={styles.inviteSelect}
+                    value={role}
+                    onChange={(event) => setRole(event.target.value as CollaboratorRole)}
+                  >
                     <option value="comentarista">Comentarista</option>
                     <option value="editor">Editor</option>
                     <option value="lector">Lector</option>
                   </select>
-                  <button type="button" className="btn-secondary" disabled={!email.trim() || inviteState === 'sending'} onClick={() => void handleInvite()}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={!email.trim() || inviteState === 'sending'}
+                    onClick={() => void handleInvite()}
+                  >
                     {inviteState === 'sending' ? 'Invitando…' : 'Invitar'}
                   </button>
                 </div>
-                {inviteState === 'sent' && <p className={styles.inviteSuccess}>Acceso concedido. Ya puede entrar en la sala.</p>}
+                {inviteState === 'sent' && (
+                  <p className={styles.inviteSuccess}>Acceso concedido. Ya puede entrar en esta sala.</p>
+                )}
                 {inviteState === 'error' && <p className={styles.inviteError}>{inviteError}</p>}
               </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </aside>
   )
 }

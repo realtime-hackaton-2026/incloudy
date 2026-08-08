@@ -314,6 +314,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
         <OwlTip tipId="map-guide" />
         <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
+        <OwlDoor token={token} caseId={caseId} stage={stage} />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">
@@ -560,9 +561,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Conversaciones</h3>
         <p className={styles.state}>
-          La sala es del equipo — todos los colaboradores la ven. El asistente es privado.
+          La conversación privada del caso está disponible desde el búho del mapa. El asistente sigue siendo privado.
         </p>
-        <OwlDoor token={token} caseId={caseId} stage={stage} />
         <CaseChat token={token} caseId={caseId} />
       </section>
 

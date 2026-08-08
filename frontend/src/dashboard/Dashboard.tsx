@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useCases } from '../cases'
 import type { Case } from '../cases'
-import { OwlDoor } from '../owl'
-import { toCaseStage } from '../components/case-map'
 import { listCaseComments, listCaseEvents } from './api'
 import type { CaseEvent, PortalComment } from './api'
 import styles from './Dashboard.module.css'
@@ -158,14 +156,7 @@ export function Dashboard({ token }: DashboardProps) {
           </aside>
 
           {selectedCase && (
-            <DashboardCase
-              token={token}
-              item={selectedCase}
-              activity={activity}
-              onLiveComment={(message) => {
-                setComments((current: PortalComment[]) => [message, ...current.filter((comment) => comment.messageId !== message.messageId)])
-              }}
-            />
+            <DashboardCase item={selectedCase} activity={activity} />
           )}
         </div>
       )}
@@ -183,13 +174,11 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 interface DashboardCaseProps {
-  token: string
   item: Case
   activity: { id: string; date: string; kind: 'event' | 'comment'; text: string }[]
-  onLiveComment: (message: PortalComment) => void
 }
 
-function DashboardCase({ token, item, activity, onLiveComment }: DashboardCaseProps) {
+function DashboardCase({ item, activity }: DashboardCaseProps) {
   const currentIndex = STAGES.findIndex((stage) => stage.id === item.estadoInteractivo.estacionActual)
   const clues = item.estadoInteractivo.pistasRecogidas
   return (
@@ -253,28 +242,6 @@ function DashboardCase({ token, item, activity, onLiveComment }: DashboardCasePr
         </section>
       </div>
 
-      <section className={styles.chatCard}>
-        <div className={styles.chatIntro}>
-          <p className="eyebrow">Colaboración en tiempo real</p>
-          <h3>Sala del equipo</h3>
-          <p>Abre al búho para entrar en la sala privada del caso. Desde ahí puedes invitar a otra persona y conversar en tiempo real.</p>
-        </div>
-        <OwlDoor
-          token={token}
-          caseId={item.id}
-          stage={toCaseStage(item.estadoInteractivo.estacionActual)}
-          onMessage={(message) => {
-            onLiveComment({
-              id: message.id,
-              messageId: message.id,
-              caseId: item.id,
-              authorId: message.sender.id,
-              content: { body: message.content.body },
-              portalTimestamp: new Date(message.timestamp).toISOString(),
-            })
-          }}
-        />
-      </section>
     </main>
   )
 }

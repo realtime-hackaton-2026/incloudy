@@ -1,8 +1,8 @@
 .roomBody {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  gap: 14px;
+  padding: clamp(14px, 2vw, 18px);
   border: 1px solid var(--hairline);
   border-radius: 13px;
   background: var(--surface);
@@ -18,7 +18,7 @@
 .roomTitle {
   margin: 0;
   font-family: var(--label);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -27,8 +27,8 @@
 
 .roomHint {
   margin-top: 3px;
-  font-size: var(--text-sm);
-  line-height: 1.35;
+  font-size: var(--text-md);
+  line-height: 1.5;
   color: var(--text-soft);
 }
 
@@ -75,7 +75,7 @@
 .waiting p {
   margin-top: 2px;
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: 1.55;
   color: var(--text-soft);
 }
 
@@ -255,3 +255,32 @@
 .historyMessages strong,
 .historyMessages time { font-size: var(--text-xs); }
 .historyMessages span { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text); }
+
+/* El panel lateral se consulta mientras se conversa: todos sus textos de
+   contenido conservan una medida cómoda incluso en pantallas estrechas. */
+.presence,
+.messageAuthor,
+.messageMeta time,
+.typing,
+.history summary,
+.historyMessages strong,
+.historyMessages time { font-size: clamp(12px, 0.16vw + 11px, 14px); }
+
+.roomTitle { font-size: clamp(15px, 0.22vw + 14px, 17px); }
+.roomHint,
+.waiting p,
+.liveStrip,
+.empty,
+.historyMessages span { font-size: clamp(15px, 0.24vw + 14px, 17px); }
+.waiting strong { font-size: clamp(16px, 0.25vw + 15px, 18px); }
+.composer input { min-height: 44px; font-size: 16px; }
+.composer button { min-height: 44px; font-size: 14px; }
+
+@media (max-width: 520px) {
+  .roomBody { padding: 16px; }
+  .roomHeader { align-items: flex-start; }
+  .roomHint { line-height: 1.55; }
+  .waiting { padding: 14px; }
+  .composer { display: grid; grid-template-columns: 1fr 1fr; }
+  .composer input { grid-column: 1 / -1; }
+}

@@ -11,6 +11,9 @@
   pointer-events: none;
 }
 
+.mobileMenuToggle { display: none; }
+.mobileMenuContent { display: contents; }
+
 .whisper,
 .actions,
 .door,
@@ -265,7 +268,9 @@
 }
 
 .lobbyCard {
-  width: min(640px, calc(100vw - 32px));
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
   padding: 24px 24px 20px;
   color: var(--text);
   background: linear-gradient(145deg, var(--surface-raised) 0%, var(--surface-deep) 100%);
@@ -277,7 +282,7 @@
 
 .lobbyKicker {
   font-family: var(--label);
-  font-size: 9px;
+  font-size: var(--text-xs);
   font-weight: 800;
   letter-spacing: 0.14em;
   color: var(--parchment);
@@ -297,7 +302,8 @@
 .lobbyCode {
   margin: 0 0 14px;
   font-family: var(--label);
-  font-size: 8px;
+  font-size: var(--text-xs);
+  line-height: 1.5;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-soft);
@@ -309,7 +315,7 @@
   gap: 7px;
   margin-top: 16px;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -318,7 +324,7 @@
 .forixCasePicker select {
   width: 100%;
   padding: 11px 12px;
-  font: 500 13px var(--sans);
+  font: 600 var(--text-sm)/1.4 var(--sans);
   color: var(--text);
   text-transform: none;
   letter-spacing: normal;
@@ -522,7 +528,7 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: min(330px, 92vw);
+  width: clamp(380px, 27vw, 440px);
   height: 100vh;
   padding: 14px;
   overflow-y: auto;
@@ -560,19 +566,28 @@
 }
 
 .endRoom {
-  min-height: 34px;
-  padding: 7px 10px;
-  color: var(--danger);
-  font: 700 var(--text-xs)/1 var(--label);
-  background: var(--danger-bg);
-  border: 1px solid rgb(240 120 92 / 35%);
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 13px;
+  color: #fff4ef;
+  font: 800 var(--text-xs)/1 var(--sans);
+  background: linear-gradient(180deg, #c45f49, #9f4435);
+  border: 1px solid rgb(255 180 160 / 48%);
+  border-radius: 10px;
+  box-shadow: 0 7px 18px rgb(90 24 14 / 30%), inset 0 1px rgb(255 255 255 / 18%);
   cursor: pointer;
+  transition: transform var(--micro) var(--ease), filter var(--micro) var(--ease);
 }
+
+.endRoom:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.endRoom:focus-visible { outline: 2px solid #ffd2c5; outline-offset: 2px; }
 
 .roomDockHeader strong {
   font-family: var(--display);
-  font-size: 15px;
+  font-size: clamp(16px, 0.35vw + 14px, 19px);
 }
 
 .closeRoom {
@@ -754,9 +769,48 @@
     left: 50%;
     bottom: 12px;
     width: calc(100vw - 24px);
-    align-items: center;
+    align-items: stretch;
     transform: translateX(-50%);
   }
+
+  .activeBanner { display: none; }
+
+  .mobileMenuToggle {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 58px;
+    padding: 8px 12px;
+    color: var(--text);
+    text-align: left;
+    background: linear-gradient(180deg, rgb(28 52 67 / 98%), rgb(15 31 42 / 98%));
+    border: 1px solid rgb(230 201 149 / 42%);
+    border-radius: 14px;
+    box-shadow: 0 14px 36px rgb(0 0 0 / 42%);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .mobileMenuToggle > span { display: grid; flex: 1; gap: 2px; min-width: 0; }
+  .mobileMenuToggle strong { font: 700 15px/1.2 var(--display); }
+  .mobileMenuToggle small { overflow: hidden; font: 600 12px/1.25 var(--sans); color: var(--text-soft); text-overflow: ellipsis; white-space: nowrap; }
+  .mobileMenuToggle b { font-size: 22px; color: var(--parchment); transition: transform var(--micro) var(--ease); }
+  .mobileMenuOwl { width: 40px; height: 40px; flex: none; }
+
+  .mobileMenuContent {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    left: 0;
+    display: none;
+    gap: 8px;
+  }
+
+  .mobileMenuExpanded .mobileMenuContent { display: grid; }
+  .mobileMenuExpanded .mobileMenuToggle b { transform: rotate(180deg); }
 
   .whisper,
   .actions { width: 100%; }
@@ -809,6 +863,10 @@
     border-left: 0;
     border-radius: 18px 18px 0 0;
   }
+
+  .roomDockHeader { align-items: flex-start; }
+  .roomHeaderActions { flex-wrap: wrap; justify-content: flex-end; }
+  .endRoom { min-height: 38px; padding: 8px 10px; }
 }
 
 .roomDockClosed {
@@ -851,3 +909,56 @@
 .startButton,
 .backButton,
 .bannerButton { min-height: 42px; }
+
+/* Escala tipográfica de Búrix: la mono queda para rótulos breves; el texto
+   de lectura nunca baja de 13px en escritorio ni móvil. */
+.roomDock :global(.eyebrow),
+.lobbyKicker,
+.lobbyCode,
+.forixCasePicker,
+.roomPeopleBar strong,
+.roomPeopleBar button,
+.inviteToggle { font-size: clamp(12px, 0.15vw + 11px, 13px); }
+
+.lobbyPanelTop strong,
+.lobbyPanelTitle span,
+.lobbyStatus strong,
+.lobbyParticipants li,
+.lobbyParticipants li small,
+.historyButton { font-size: clamp(13px, 0.18vw + 12px, 14px); }
+
+.lobbyPanelTop span,
+.lobbyPanelTitle small,
+.aggregatePresence,
+.lobbyStatus span:last-child,
+.lobbyFootnote,
+.participants li,
+.rosterHint,
+.inviteHint,
+.inviteSuccess,
+.inviteError { font-size: clamp(14px, 0.2vw + 13px, 16px); }
+
+.lobbyPanel,
+.lobbyStatus,
+.lobbyInvite { padding: clamp(14px, 2vw, 18px); }
+
+.lobbyParticipants li,
+.aggregatePresence { min-height: 42px; }
+
+.startButton,
+.backButton,
+.historyButton,
+.inviteRow button { min-height: 46px; }
+
+.inviteInput,
+.inviteSelect { min-height: 44px; font-size: 16px; }
+
+@media (max-width: 700px) {
+  .lobbyCard { padding: 20px 16px; }
+  .lobbyCard h2 { font-size: clamp(30px, 9vw, 40px); line-height: 1.05; }
+  .lobbyPanelTop, .lobbyPanelTitle { align-items: flex-start; }
+  .lobbyPanelTitle small { max-width: 15ch; text-align: right; }
+  .roomDock :global(.eyebrow) { font-size: 12px; }
+  .roomPeopleBar { gap: 12px; padding: 13px 0; }
+  .roomPeopleBar strong { line-height: 1.4; }
+}

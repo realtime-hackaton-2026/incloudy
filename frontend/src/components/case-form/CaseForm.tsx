@@ -339,6 +339,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         answer={current.respuestas.find((r) => r.estacionId === templateStation.id) ?? null}
         editable={isEditor}
         onAnswer={answerStation}
+        headerActionTargetId={`mission-actions-${mapStation.stage}`}
         onContinue={() => {
           // The quest chain: completing a mission hands straight over to the
           // next station on the map instead of dropping back to the canvas.

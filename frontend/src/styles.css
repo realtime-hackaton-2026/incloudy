@@ -440,6 +440,21 @@ p {
 
 @media (max-width: 600px) {
   .map-case-selector__heading { align-items: flex-start; }
-  .map-case-option { align-items: stretch; }
-  .map-case-option__edit { align-self: center; }
+  .map-case-selector { gap: 10px; padding: 12px; }
+  .map-case-selector__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .map-case-option { align-items: center; gap: 5px; padding: 6px; border-radius: 11px; }
+  .map-case-option__select { gap: 7px; }
+  .map-case-option__select img { width: 36px; height: 36px; }
+  .map-case-option__select > span { gap: 1px; }
+  .map-case-option__select strong { font-size: 13px; }
+  .map-case-option__select small { font-size: 11px; }
+  .map-case-option__edit {
+    align-self: center;
+    width: 34px;
+    min-height: 34px;
+    padding: 5px;
+    overflow: hidden;
+    font-size: 0;
+  }
+  .map-case-option__edit::first-letter { font-size: 14px; }
 }

@@ -1,16 +1,18 @@
 .header {
   position: sticky;
-  top: 0;
+  top: 10px;
   z-index: 20;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 24px;
-  padding: 16px 0 14px;
-  margin-bottom: 28px;
-  border-bottom: 1px solid var(--hairline);
-  background: rgb(16 33 45 / 72%);
-  backdrop-filter: blur(16px);
+  padding: 9px 11px;
+  margin: 10px 0 28px;
+  border: 1px solid rgb(230 201 149 / 18%);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgb(18 39 52 / 94%), rgb(10 26 36 / 94%));
+  box-shadow: 0 14px 38px rgb(0 0 0 / 28%), inset 0 1px rgb(255 255 255 / 6%);
+  backdrop-filter: blur(20px) saturate(125%);
 }
 
 /* Step 2 of the page-load choreography: navigation arrives after the
@@ -97,7 +99,9 @@
 }
 
 .navItemActive {
-  color: var(--text);
+  color: #f7fbff;
+  background: var(--primary);
+  border-radius: 999px;
 }
 
 .navItemActive::after {
@@ -146,9 +150,10 @@
 }
 
 .dashboardLinkActive {
-  background: var(--parchment);
-  color: var(--ink);
-  border-color: var(--parchment-hi);
+  background: var(--primary);
+  color: #f7fbff;
+  border-color: var(--map-blue);
+  box-shadow: 0 0 0 2px rgb(114 188 208 / 18%);
 }
 
 .teacher {
@@ -253,33 +258,44 @@
 
 @media (max-width: 860px) {
   .header {
-    grid-template-columns: 1fr auto;
-    row-gap: 10px;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
   }
 
   .nav {
-    order: 3;
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+    order: initial;
+    grid-column: auto;
+    justify-content: center;
   }
 
   .teacher {
-    max-width: 14ch;
+    display: none;
   }
+
+  .user { gap: 6px; }
 }
 
 /* Phones: the user block (email + panel + salir) stops fitting next to the
    brand. The email is the first thing a session can lose — hide it. */
 @media (max-width: 520px) {
   .header {
-    gap: 12px;
-    padding: 12px 0 10px;
-    margin-bottom: 20px;
+    top: 8px;
+    gap: 5px;
+    padding: 6px;
+    margin: 8px 0 20px;
+    border-radius: 999px;
   }
 
-  .teacher {
-    display: none;
-  }
+  .brand { gap: 0; font-size: 0; }
+  .mark { width: 30px; height: 30px; border-radius: 50%; }
+  .nav { gap: 4px; }
+  .navItem { min-height: 34px; padding: 7px 7px 9px; font-size: 9px; letter-spacing: .055em; }
+  .navItem::after { left: 9px; right: 9px; bottom: 4px; }
+  .dashboardLink { min-height: 34px; padding: 6px 8px; font-size: 0; border-radius: 999px; }
+  .dashboardLink::before { content: 'Dashboard'; font-size: 9px; }
+  .settingsButton { width: 32px; height: 32px; border-radius: 50%; font-size: 14px; }
+  .signOut { width: 32px; height: 32px; padding: 0; overflow: hidden; font-size: 0; border-radius: 50%; }
+  .signOut::before { content: '↪'; font-size: 17px; }
 
   .passwordGrid { grid-template-columns: 1fr; }
 
@@ -298,16 +314,12 @@
   .settingsHeading h2 { font-size: 25px; }
   .settingsForm { gap: 13px; }
 
-  .navItem {
-    padding: 8px 10px 10px;
-  }
+}
 
-  .navItem::after {
-    left: 10px;
-    right: 10px;
-  }
-
-  .signOut {
-    padding: 6px 10px;
-  }
+@media (max-width: 380px) {
+  .header { padding: 5px; }
+  .navItem { padding-inline: 6px; font-size: 9px; }
+  .dashboardLink { padding-inline: 6px; }
+  .dashboardLink::before { font-size: 9px; }
+  .settingsButton, .signOut { width: 31px; height: 31px; }
 }

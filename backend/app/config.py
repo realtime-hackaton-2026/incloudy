@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 1440
     jwt_algorithm: str = "HS256"
     gemini_api_key: str = ""
+    portal_secret_key: str = ""
+    portal_publishable_key: str = ""
+    portal_api_url: str = "https://api.useportal.co"
+    portal_token_ttl: str = "1h"
     cors_origins: list[str] = ["http://localhost:5173"]
 
 

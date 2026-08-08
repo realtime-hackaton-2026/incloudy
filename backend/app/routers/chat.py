@@ -4,7 +4,7 @@ from ..auth import get_current_user
 from ..models import User
 from ..schemas import ChatRequest, ChatResponse
 from ..services.ai import ask_gemini
-from ..services.cases import get_owned_case
+from ..services.cases import get_accessible_case
 
 router = APIRouter()
 
@@ -14,6 +14,6 @@ async def chat(
 ) -> ChatResponse:
     case = None
     if body.case_id is not None:
-        case = await get_owned_case(body.case_id, current_user)
+        case = await get_accessible_case(body.case_id, current_user)
 
     return ChatResponse(respuesta=await ask_gemini(body.mensaje, case))

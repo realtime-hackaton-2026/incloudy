@@ -1,0 +1,109 @@
+import logging
+from typing import Any
+from urllib.parse import quote
+
+import httpx
+from fastapi import HTTPException
+
+from ..config import settings
+from ..models import Case, User
+from ..schemas import PortalSessionResponse
+
+logger = logging.getLogger(__name__)
+
+
+def case_channel_id(case: Case) -> str:
+    return f"case-{case.id}"
+
+
+def is_portal_configured() -> bool:
+    return bool(settings.portal_secret_key and settings.portal_publishable_key)
+
+
+def ensure_portal_configured() -> None:
+    if not is_portal_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="Portal no está configurado en el servidor",
+        )
+
+
+async def portal_post(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    ensure_portal_configured()
+    try:
+        async with httpx.AsyncClient(
+            base_url=settings.portal_api_url,
+            timeout=15,
+            headers={
+                "Authorization": f"Bearer {settings.portal_secret_key}",
+                "Content-Type": "application/json",
+            },
+        ) as client:
+            response = await client.post(path, json=payload)
+            response.raise_for_status()
+            return response.json()
+    except (httpx.HTTPError, ValueError) as error:
+        logger.exception("Falló una solicitud a Portal: %s", error)
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo contactar con Portal",
+        ) from error
+
+
+async def portal_delete(path: str) -> None:
+    ensure_portal_configured()
+    try:
+        async with httpx.AsyncClient(
+            base_url=settings.portal_api_url,
+            timeout=15,
+            headers={"Authorization": f"Bearer {settings.portal_secret_key}"},
+        ) as client:
+            response = await client.delete(path)
+            if response.status_code != 404:
+                response.raise_for_status()
+    except httpx.HTTPError as error:
+        logger.exception("Falló una solicitud a Portal: %s", error)
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo contactar con Portal",
+        ) from error
+
+
+async def create_case_session(user: User, case: Case) -> PortalSessionResponse:
+    channel_id = case_channel_id(case)
+    user_id = str(user.id)
+    claims = {"email": str(user.email)}
+
+    await portal_post(
+        f"/v1/channels/{quote(channel_id, safe='')}/members",
+        {"userId": user_id, "claims": claims},
+    )
+    token_data = await portal_post(
+        "/v1/tokens",
+        {
+            "userId": user_id,
+            "claims": claims,
+            "channels": {channel_id: ["connect", "publish"]},
+            "ttl": settings.portal_token_ttl,
+        },
+    )
+
+    try:
+        return PortalSessionResponse(
+            token=token_data["token"],
+            expires_at=token_data["expiresAt"],
+            channel_id=channel_id,
+            publishable_key=settings.portal_publishable_key,
+        )
+    except (KeyError, TypeError) as error:
+        logger.exception("Portal devolvió una respuesta inesperada")
+        raise HTTPException(
+            status_code=502,
+            detail="Portal devolvió una respuesta inválida",
+        ) from error
+
+
+async def remove_case_member(case: Case, user_id: str) -> None:
+    channel_id = quote(case_channel_id(case), safe="")
+    member_id = quote(user_id, safe="")
+    await portal_delete(f"/v1/channels/{channel_id}/members/{member_id}")

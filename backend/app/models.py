@@ -37,6 +37,7 @@ class User(Document):
 
 class Case(Document):
     profesor_id: str
+    colaboradores_ids: list[str] = Field(default_factory=list)
     alumno: Student
     estaciones: list[Station] = Field(default_factory=list)
     status: CaseStatus = CaseStatus.draft

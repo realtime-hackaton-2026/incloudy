@@ -56,3 +56,19 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     respuesta: str
+
+
+class CollaboratorRequest(BaseModel):
+    email: EmailStr
+
+
+class CollaboratorResponse(BaseModel):
+    user_id: str
+    email: EmailStr
+
+
+class PortalSessionResponse(BaseModel):
+    token: str
+    expires_at: str
+    channel_id: str
+    publishable_key: str

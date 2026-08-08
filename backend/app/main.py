@@ -11,6 +11,7 @@ from .models import Case, User
 from .routers import auth as auth_router
 from .routers import cases as cases_router
 from .routers import chat as chat_router
+from .routers import portal as portal_router
 from .ws import manager
 
 
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 app.include_router(cases_router.router, prefix="/cases", tags=["cases"])
 app.include_router(chat_router.router, prefix="/chat", tags=["chat"])
+app.include_router(portal_router.router, prefix="/portal", tags=["portal"])
 
 
 @app.get("/health")

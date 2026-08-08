@@ -169,11 +169,9 @@ Al contribuir, preserva los principios del proyecto: privacidad por diseño, acc
 
 Gracias a quienes construyeron y mantienen incloudy:
 
-| Contribuidor | Participación |
-|:--|--:|
-| [LuisAlejandroCR](https://github.com/LuisAlejandroCR) | 50 commits |
-| [CristhAXe](https://github.com/CristhAXe) | 36 commits |
-| [alusilco](https://github.com/alusilco) | 14 commits |
+ [LuisAlejandroCR](https://github.com/LuisAlejandroCR) 
+ [CristhAXe](https://github.com/CristhAXe) 
+ [alusilco](https://github.com/alusilco) 
 
 Las cifras corresponden al historial del repositorio al **8 de agosto de 2026**.
 

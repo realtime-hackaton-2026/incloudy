@@ -564,6 +564,7 @@
 .roomDockHeader > div {
   display: grid;
   gap: 3px;
+  min-width: 0;
 }
 
 .roomDockHeader > .roomHeaderActions {
@@ -598,6 +599,42 @@
   font-size: clamp(16px, 0.35vw + 14px, 19px);
 }
 
+.caseLink {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  align-items: baseline;
+  max-width: 100%;
+  padding: 3px 0;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.caseLink span {
+  overflow: hidden;
+  font: 700 clamp(13px, 0.2vw + 12px, 15px)/1.25 var(--display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caseLink small {
+  flex: none;
+  color: var(--parchment);
+  font: 700 11px/1.25 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.caseLink:hover span,
+.caseLink:focus-visible span {
+  color: var(--parchment-hi);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .closeRoom {
   display: grid;
   width: 28px;
@@ -607,12 +644,51 @@
   background: rgb(233 240 232 / 4%);
   border: 1px solid var(--hairline);
   border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
   cursor: pointer;
 }
 
 .closeRoom:hover {
   color: var(--text);
   border-color: rgb(230 201 149 / 35%);
+}
+
+.collapsedRoomTab {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 10px 12px 10px 8px;
+  color: var(--text);
+  text-align: left;
+  background: linear-gradient(180deg, rgb(28 52 67 / 99%), rgb(15 31 42 / 99%));
+  border: 1px solid rgb(230 201 149 / 35%);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  box-shadow: -10px 10px 30px rgb(0 0 0 / 32%);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.collapsedArrow {
+  color: var(--parchment);
+  font: 700 28px/1 var(--sans);
+}
+
+.collapsedRoomTab .activeBannerCopy {
+  min-width: 0;
+}
+
+.collapsedRoomTab .activeBannerCopy strong,
+.collapsedRoomTab .activeBannerCopy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .roomPeopleBar {
@@ -833,6 +909,13 @@
   }
 
   .activeBanner { display: none; }
+
+  .collapsedRoomTab {
+    top: auto;
+    right: 0;
+    bottom: 88px;
+    transform: none;
+  }
 
   .mobileMenuToggle {
     position: relative;

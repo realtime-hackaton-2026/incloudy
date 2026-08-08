@@ -386,7 +386,13 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           }
           renderStationPanel={template ? renderStationPanel : undefined}
         />
-        <OwlDoor token={token} caseId={caseId} joinCode={current.joinCode} stage={stage} />
+        <OwlDoor
+          token={token}
+          caseId={caseId}
+          joinCode={current.joinCode}
+          studentName={current.alumno.nombre}
+          stage={stage}
+        />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">

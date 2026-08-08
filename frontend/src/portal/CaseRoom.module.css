@@ -331,10 +331,17 @@
 .historyMessages {
   display: grid;
   gap: 7px;
+  max-height: 280px;
   padding: 0 10px 10px;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
   list-style: none;
+}
+
+.historyMessages::-webkit-scrollbar {
+  display: none;
 }
 
 .historyMessages li {

@@ -14,10 +14,11 @@ export interface OwlDoorProps {
   token: string
   caseId: string
   joinCode: string
+  studentName: string
   stage: CaseStage
 }
 
-export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -134,6 +135,10 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     setRosterOpen(false)
   }
 
+  function viewCurrentCase() {
+    location.hash = `#/caso/${caseId}`
+  }
+
   return (
     <>
       {/* Portal presence and the session-control channel remain mounted even
@@ -145,6 +150,15 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
             <div className={styles.roomDockHeader}>
               <div>
                 <span className="eyebrow">Búrix · guía de la sala</span>
+                <button
+                  type="button"
+                  className={styles.caseLink}
+                  onClick={viewCurrentCase}
+                  aria-label={`Ver el caso de ${studentName}, código ${joinCode}`}
+                >
+                  <span>Caso de {studentName}</span>
+                  <small>Código {joinCode}</small>
+                </button>
                 <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.roomHeaderActions}>
@@ -153,7 +167,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
                     <span aria-hidden="true">■</span> Cerrar mesa
                   </button>
                 )}
-                <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Ocultar sala">✕</button>
+                <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Contraer chat">›</button>
               </div>
             </div>
 
@@ -199,16 +213,14 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
       </aside>
 
       {sessionActive && !roomOpen && (
-        <div className={styles.activeBanner} role="status">
+        <button type="button" className={styles.collapsedRoomTab} onClick={() => setRoomOpen(true)} aria-label="Expandir chat de la sala">
+          <span className={styles.collapsedArrow} aria-hidden="true">‹</span>
           <span className={styles.activeBannerDot} />
           <div className={styles.activeBannerCopy}>
-            <strong>Sala de trabajo activa</strong>
-            <span>{portalReady ? `${presence.count}/5 docentes · Búrix facilita la conversación en tiempo real` : presenceLabel}</span>
+            <strong>Caso de {studentName}</strong>
+            <span>{joinCode} · {portalReady ? `${presence.count}/5 docentes` : presenceLabel}</span>
           </div>
-          <button type="button" className={styles.bannerButton} onClick={() => setRoomOpen(true)}>
-            Ver sala
-          </button>
-        </div>
+        </button>
       )}
 
       {!lobbyOpen && !roomOpen && (

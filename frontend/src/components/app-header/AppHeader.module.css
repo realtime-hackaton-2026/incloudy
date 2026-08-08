@@ -1,0 +1,177 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 0 14px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--hairline);
+  background: rgb(16 19 26 / 72%);
+  backdrop-filter: blur(16px);
+}
+
+/* Step 2 of the page-load choreography: navigation arrives after the
+   background has established itself, before the content. */
+@keyframes headerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  animation: headerIn var(--small) var(--ease) 120ms both;
+}
+
+/* --- Brand ------------------------------------------------------------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  image-rendering: pixelated;
+}
+
+/* --- Navigation -------------------------------------------------------- */
+
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.navItem {
+  position: relative;
+  padding: 8px 16px 12px;
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--micro) var(--ease);
+}
+
+.navItem:hover {
+  color: var(--text);
+}
+
+/*
+ * The active route draws its own line, left to right, rather than just
+ * recolouring text — the movement is what says "you are here now".
+ */
+.navItem::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--parchment);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--medium) var(--ease);
+}
+
+.navItemActive {
+  color: var(--text);
+}
+
+.navItemActive::after {
+  transform: scaleX(1);
+}
+
+.badge {
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 4px;
+  vertical-align: 2px;
+}
+
+/* --- User -------------------------------------------------------------- */
+
+.user {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  font-family: var(--label);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 22ch;
+}
+
+.signOut {
+  padding: 7px 14px;
+  font: inherit;
+  color: var(--text-soft);
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease),
+    opacity var(--small) var(--ease);
+}
+
+.signOut:hover {
+  color: var(--text);
+  border-color: var(--hairline-strong);
+}
+
+/* Signing out fades rather than snapping away. */
+.signingOut {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  .header {
+    grid-template-columns: 1fr auto;
+    row-gap: 10px;
+  }
+
+  .nav {
+    order: 3;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .email {
+    max-width: 14ch;
+  }
+}

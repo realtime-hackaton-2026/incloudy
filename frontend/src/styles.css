@@ -1,151 +1,224 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/*
+ * incloudy — design foundation.
+ *
+ * The map (`assets/images/fondo.png`) is the product's identity, so the whole
+ * interface is built around it: a dark expedition/control-room shell, warm
+ * parchment reserved for the things the map itself owns. The artwork is never
+ * modified — only positioned, masked and lit.
+ */
 
+:root {
+  /* --- Environment ---------------------------------------------------- */
+  --bg: #10131a;
+  --surface-deep: #151922;
+  /* Functional panels stay solid; translucency is reserved for overlays. */
+  --surface: #161b25;
+  --surface-raised: #1b212d;
+  --overlay: rgb(18 22 30 / 78%);
+  --hairline: rgb(255 255 255 / 8%);
+  --hairline-strong: rgb(255 255 255 / 14%);
+
+  /* --- Brand ---------------------------------------------------------- */
+  --primary: #28548a;
+  --map-blue: #3478b8;
+  --parchment: #e6c995;
+  --parchment-hi: #f1d8a6;
+
+  /* --- Text ----------------------------------------------------------- */
+  --text: #f3f0e8;
+  --text-soft: #9aa3b2;
+  --muted: #626b79;
+
+  /* --- Feedback ------------------------------------------------------- */
+  --danger: #ff6b6b;
+  --danger-bg: rgb(186 26 26 / 18%);
+  --success: #6ee7a8;
+
+  /* --- Type ----------------------------------------------------------- */
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --display: 'Space Grotesk', system-ui, 'Segoe UI', sans-serif;
+  --label: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 
   /*
-   * Wood-and-paper palette, lifted from the login mockup that shipped as
-   * `src/index.html`. Same names it used, minus the Tailwind indirection.
-   * The case map keeps its own colours: it is artwork, not a themed surface.
+   * --- Motion ----------------------------------------------------------
+   * Five tiers, so nothing is animated at an arbitrary duration. Pick the
+   * tier by what is moving, not by how it feels in isolation.
    */
-  --primary: #2b4c7e;
-  --secondary: #5ba8d1;
-  --wood: #e0c9a3;
-  --wood-dark: #c3a985;
-  --paper: #fdfbf7;
-  --ink: #212529;
-  --ink-soft: #475569;
-  --outline: #64748b;
-  --outline-soft: #cbd5e1;
-  --surface-dim: #e9ecef;
-  --danger: #ba1a1a;
-  --danger-bg: #ffdad6;
+  --micro: 200ms; /* hover, icon, button */
+  --small: 380ms; /* cards, panels, inputs */
+  --medium: 600ms; /* sections, station activation */
+  --large: 1000ms; /* route transitions */
+  --cinematic: 1600ms; /* login → map, camera, milestones */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Space Grotesk and JetBrains Mono when the machine has them; no CDN fetch
-     either way, so the first paint never waits on fonts.googleapis.com. */
-  --display: 'Space Grotesk', var(--heading);
-  --label: 'JetBrains Mono', var(--mono);
+  /* Atmospheric grain. Static texture, never animated — it is a backdrop,
+     not an effect, and repainting it every frame would cost more than it
+     is worth. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
+  font: 16px/1.55 var(--sans);
+  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+* {
+  box-sizing: border-box;
 }
 
-/* Full bleed: the login paints its own background edge to edge. Screens that
-   want a column instead set their own width — see `.app` below. */
+body {
+  margin: 0;
+  background: var(--bg);
+  /* The environment paints edge to edge; nothing should scroll sideways. */
+  overflow-x: hidden;
+}
+
 #root {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
 
-body {
+/* --- Type scale -------------------------------------------------------- */
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+p {
   margin: 0;
 }
 
-/* --- App shell (the signed-in view) ------------------------------------ */
+/* Small uppercase mono label — the interface's "instrument" voice. */
+.eyebrow {
+  font-family: var(--label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+/* --- Button language --------------------------------------------------- */
+
+.btn-primary,
+.btn-secondary,
+.btn-map {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 22px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    transform var(--micro) var(--ease),
+    background-color var(--micro) var(--ease),
+    border-color var(--micro) var(--ease),
+    box-shadow var(--micro) var(--ease);
+}
+
+.btn-primary {
+  color: #10131a;
+  background: var(--parchment);
+  border: 1px solid var(--parchment-hi);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--parchment-hi);
+}
+
+.btn-secondary {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgb(255 255 255 / 6%);
+  border-color: rgb(255 255 255 / 24%);
+}
+
+.btn-map {
+  color: var(--parchment);
+  background: rgb(18 22 30 / 72%);
+  border: 1px solid rgb(230 201 149 / 34%);
+  backdrop-filter: blur(10px);
+}
+
+.btn-map:hover:not(:disabled) {
+  border-color: rgb(230 201 149 / 62%);
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.btn-map:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-map:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-map:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+:where(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--parchment);
+  outline-offset: 3px;
+}
+
+/* --- App shell --------------------------------------------------------- */
 
 .app {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  width: 1126px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
-  box-sizing: border-box;
+  padding: 0 28px 64px;
 }
 
-.app-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 16px;
-  margin-bottom: 24px;
-}
-
-.app-header h1 {
-  font-family: var(--display);
-  font-size: 40px;
-  letter-spacing: -1.2px;
-  margin: 0;
-  color: var(--primary);
-
-  @media (max-width: 1024px) {
-    font-size: 30px;
+@media (max-width: 720px) {
+  .app {
+    padding: 0 18px 40px;
   }
-}
-
-.app-header p {
-  flex: 1 1 320px;
-  font-size: 16px;
-}
-
-.app-session {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--label);
-  font-size: 13px;
-  color: var(--outline);
-}
-
-.app-signout {
-  font: inherit;
-  padding: 6px 12px;
-  color: var(--primary);
-  background: var(--wood);
-  border: 3px solid var(--wood-dark);
-  cursor: pointer;
-}
-
-.app-signout:hover {
-  filter: brightness(1.05);
-}
-
-.app-signout:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 2px;
 }
 
 /* Shown for the moment it takes /auth/me to vet a stored token. */
@@ -154,93 +227,25 @@ body {
   display: grid;
   place-content: center;
   font-family: var(--label);
-  font-size: 14px;
-  color: var(--outline);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-.app-nav {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--outline-soft);
-}
-
-.app-nav button {
-  padding: 10px 4px;
-  margin-bottom: -2px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--outline);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.app-nav button:hover {
-  color: var(--primary);
-}
-
-.app-nav button.app-nav-active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-
-.app-nav button:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 2px;
-}
-
-.app-demo-note {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  font-size: 14px;
-  color: var(--ink-soft);
-  background: var(--surface-dim);
-  border-left: 4px solid var(--secondary);
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/*
+ * --- Reduced motion ----------------------------------------------------
+ * Ambient drift, camera moves and particles are removed; state changes and
+ * their colour/opacity feedback survive, so nothing becomes unusable or
+ * ambiguous — it just stops moving.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

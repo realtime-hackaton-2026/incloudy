@@ -1,0 +1,78 @@
+/*
+ * The veil that carries the login → casos transition.
+ *
+ * It does not paint the movement — MapEnvironment's `sharpening` phase does
+ * that underneath. This only covers the swap of one screen for another so
+ * the change of content never reads as a page load.
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-content: center;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgb(16 19 26 / 20%) 0%,
+    rgb(6 8 12 / 82%) 100%
+  );
+  animation: veil var(--cinematic) var(--ease) both;
+}
+
+@keyframes veil {
+  0% {
+    opacity: 0;
+  }
+
+  /* Deepest right as the world sharpens and the login leaves. */
+  22% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.word {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  animation: word var(--cinematic) var(--ease) both;
+}
+
+@keyframes word {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.18em;
+  }
+
+  30% {
+    opacity: 0.9;
+  }
+
+  60% {
+    opacity: 0.5;
+    letter-spacing: 0.44em;
+  }
+
+  100% {
+    opacity: 0;
+    letter-spacing: 0.5em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .word {
+    animation-duration: 1ms;
+  }
+}

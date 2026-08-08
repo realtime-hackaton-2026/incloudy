@@ -35,7 +35,10 @@ export async function registerAccount({ email, password }: Credentials): Promise
   const response = await apiFetch('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    // The current registration screen intentionally stays compact and does
+    // not ask for a display name. Use the email prefix as a sensible default;
+    // the backend requires `nombre` when creating the user.
+    body: JSON.stringify({ nombre: email.split('@')[0], email, password }),
   })
   return readAccessToken(response)
 }
@@ -43,7 +46,8 @@ export async function registerAccount({ email, password }: Credentials): Promise
 /** The email behind a token. Also the cheapest way to know a stored token still works. */
 export async function fetchCurrentUser(token: string): Promise<string> {
   const response = await apiFetch('/auth/me', { headers: authHeaders(token) })
-  return (await response.json()) as string
+  const user = (await response.json()) as { email: string }
+  return user.email
 }
 
 async function readAccessToken(response: Response): Promise<string> {

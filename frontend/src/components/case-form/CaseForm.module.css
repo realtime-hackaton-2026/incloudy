@@ -539,6 +539,36 @@
   border-radius: 9px;
 }
 
+.collaboratorIdentity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.collaboratorIdentity strong {
+  color: var(--text);
+  font: 700 14px/1.3 var(--display);
+}
+
+.collaboratorIdentity span,
+.collaboratorIdentity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collaboratorIdentity span {
+  color: var(--text-soft);
+  font: 13px/1.35 var(--sans);
+}
+
+.collaboratorIdentity small {
+  color: var(--parchment);
+  font: 700 11px/1.3 var(--label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .collaborator button {
   padding: 5px 11px;
   font: inherit;

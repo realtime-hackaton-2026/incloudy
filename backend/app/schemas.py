@@ -83,6 +83,7 @@ class CaseJoinRequest(BaseModel):
 class CaseParticipantResponse(BaseModel):
     user_id: str
     nombre: str
+    email: EmailStr
     role: str
 
 

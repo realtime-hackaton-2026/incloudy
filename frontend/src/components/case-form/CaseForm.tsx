@@ -6,11 +6,11 @@
  * client-side notion of "done" independent of it.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError } from '../../lib/http'
-import { CASE_STATUS_LABELS, useCase } from '../../cases'
-import type { CollaboratorRole, Student } from '../../cases'
+import { CASE_STATUS_LABELS, listCaseParticipants, useCase } from '../../cases'
+import type { CaseParticipant, CollaboratorRole, Student } from '../../cases'
 import { useJourneyTemplate } from '../../journeys'
 import { CaseMap, STATIONS, stationIndex, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
@@ -79,6 +79,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [collaboratorError, setCollaboratorError] = useState<string | null>(null)
   const [invitePending, setInvitePending] = useState(false)
   const [pendingRemoveCollaborator, setPendingRemoveCollaborator] = useState<string | null>(null)
+  const [caseParticipants, setCaseParticipants] = useState<CaseParticipant[]>([])
 
   const [completing, setCompleting] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
@@ -99,6 +100,23 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   // standing "how far is left" message until it expires.
   const [lockedNotice, setLockedNotice] = useState<Guidance | null>(null)
 
+  useEffect(() => {
+    let active = true
+    const refresh = () => {
+      void listCaseParticipants(token, caseId)
+        .then((participants) => {
+          if (active) setCaseParticipants(participants)
+        })
+        .catch(() => {})
+    }
+    refresh()
+    const timer = setInterval(refresh, 5_000)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [caseId, token])
+
   if (loadStatus === 'loading') return <p className={styles.state}>Cargando caso…</p>
 
   if (loadStatus === 'error' || !item) {
@@ -117,6 +135,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   // Narrowed once, here, so every handler below can reference `current`
   // instead of asserting `item!` is non-null everywhere it's used.
   const current = item
+  const participantById = new Map(caseParticipants.map((participant) => [participant.userId, participant]))
   const isOwner = ownerId !== null && current.profesorId === ownerId
   const isEditor =
     isOwner || current.colaboradores.some((c) => c.userId === ownerId && c.role === 'editor')
@@ -618,9 +637,11 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           <ul className={styles.collaborators}>
             {current.colaboradores.map((collaborator) => (
               <li key={collaborator.userId} className={styles.collaborator}>
-                <span>
-                  {collaborator.userId} · {ROLE_LABELS[collaborator.role]}
-                </span>
+                <div className={styles.collaboratorIdentity}>
+                  <strong>Docente · {participantById.get(collaborator.userId)?.nombre ?? 'Sin nombre'}</strong>
+                  <span>{participantById.get(collaborator.userId)?.email ?? 'Correo no disponible'}</span>
+                  <small>Rol · {ROLE_LABELS[collaborator.role]}</small>
+                </div>
                 <button
                   type="button"
                   onClick={() => setPendingRemoveCollaborator(collaborator.userId)}

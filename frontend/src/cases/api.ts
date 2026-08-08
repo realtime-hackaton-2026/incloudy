@@ -103,6 +103,7 @@ export interface CollaboratorRecord {
 export interface CaseParticipant {
   userId: string
   nombre: string
+  email: string
   role: string
 }
 
@@ -221,8 +222,8 @@ export async function listCaseParticipants(token: string, caseId: string): Promi
   const response = await apiFetch(`/cases/${encodeURIComponent(caseId)}/participants`, {
     headers: authHeaders(token),
   })
-  const wire = (await response.json()) as Array<{ user_id: string; nombre: string; role: string }>
-  return wire.map((item) => ({ userId: item.user_id, nombre: item.nombre, role: item.role }))
+  const wire = (await response.json()) as Array<{ user_id: string; nombre: string; email: string; role: string }>
+  return wire.map((item) => ({ userId: item.user_id, nombre: item.nombre, email: item.email, role: item.role }))
 }
 
 export async function joinCase(token: string, code: string): Promise<Case> {

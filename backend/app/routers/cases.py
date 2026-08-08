@@ -291,6 +291,7 @@ async def list_case_participants(
             CaseParticipantResponse(
                 user_id=user_id,
                 nombre=user.nombre,
+                email=user.email,
                 role=user_role(case, user_id) or "docente",
             )
         )

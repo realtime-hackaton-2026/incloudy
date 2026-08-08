@@ -1,0 +1,127 @@
+/* ============================================================
+   Tokens y clases base compartidas — estilo pixel-art.
+   Importa este fichero una vez (por ejemplo en main.tsx) antes
+   de DataStationPage.css y PistasPage.css, ya que ambos usan
+   estas variables y clases (.pixel-panel, .pixel-btn...).
+   Si tu proyecto incloudy ya tiene un design system, sáltate
+   este fichero y solo reutiliza los nombres de clase que quieras.
+   ============================================================ */
+
+:root {
+  --ink: #1c1a17;
+  --parchment: #e7dcc4;
+  --parchment-dark: #cdbd97;
+  --wood: #4a3527;
+  --wood-dark: #3b3b3b;
+
+  --forest: #2f5c3c;
+  --castle-dark: #5c4a37;
+
+  --gold: #e0b23d;
+  --gold-light: #f3d67a;
+  --danger: #b5473a;
+  --ok: #4d8058;
+
+  --panel-bg: #f2e9d3;
+  --panel-border: var(--wood);
+
+  --font-display: "Press Start 2P", monospace;
+  --font-body: "Silkscreen", monospace;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--wood-dark);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.pixel-btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  color: var(--parchment);
+  background: var(--forest);
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    inset -4px -4px 0 0 rgba(0, 0, 0, 0.25),
+    inset 4px 4px 0 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.08s ease;
+}
+
+.pixel-btn:hover {
+  filter: brightness(1.08);
+}
+
+.pixel-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.25),
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+.pixel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pixel-btn.secondary {
+  background: var(--castle-dark);
+}
+
+.pixel-btn.gold {
+  background: var(--gold);
+  color: var(--wood-dark);
+}
+
+.pixel-panel {
+  background: var(--panel-bg);
+  border: 4px solid var(--panel-border);
+  box-shadow: 0 0 0 2px var(--wood-dark);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enter-anim {
+  animation: fade-in-up 0.35s ease both;
+}
+
+/* Barra superior simple, reutilizable en ambas páginas. */
+.page-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--wood-dark);
+  border-bottom: 4px solid var(--wood);
+  flex-shrink: 0;
+}
+
+.page-topbar-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--gold-light);
+}
+
+.page-topbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--parchment);
+  font-size: 0.9rem;
+}

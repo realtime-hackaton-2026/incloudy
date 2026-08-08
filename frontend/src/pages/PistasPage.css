@@ -1,0 +1,91 @@
+.pistas-screen {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pistas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pistas-count {
+  color: var(--parchment);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.pistas-tension-hint {
+  background: rgba(224, 178, 61, 0.18);
+  border: 2px solid var(--gold);
+  color: var(--gold-light);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.pistas-empty {
+  color: var(--parchment-dark);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.pistas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.pistas-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pistas-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pistas-card-icon {
+  font-size: 1.4rem;
+}
+
+.pistas-card-station {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--wood);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pistas-card-type {
+  font-size: 0.75rem;
+  color: var(--forest);
+  font-weight: 700;
+}
+
+.pistas-card-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.pistas-card-contraste {
+  margin: 4px 0 0;
+  padding-top: 8px;
+  border-top: 2px dashed var(--parchment-dark);
+  font-size: 0.82rem;
+  color: var(--danger);
+}

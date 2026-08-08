@@ -6,20 +6,30 @@ import { CaseMap } from './components/case-map'
 import type { CaseStage } from './components/case-map'
 import { Login } from './components/login'
 import { Registro } from './components/registro'
+import DataStationPage from './pages/DataStationPage'
+import PistasPage from './pages/PistasPage'
 
 type AuthScreenName = 'login' | 'registro'
-type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' }
+type View =
+  | { name: 'cases' }
+  | { name: 'case'; caseId: string }
+  | { name: 'map-demo' }
+  | { name: 'data-station' }
+  | { name: 'pistas' }
 
 /*
- * Every screen has a URL (#/casos, #/caso/:id, #/mapa, #/login, #/registro)
- * so the frontend README and the browser back button can point at it
- * directly. State changes always go through the hash; the hashchange event
- * is the only writer of `view` and `authScreen`.
+ * Every screen has a URL (#/casos, #/caso/:id, #/mapa, #/data-station,
+ * #/pistas, #/login, #/registro) so the frontend README and the browser
+ * back button can point at it directly. State changes always go through
+ * the hash; the hashchange event is the only writer of `view` and
+ * `authScreen`.
  */
 
 function viewFromHash(hash: string): View {
   const [first, second] = hash.replace(/^#\/?/, '').split('/')
   if (first === 'mapa') return { name: 'map-demo' }
+  if (first === 'data-station') return { name: 'data-station' }
+  if (first === 'pistas') return { name: 'pistas' }
   if (first === 'caso' && second) return { name: 'case', caseId: second }
   return { name: 'cases' }
 }
@@ -27,6 +37,8 @@ function viewFromHash(hash: string): View {
 function hashFor(view: View): string {
   if (view.name === 'case') return `#/caso/${view.caseId}`
   if (view.name === 'map-demo') return '#/mapa'
+  if (view.name === 'data-station') return '#/data-station'
+  if (view.name === 'pistas') return '#/pistas'
   return '#/casos'
 }
 
@@ -130,6 +142,24 @@ function App() {
         >
           Mapa (demo)
         </button>
+        <button
+          type="button"
+          className={view.name === 'data-station' ? 'app-nav-active' : ''}
+          onClick={() => {
+            location.hash = '#/data-station'
+          }}
+        >
+          Data Station
+        </button>
+        <button
+          type="button"
+          className={view.name === 'pistas' ? 'app-nav-active' : ''}
+          onClick={() => {
+            location.hash = '#/pistas'
+          }}
+        >
+          Pistas
+        </button>
       </nav>
 
       {view.name === 'cases' && (
@@ -163,6 +193,20 @@ function App() {
           </p>
           <CaseMap stage={demoStage} onSelectStage={setDemoStage} />
         </>
+      )}
+      {view.name === 'data-station' && (
+        <DataStationPage
+          onBack={() => {
+            location.hash = '#/casos'
+          }}
+        />
+      )}
+      {view.name === 'pistas' && (
+        <PistasPage
+          onBack={() => {
+            location.hash = '#/casos'
+          }}
+        />
       )}
     </main>
   )

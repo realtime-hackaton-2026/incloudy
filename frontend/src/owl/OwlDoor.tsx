@@ -11,10 +11,11 @@ import styles from './OwlDoor.module.css'
 export interface OwlDoorProps {
   token: string
   caseId: string
+  joinCode: string
   stage: CaseStage
 }
 
-export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -248,7 +249,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
           <div className={styles.lobbyCard}>
             <div className={styles.lobbyKicker}>BRÚIX · COLABORACIÓN</div>
             <h2 id="owl-lobby-title">Sala de trabajo de Búrix</h2>
-            <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {caseId.slice(-6).toUpperCase()}</p>
+            <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {joinCode}</p>
 
             <section className={styles.lobbyPanel} aria-label="Docentes presentes">
               <div className={styles.lobbyPanelTop}>

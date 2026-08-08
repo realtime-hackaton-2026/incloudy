@@ -74,6 +74,7 @@ export interface Collaborator {
 export interface Case {
   id: string
   profesorId: string
+  joinCode: string
   colaboradores: Collaborator[]
   colaboradoresIds: string[]
   templateId: string | null
@@ -102,6 +103,7 @@ interface CaseWire {
   _id?: string
   id?: string
   profesor_id: string
+  join_code?: string | null
   colaboradores: { user_id: string; role: CollaboratorRole }[]
   colaboradores_ids: string[]
   template_id: string | null
@@ -147,6 +149,7 @@ function normalizeCase(wire: CaseWire): Case {
   return {
     id,
     profesorId: wire.profesor_id,
+    joinCode: wire.join_code ?? id.slice(-6).toUpperCase(),
     colaboradores: wire.colaboradores.map((item) => ({ userId: item.user_id, role: item.role })),
     colaboradoresIds: wire.colaboradores_ids,
     templateId: wire.template_id,
@@ -202,6 +205,15 @@ export async function createCase(token: string, draft: CaseDraft): Promise<Case>
 
 export async function getCase(token: string, caseId: string): Promise<Case> {
   const response = await apiFetch(`/cases/${caseId}`, { headers: authHeaders(token) })
+  return normalizeCase((await response.json()) as CaseWire)
+}
+
+export async function joinCase(token: string, code: string): Promise<Case> {
+  const response = await apiFetch('/cases/join', {
+    method: 'POST',
+    headers: jsonHeaders(token),
+    body: JSON.stringify({ code: code.trim().toUpperCase() }),
+  })
   return normalizeCase((await response.json()) as CaseWire)
 }
 

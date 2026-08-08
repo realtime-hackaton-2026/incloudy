@@ -18,6 +18,8 @@ export interface CaseRoomProps {
   hideUi?: boolean
   /** Increment to request a collaborative session start from the current teacher. */
   startSessionNonce?: number
+  /** Increment to close the current table for every connected teacher. */
+  closeSessionNonce?: number
   onSessionActiveChange?: (active: boolean) => void
 }
 
@@ -35,6 +37,7 @@ export function CaseRoom({
   minimumParticipants = 2,
   hideUi = false,
   startSessionNonce = 0,
+  closeSessionNonce = 0,
   onSessionActiveChange,
   onPresenceChange,
 }: CaseRoomProps) {
@@ -80,6 +83,7 @@ export function CaseRoom({
         minimumParticipants={minimumParticipants}
         hideUi={hideUi}
         startSessionNonce={startSessionNonce}
+        closeSessionNonce={closeSessionNonce}
         onSessionActiveChange={onSessionActiveChange}
         onPresenceChange={onPresenceChange}
       />
@@ -94,6 +98,7 @@ function RoomChannel({
   minimumParticipants,
   hideUi,
   startSessionNonce,
+  closeSessionNonce,
   onSessionActiveChange,
   onPresenceChange,
 }: {
@@ -103,6 +108,7 @@ function RoomChannel({
   minimumParticipants: number
   hideUi: boolean
   startSessionNonce: number
+  closeSessionNonce: number
   onSessionActiveChange?: (active: boolean) => void
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
 }) {
@@ -118,6 +124,7 @@ function RoomChannel({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [askingAi, setAskingAi] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   // A guard, not display state: it only decides whether this particular
@@ -125,6 +132,7 @@ function RoomChannel({
   // write state synchronously on every bump, which is the cascading-render
   // pattern the lint rule flags.
   const lastStartNonce = useRef(0)
+  const lastCloseNonce = useRef(0)
   // Memoized on its own: rebuilt inline it was a fresh array every render,
   // which made `presenceState` below re-memo every time and fire the
   // `onPresenceChange` effect on every render instead of on real changes.
@@ -148,8 +156,14 @@ function RoomChannel({
     error: portalError,
   }), [onlineCount, participants, presence?.kind, portalError, status])
   const unlocked = onlineCount >= minimumParticipants
-  const sessionActive = messages.some((message) => isSessionStarted(message.content))
-  const chatMessages = messages.filter((message) => !isSessionStarted(message.content))
+  const latestControlIndex = messages.reduce(
+    (latest, message, index) => isSessionControl(message.content) ? index : latest,
+    -1,
+  )
+  const latestControl = latestControlIndex >= 0 ? messages[latestControlIndex] : null
+  const sessionActive = latestControl ? isSessionStarted(latestControl.content) : false
+  const currentMessages = messages.slice(latestControlIndex + 1).filter((message) => !isSessionControl(message.content))
+  const previousMessages = messages.slice(0, Math.max(0, latestControlIndex)).filter((message) => !isSessionControl(message.content))
 
   useEffect(() => {
     onSessionActiveChange?.(sessionActive)
@@ -170,6 +184,18 @@ function RoomChannel({
       },
     }).finally(() => setStarting(false))
   }, [send, sessionActive, startSessionNonce, starting, unlocked])
+
+  useEffect(() => {
+    if (!closeSessionNonce || closeSessionNonce <= lastCloseNonce.current || !sessionActive || closing) return
+    lastCloseNonce.current = closeSessionNonce
+    setClosing(true)
+    void send({
+      content: {
+        type: 'session_closed',
+        body: 'La mesa de docentes ha sido cerrada.',
+      },
+    }).finally(() => setClosing(false))
+  }, [closeSessionNonce, closing, send, sessionActive])
 
   async function handleSend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -250,11 +276,26 @@ function RoomChannel({
         </div>
       )}
 
+      {previousMessages.length > 0 && (
+        <details className={styles.history} open={!sessionActive}>
+          <summary>Historial anterior del caso · {previousMessages.length} aportes</summary>
+          <ul className={styles.historyMessages}>
+            {previousMessages.map((message) => (
+              <li key={message.id}>
+                <strong>{message.content && typeof message.content !== 'string' && message.content.type === 'ai_answer' ? 'Forix · IA' : message.sender.username ?? 'Docente'}</strong>
+                <span>{messageBody(message.content)}</span>
+                <time>{formatTime(message.timestamp)}</time>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {sessionActive && (
         <>
           <ul className={styles.messages} aria-live="polite">
-            {chatMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
-            {chatMessages.map((message) => (
+            {currentMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
+            {currentMessages.map((message) => (
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
                 <span className={styles.messageAuthor}>
@@ -296,12 +337,17 @@ function RoomChannel({
       )}
 
       {starting && <p className={styles.typing}>Iniciando la experiencia colaborativa…</p>}
+      {closing && <p className={styles.typing}>Cerrando la mesa para el equipo…</p>}
     </div>
   )
 }
 
 function isSessionStarted(content: ChatMessage | string) {
   return typeof content !== 'string' && content.type === 'session_started'
+}
+
+function isSessionControl(content: ChatMessage | string) {
+  return typeof content !== 'string' && (content.type === 'session_started' || content.type === 'session_closed')
 }
 
 function messageBody(content: ChatMessage | string) {

@@ -1,8 +1,8 @@
 .roomBody {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  gap: 14px;
+  padding: clamp(14px, 2vw, 18px);
   border: 1px solid var(--hairline);
   border-radius: 13px;
   background: var(--surface);
@@ -18,7 +18,7 @@
 .roomTitle {
   margin: 0;
   font-family: var(--label);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -27,8 +27,8 @@
 
 .roomHint {
   margin-top: 3px;
-  font-size: var(--text-sm);
-  line-height: 1.35;
+  font-size: var(--text-md);
+  line-height: 1.5;
   color: var(--text-soft);
 }
 
@@ -75,7 +75,7 @@
 .waiting p {
   margin-top: 2px;
   font-size: var(--text-sm);
-  line-height: 1.4;
+  line-height: 1.55;
   color: var(--text-soft);
 }
 

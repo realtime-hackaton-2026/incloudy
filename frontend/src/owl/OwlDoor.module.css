@@ -265,7 +265,9 @@
 }
 
 .lobbyCard {
-  width: min(640px, calc(100vw - 32px));
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
   padding: 24px 24px 20px;
   color: var(--text);
   background: linear-gradient(145deg, var(--surface-raised) 0%, var(--surface-deep) 100%);
@@ -277,7 +279,7 @@
 
 .lobbyKicker {
   font-family: var(--label);
-  font-size: 9px;
+  font-size: var(--text-xs);
   font-weight: 800;
   letter-spacing: 0.14em;
   color: var(--parchment);
@@ -297,7 +299,8 @@
 .lobbyCode {
   margin: 0 0 14px;
   font-family: var(--label);
-  font-size: 8px;
+  font-size: var(--text-xs);
+  line-height: 1.5;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-soft);
@@ -309,7 +312,7 @@
   gap: 7px;
   margin-top: 16px;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -318,7 +321,7 @@
 .forixCasePicker select {
   width: 100%;
   padding: 11px 12px;
-  font: 500 13px var(--sans);
+  font: 600 var(--text-sm)/1.4 var(--sans);
   color: var(--text);
   text-transform: none;
   letter-spacing: normal;
@@ -522,7 +525,7 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: min(330px, 92vw);
+  width: clamp(380px, 27vw, 440px);
   height: 100vh;
   padding: 14px;
   overflow-y: auto;
@@ -560,19 +563,28 @@
 }
 
 .endRoom {
-  min-height: 34px;
-  padding: 7px 10px;
-  color: var(--danger);
-  font: 700 var(--text-xs)/1 var(--label);
-  background: var(--danger-bg);
-  border: 1px solid rgb(240 120 92 / 35%);
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 13px;
+  color: #fff4ef;
+  font: 800 var(--text-xs)/1 var(--sans);
+  background: linear-gradient(180deg, #c45f49, #9f4435);
+  border: 1px solid rgb(255 180 160 / 48%);
+  border-radius: 10px;
+  box-shadow: 0 7px 18px rgb(90 24 14 / 30%), inset 0 1px rgb(255 255 255 / 18%);
   cursor: pointer;
+  transition: transform var(--micro) var(--ease), filter var(--micro) var(--ease);
 }
+
+.endRoom:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.endRoom:focus-visible { outline: 2px solid #ffd2c5; outline-offset: 2px; }
 
 .roomDockHeader strong {
   font-family: var(--display);
-  font-size: 15px;
+  font-size: clamp(16px, 0.35vw + 14px, 19px);
 }
 
 .closeRoom {
@@ -809,6 +821,10 @@
     border-left: 0;
     border-radius: 18px 18px 0 0;
   }
+
+  .roomDockHeader { align-items: flex-start; }
+  .roomHeaderActions { flex-wrap: wrap; justify-content: flex-end; }
+  .endRoom { min-height: 38px; padding: 8px 10px; }
 }
 
 .roomDockClosed {

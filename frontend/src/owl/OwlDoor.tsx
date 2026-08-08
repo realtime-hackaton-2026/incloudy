@@ -131,7 +131,11 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
                 <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.roomHeaderActions}>
-                {sessionActive && <button type="button" className={styles.endRoom} onClick={() => setCloseSessionNonce((current) => current + 1)}>Cerrar mesa</button>}
+                {sessionActive && (
+                  <button type="button" className={styles.endRoom} onClick={() => setCloseSessionNonce((current) => current + 1)}>
+                    <span aria-hidden="true">■</span> Cerrar mesa
+                  </button>
+                )}
                 <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Ocultar sala">✕</button>
               </div>
             </div>

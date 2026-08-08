@@ -416,16 +416,16 @@
 
 .stationEditButton {
   position: absolute;
-  top: 16px;
-  right: 58px;
+  top: 14px;
+  right: 62px;
   z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 30px;
-  padding: 5px 10px;
+  min-height: 38px;
+  padding: 7px 12px;
   font-family: var(--label);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -450,8 +450,11 @@
 
 @media (max-width: 560px) {
   .stationEditButton {
-    width: 32px;
-    padding: 5px;
+    top: 10px;
+    right: 54px;
+    width: 38px;
+    min-height: 38px;
+    padding: 6px;
     justify-content: center;
   }
 

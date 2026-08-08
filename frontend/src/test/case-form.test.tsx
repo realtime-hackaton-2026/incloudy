@@ -31,7 +31,12 @@ const TEMPLATE_WIRE = {
       descripcion: '',
       tipo: 'multiple',
       obligatoria: true,
-      opciones: [{ id: 'voz_alumno', texto: 'Escuchar al alumno' }],
+      contenido: { introduccion: 'Alex tiene 9 años. Texto fijo de la plantilla.' },
+      opciones: [{
+        id: 'voz_alumno',
+        texto: 'Escuchar al alumno',
+        contenido: { evidencia: 'Alex explica lo que necesita.' },
+      }],
     },
     {
       id: 'orientar',
@@ -185,6 +190,35 @@ describe('CaseForm — the complete → publish state machine', () => {
 })
 
 describe('CaseForm — stations open as popups on the map, not as a list below it', () => {
+  it('uses the current case name and description instead of Alex template copy', async () => {
+    const fetchMock = routedFetch({
+      'GET /cases/case-1': () => jsonResponse(caseWire({
+        alumno: {
+          nombre: 'Lucía',
+          edad: 11,
+          curso: '6.º de primaria',
+          descripcion: 'Necesita apoyo para participar en trabajos grupales.',
+        },
+      })),
+      'GET /journeys/templates/tmpl-1': () => jsonResponse(TEMPLATE_WIRE),
+      'POST /portal/sessions/case-1': () => jsonResponse({ detail: 'Portal no configurado' }, 503),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const user = userEvent.setup()
+    render(
+      <CaseForm token="tok" caseId="case-1" ownerId="u-1" onBack={() => {}} onDeleted={() => {}} />,
+    )
+    await screen.findByTestId('case-form')
+    await user.click(screen.getByRole('button', { name: /explorar en la selva/i }))
+
+    const panel = await screen.findByTestId('station-explorar')
+    expect(within(panel).getByText(/Lucía · 11 años · 6.º de primaria/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Necesita apoyo para participar/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Lucía explica lo que necesita/)).toBeInTheDocument()
+    expect(within(panel).queryByText(/Alex/)).toBeNull()
+  })
+
   it('opens a station\'s real form on the map when its hotspot is clicked, pre-filled from the saved answer', async () => {
     const fetchMock = routedFetch({
       'GET /cases/case-1': () => jsonResponse(caseWire()),

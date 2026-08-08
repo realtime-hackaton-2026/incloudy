@@ -74,6 +74,26 @@ describe('CaseMap reports its camera as state', () => {
       { numRuns: 25 },
     )
   })
+
+  /* The journey lives on the map: the trail's travelled index is the case's
+     position, reported as state so no test has to wait for the reveal. */
+  it('fills the trail exactly up to the case position, any stage', () => {
+    fc.assert(
+      fc.property(stageArb, (stage) => {
+        const { unmount } = render(<CaseMap stage={stage} />)
+        const trail = screen.getByTestId('map-journey')
+        const active = Number(trail.getAttribute('data-active-index'))
+        unmount()
+        return (
+          Number.isInteger(active) &&
+          active === STATIONS.findIndex((s) => s.stage === stage) &&
+          active >= 0 &&
+          active < STATIONS.length
+        )
+      }),
+      { numRuns: 25 },
+    )
+  })
 })
 
 /* ── ProgressJourney ─────────────────────────────────────────────────── */

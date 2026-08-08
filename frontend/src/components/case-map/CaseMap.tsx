@@ -11,7 +11,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import mapArt from '../../assets/images/fondo.png'
-import { ProgressJourney } from '../progress-journey'
 import styles from './CaseMap.module.css'
 import { MAP_ASPECT_RATIO, STATIONS, stationFor, stationIndex } from './stations'
 import type { CaseStage, Station } from './stations'
@@ -94,6 +93,15 @@ export function CaseMap({
   // with only "Explorar →" still needs onSelectStage to mean anything.
   const interactive = Boolean(onSelectStage) || Boolean(renderStationPanel)
 
+  // The journey trail: the stations themselves are the progress indicator,
+  // so the route is drawn between their signposts instead of restated as a
+  // strip below the map. Filled from the start up to the station the case
+  // currently stands on, like the pin it arrives at.
+  const basePoints = STATIONS.map((station) => `${station.x},${station.y}`).join(' ')
+  const traveledPoints = STATIONS.slice(0, activeIndex + 1)
+    .map((station) => `${station.x},${station.y}`)
+    .join(' ')
+
   // With the origin pinned to the station, that point is the one thing the
   // zoom leaves untouched — so the HUD below can use the same coordinates.
   const camera = focusedStation
@@ -149,6 +157,23 @@ export function CaseMap({
             alt="Mapa del caso: selva, montaña, escuela, bosque y aldea."
             className={styles.art}
           />
+
+          {/* The route between the signposts, in the same percentage space
+              as the hotspots. Read as a journey, not drawn over the art: the
+              base track is a faint dashed "road ahead", the travelled part
+              fills in parchment up to the pin. */}
+          <svg
+            className={styles.trail}
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            data-testid="map-journey"
+            data-active-index={activeIndex}
+            data-total={STATIONS.length}
+          >
+            <polyline className={styles.trailBase} points={basePoints} />
+            <polyline className={styles.trailTraveled} points={traveledPoints} />
+          </svg>
 
           {/* Dims everything but the lit station — a spotlight, not a filter
               over the artwork. */}
@@ -327,16 +352,13 @@ export function CaseMap({
         <span className={styles.current}>
           {active.label} <span className={styles.place}>{active.place}</span>
         </span>
+        <span className={styles.journey} aria-label={`Aventura ${activeIndex + 1} de ${STATIONS.length}`}>
+          Aventura {activeIndex + 1} de {STATIONS.length}
+        </span>
         <span className={styles.hint}>
           {focused ? 'Cierra para alejar' : 'Toca un lugar del mapa'}
         </span>
       </div>
-
-      <ProgressJourney
-        nodes={STATIONS.map((station) => ({ id: station.stage, label: station.label }))}
-        activeIndex={activeIndex}
-        onSelect={interactive ? (id) => focus(id as CaseStage) : undefined}
-      />
     </div>
   )
 }

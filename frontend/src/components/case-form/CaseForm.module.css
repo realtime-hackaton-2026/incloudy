@@ -429,9 +429,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--on-warm);
-  background: var(--parchment);
-  border: 1px solid var(--parchment-hi);
+  color: var(--text);
+  background: var(--option-bg-selected, var(--parchment));
+  border: 1px solid var(--option-border-selected, var(--parchment-hi));
   border-radius: 6px;
   cursor: pointer;
   transition: background-color var(--micro) var(--ease), transform var(--micro) var(--ease);
@@ -444,13 +444,30 @@
 }
 
 .stationEditButton:hover {
-  background: var(--parchment-hi);
+  background: var(--option-bg-hover, var(--parchment-hi));
   transform: translateY(-1px);
+}
+
+/* When portalled into the mission header, layout owns its position. */
+.stationEditButtonHeader {
+  position: static;
+}
+
+/* Mission actions use the same visual language as the selected answer. */
+.stationChoiceAction {
+  color: var(--text);
+  background: var(--option-bg-selected, var(--parchment));
+  border-color: var(--option-border-selected, var(--parchment-hi));
+}
+
+.stationChoiceAction:hover:not(:disabled) {
+  background: var(--option-bg-hover, var(--parchment-hi));
+  border-color: var(--option-border-selected, var(--parchment-hi));
 }
 
 @media (max-width: 560px) {
   .stationEditButton {
-    top: 13px;
+    top: 14px;
     right: 58px;
     width: 38px;
     min-height: 38px;

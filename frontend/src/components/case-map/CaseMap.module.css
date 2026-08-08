@@ -844,14 +844,18 @@
 }
 
 .missionHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "identity actions close"
+    "beads beads beads";
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 7px 12px;
   margin-bottom: 8px;
 }
 
 .missionIdentity {
+  grid-area: identity;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -878,14 +882,18 @@
 /* Beads for the quest chain — the same collected-badge language as the HUD,
    re-tinted for the cream panel (white strokes would vanish on it). */
 .missionBeads {
+  grid-area: beads;
   display: flex;
   gap: 7px;
-  margin-left: auto;
+  margin: 0;
+  padding-left: 2px;
 }
 
 .missionActions {
+  grid-area: actions;
   flex: none;
-  width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .missionBead {
@@ -903,6 +911,7 @@
 }
 
 .missionClose {
+  grid-area: close;
   width: 30px;
   height: 30px;
   color: var(--ink);
@@ -946,6 +955,42 @@
 }
 
 @media (max-width: 720px) {
+  .wrapper {
+    overflow: hidden;
+    padding-bottom: 10px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgb(12 47 39 / 94%), rgb(9 38 34 / 98%));
+    box-shadow: 0 18px 38px -24px rgb(4 12 17 / 90%);
+  }
+
+  .wrapper > :last-child {
+    margin-inline: clamp(14px, 5vw, 24px);
+  }
+
+  .caption {
+    gap: 8px 14px;
+    margin-top: 0;
+    padding: 16px clamp(14px, 5vw, 24px) 2px;
+  }
+
+  .current {
+    flex: 1 1 auto;
+  }
+
+  .journey {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .hint {
+    flex-basis: 100%;
+    margin-top: 2px;
+  }
+
+  .frame {
+    border-radius: 18px 18px 12px 12px;
+  }
+
   .frame[data-state='focused'] {
     height: min(76dvh, 680px);
     min-height: 520px;
@@ -958,6 +1003,7 @@
     border-color: transparent !important;
     box-shadow: none !important;
     animation: none !important;
+    pointer-events: none;
   }
 
   .hotspot:not(:disabled):hover,
@@ -970,20 +1016,20 @@
   }
 
   .hotspotLabel {
-    top: 122%;
-    max-width: 92px;
-    min-width: 0;
-    padding: 5px 6px;
+    top: 112%;
+    min-width: 68px;
+    max-width: 86px;
+    padding: 6px 7px;
     font-size: clamp(9px, 2.45vw, 11px);
     line-height: 1.15;
     letter-spacing: 0.045em;
     white-space: normal;
+    cursor: pointer;
+    pointer-events: auto;
   }
 
   .hotspotStatus {
-    margin-top: 3px;
-    font-size: clamp(7px, 2vw, 9px);
-    line-height: 1.2;
+    display: none;
   }
 
   .hotspotLocked { opacity: 1; }
@@ -1009,11 +1055,23 @@
   }
 
   .missionOverlay { padding: 8px; }
-  .missionHeader { position: relative; min-height: 48px; padding-right: 0; }
-  .missionIdentity { max-width: calc(100% - 150px); }
+  .missionHeader {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    min-height: 72px;
+    padding-right: 0;
+    row-gap: 7px;
+  }
+  .missionIdentity { max-width: none; }
   .missionKicker { font-size: 9px; line-height: 1.35; }
   .missionStation { font-size: 18px; }
-  .missionBeads { gap: 5px; }
+  .missionBeads {
+    justify-content: flex-start;
+    gap: 7px;
+    margin: 0;
+    padding-left: 2px;
+  }
   .missionBead { width: 8px; height: 8px; }
-  .missionClose { flex: none; width: 38px; height: 38px; }
+  .missionClose { width: 38px; height: 38px; }
 }

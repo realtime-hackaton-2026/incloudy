@@ -208,7 +208,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const editButton = editable && showResult ? (
     <button
       type="button"
-      className={styles.stationEditButton}
+      className={`${styles.stationEditButton} ${headerActionTarget ? styles.stationEditButtonHeader : ''}`}
       onClick={() => {
         setEditingAnswer(true)
         setShowResult(false)
@@ -368,7 +368,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
           {editable && station.id === 'compartir' && onFinish ? (
             <button
               type="button"
-              className="btn-primary"
+              className={`btn-primary ${styles.stationChoiceAction}`}
               disabled={finishState === 'saving'}
               onClick={async () => {
                 setFinishState('saving')
@@ -383,7 +383,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
               {finishState === 'saving' ? 'Concluyendo…' : 'Concluir caso'}
             </button>
           ) : editable && onContinue ? (
-            <button type="button" className="btn-primary" onClick={onContinue}>Continuar →</button>
+            <button type="button" className={`btn-primary ${styles.stationChoiceAction}`} onClick={onContinue}>Continuar →</button>
           ) : null}
           {finishState === 'error' && <p className={styles.stationCardWarning}>⚠ No se pudo cerrar el caso.</p>}
         </div>

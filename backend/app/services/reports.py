@@ -19,11 +19,11 @@ def build_case_pdf(case: Case, template: JourneyTemplate) -> bytes:
         leftMargin=1.8 * cm,
         topMargin=1.8 * cm,
         bottomMargin=1.8 * cm,
-        title=f"Caso de {case.alumno.nombre}",
+        title=case.alumno.titulo_caso(),
     )
     styles = getSampleStyleSheet()
     story = [
-        Paragraph(f"Caso de {escape(case.alumno.nombre)}", styles["Title"]),
+        Paragraph(escape(case.alumno.titulo_caso()), styles["Title"]),
         Spacer(1, 0.4 * cm),
         Paragraph(
             escape(case.alumno.descripcion or "Sin descripción"),

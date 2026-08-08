@@ -683,20 +683,21 @@ async def ensure_alex_scenario(template: JourneyTemplate) -> CaseScenario:
         ),
     ]
     scenario = await CaseScenario.find_one(CaseScenario.slug == SCENARIO_SLUG)
+    student = Student(
+        nombre="Alex",
+        edad=9,
+        curso="No especificado",
+        descripcion=(
+            "Termina algunas tareas muy rápido y pierde interés cuando las "
+            "actividades son repetitivas."
+        ),
+        es_ficticio=True,
+    )
     values = {
-        "nombre": "Caso de Alex",
+        "nombre": student.titulo_caso(),
         "template_id": str(template.id),
         "template_version": template.version,
-        "alumno": Student(
-            nombre="Alex",
-            edad=9,
-            curso="No especificado",
-            descripcion=(
-                "Termina algunas tareas muy rápido y pierde interés cuando las "
-                "actividades son repetitivas."
-            ),
-            es_ficticio=True,
-        ),
+        "alumno": student,
         "presentacion": CASE_PRESENTATION,
         "hipotesis": hypotheses,
         "estado_inicial": InteractiveCaseState(),

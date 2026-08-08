@@ -50,6 +50,9 @@ class Student(BaseModel):
     descripcion: str = Field(default="", max_length=2_000)
     es_ficticio: bool = True
 
+    def titulo_caso(self) -> str:
+        return f"Caso de {self.nombre}"
+
 
 class StationOption(BaseModel):
     id: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9_-]+$")

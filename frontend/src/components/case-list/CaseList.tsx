@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { CASE_STATUS_LABELS, joinCase, useCases } from '../../cases'
+import { AvatarPicker, DEFAULT_AVATAR_ID, saveAvatarId } from '../../avatar'
 import { ApiError } from '../../lib/http'
 import type { Case } from '../../cases'
 import { STATIONS, toCaseStage } from '../case-map'
@@ -24,6 +25,9 @@ export interface CaseListProps {
 export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
   const { cases, status, error, create, remove } = useCases(token)
   const [creating, setCreating] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newStudent, setNewStudent] = useState({ nombre: '', edad: '', curso: '', descripcion: '' })
+  const [newAvatarId, setNewAvatarId] = useState(DEFAULT_AVATAR_ID)
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [joinOpen, setJoinOpen] = useState(false)
@@ -47,12 +51,20 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
     }
   }
 
-  async function handleCreate() {
+  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!newStudent.nombre.trim() || !newStudent.descripcion.trim()) return
     setCreating(true)
     try {
       const created = await create({
-        alumno: { nombre: 'Nuevo alumno', descripcion: '' },
+        alumno: {
+          nombre: newStudent.nombre.trim(),
+          edad: newStudent.edad ? Number(newStudent.edad) : null,
+          curso: newStudent.curso.trim() || null,
+          descripcion: newStudent.descripcion.trim(),
+        },
       })
+      saveAvatarId(created.id, newAvatarId)
       onOpen(created.id)
     } finally {
       setCreating(false)
@@ -89,13 +101,76 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
           <button
             type="button"
             className={`btn-primary ${styles.newButton}`}
-            onClick={handleCreate}
+            onClick={() => setCreateOpen((open) => !open)}
             disabled={creating}
           >
-            {creating ? 'Creando…' : '+ Nueva aventura'}
+            {createOpen ? 'Cancelar' : '+ Nueva aventura'}
           </button>
         </div>
       </div>
+
+      {createOpen && (
+        <form className={styles.createForm} onSubmit={handleCreate}>
+          <div className={styles.createHeading}>
+            <div>
+              <span className="eyebrow">Nueva aventura</span>
+              <h2>Prepara el caso antes de empezar</h2>
+            </div>
+            <p>Escribe toda la información; se enviará únicamente al pulsar “Empezar caso”.</p>
+          </div>
+
+          <div className={styles.createFields}>
+            <label>
+              Nombre del alumno
+              <input
+                value={newStudent.nombre}
+                onChange={(event) => setNewStudent((current) => ({ ...current, nombre: event.target.value }))}
+                autoFocus
+                required
+              />
+            </label>
+            <label>
+              Edad
+              <input
+                type="number"
+                min={1}
+                max={120}
+                value={newStudent.edad}
+                onChange={(event) => setNewStudent((current) => ({ ...current, edad: event.target.value }))}
+              />
+            </label>
+            <label>
+              Curso
+              <input
+                value={newStudent.curso}
+                onChange={(event) => setNewStudent((current) => ({ ...current, curso: event.target.value }))}
+              />
+            </label>
+            <label className={styles.createDescription}>
+              Descripción del caso
+              <textarea
+                value={newStudent.descripcion}
+                onChange={(event) => setNewStudent((current) => ({ ...current, descripcion: event.target.value }))}
+                required
+                rows={5}
+              />
+            </label>
+          </div>
+
+          <AvatarPicker avatarId={newAvatarId} onSelect={setNewAvatarId} />
+
+          <div className={styles.createActions}>
+            <span>{newStudent.descripcion.trim().length} caracteres</span>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={creating || !newStudent.nombre.trim() || !newStudent.descripcion.trim()}
+            >
+              {creating ? 'Empezando…' : 'Empezar caso →'}
+            </button>
+          </div>
+        </form>
+      )}
 
       {joinOpen && (
         <form className={styles.joinForm} onSubmit={handleJoin}>
@@ -125,7 +200,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
         </p>
       )}
 
-      {status === 'ready' && cases.length === 0 && (
+      {status === 'ready' && cases.length === 0 && !createOpen && (
         <div className={styles.empty}>
           <span className={styles.emptyBook} aria-hidden="true">
             <span className={styles.emptyBookMark}>?</span>
@@ -138,10 +213,10 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
           <button
             type="button"
             className={`btn-primary ${styles.emptyCta}`}
-            onClick={handleCreate}
+            onClick={() => setCreateOpen(true)}
             disabled={creating}
           >
-            {creating ? 'Creando…' : '+ Nueva aventura'}
+            + Nueva aventura
           </button>
         </div>
       )}

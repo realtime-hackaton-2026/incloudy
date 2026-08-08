@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useSession } from './auth'
 import type { Credentials } from './auth'
-import { AvatarPicker, useAvatar } from './avatar'
 import { useCases } from './cases'
-import { OwlTip } from './guide'
 import { AppHeader } from './components/app-header'
 import type { RouteName } from './components/app-header'
 import { CaseForm } from './components/case-form'
 import { CaseList } from './components/case-list'
-import { CaseMap, toCaseStage } from './components/case-map'
 import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
 import { Registro } from './components/registro'
@@ -194,7 +191,7 @@ function App() {
             }}
           />
         )}
-        {view.name === 'map-demo' && <MapOverview token={session.token} />}
+        {view.name === 'map-demo' && <MapOverview token={session.token} ownerId={session.userId} />}
         {view.name === 'dashboard' && <Dashboard token={session.token} />}
       </main>
     </>
@@ -206,10 +203,8 @@ function App() {
  * touched case stands. Its own hooks so they only run while this route is
  * actually mounted, instead of every route paying for a second case fetch.
  */
-function MapOverview({ token }: { token: string }) {
+function MapOverview({ token, ownerId }: { token: string; ownerId: string | null }) {
   const { cases, status } = useCases(token)
-  const { avatarId, setAvatarId } = useAvatar()
-
   if (status === 'loading') return <p className="app-restoring">Abriendo el mapa…</p>
   if (cases.length === 0) {
     return <p className="app-restoring">Crea tu primera aventura para ver el mapa.</p>
@@ -217,11 +212,15 @@ function MapOverview({ token }: { token: string }) {
 
   const latest = cases[0]
   return (
-    <>
-      <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
-      <OwlTip tipId="map-guide" />
-      <CaseMap stage={toCaseStage(latest.estadoInteractivo.estacionActual)} />
-    </>
+    <CaseForm
+      key={latest.id}
+      token={token}
+      caseId={latest.id}
+      ownerId={ownerId}
+      onBack={() => {}}
+      onDeleted={() => {}}
+      mapOnly
+    />
   )
 }
 

@@ -28,6 +28,8 @@ export interface CaseFormProps {
   ownerId: string | null
   onDeleted: () => void
   onBack: () => void
+  /** Render only the interactive journey map. Used by the world/map route. */
+  mapOnly?: boolean
 }
 
 const ROLE_LABELS: Record<CollaboratorRole, string> = {
@@ -36,7 +38,7 @@ const ROLE_LABELS: Record<CollaboratorRole, string> = {
   lector: 'Lector',
 }
 
-export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseFormProps) {
+export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = false }: CaseFormProps) {
   const {
     item,
     loadStatus,
@@ -292,6 +294,36 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
         onContinue={close}
         onFinish={completeCase}
       />
+    )
+  }
+
+  if (mapOnly) {
+    return (
+      <div className={styles.mapOnly} data-testid="case-map-only">
+        <div className={styles.mapOnlyHeader}>
+          <div>
+            <span className={styles.mapOnlyKicker}>Caso de Alex</span>
+            <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
+          </div>
+          <div className={styles.mapOnlyStats}>
+            <span>⏳ {current.estadoInteractivo.diasRestantes} días</span>
+            <span>🤝 {current.estadoInteractivo.confianzaEquipo}%</span>
+            <span>✦ {current.estadoInteractivo.xpTotal} XP</span>
+          </div>
+        </div>
+        <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
+        <OwlTip tipId="map-guide" />
+        <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
+        {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
+        {templateStatus === 'error' && (
+          <p className={`${styles.state} ${styles.stateError}`} role="alert">
+            {templateError}
+          </p>
+        )}
+        {completeError && (
+          <p className={`${styles.state} ${styles.stateError}`} role="alert">{completeError}</p>
+        )}
+      </div>
     )
   }
 

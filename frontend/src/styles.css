@@ -1,10 +1,15 @@
 /*
  * incloudy — design foundation.
  *
- * The map (`assets/images/fondo.png`) is the product's identity, so the whole
- * interface is built around it: a dark expedition/control-room shell, warm
- * parchment reserved for the things the map itself owns. The artwork is never
- * modified — only positioned, masked and lit.
+ * The map (`assets/images/fondo.png`) is the product's identity, and the
+ * palette is taken *from* it rather than applied to it: forest greens, river
+ * blues, sand and parchment, over a warm night instead of a cold near-black.
+ * The artwork itself is never modified — only positioned, masked and lit.
+ *
+ * Rule: no pure black anywhere in the interface. Black belongs to the pixel
+ * art (outlines, pupils), not to the surfaces around it — a UI black next to
+ * the map's black is what made the map read as an image pasted onto a
+ * website rather than a world the interface lives in.
  */
 
 :root {
@@ -19,20 +24,39 @@
   overflow-x: hidden;
 
   /* --- Environment ---------------------------------------------------- */
-  --bg: #10131a;
-  --surface-deep: #151922;
+  /* Warm night, not slate: the same blue-green the map's river and shadows
+     already sit in, so panels read as dusk over the world. */
+  --bg: #10212d;
+  --surface-deep: #0e1c26;
   /* Functional panels stay solid; translucency is reserved for overlays. */
-  --surface: #161b25;
-  --surface-raised: #1b212d;
-  --overlay: rgb(18 22 30 / 78%);
-  --hairline: rgb(255 255 255 / 8%);
-  --hairline-strong: rgb(255 255 255 / 14%);
+  --surface: #172c3a;
+  --surface-raised: #203b49;
+  --overlay: rgb(16 33 45 / 82%);
+  /* Hairlines pick up a trace of leaf so edges belong to the world too. */
+  --hairline: rgb(233 240 232 / 10%);
+  --hairline-strong: rgb(233 240 232 / 18%);
+
+  /* --- The world's own colours ---------------------------------------- */
+  --forest: #19352c;
+  --forest-deep: #12271f;
+  --moss: #35633c;
+  --leaf: #8fb84a;
 
   /* --- Brand ---------------------------------------------------------- */
-  --primary: #28548a;
-  --map-blue: #3478b8;
-  --parchment: #e6c995;
-  --parchment-hi: #f1d8a6;
+  --primary: #22678d;
+  --map-blue: #3c91b6;
+  /* --map-blue is a fill; it only reaches 4.1:1 as text on a panel. This is
+     the same hue lifted for type. */
+  --river-hi: #72bcd0;
+  /* `--parchment` is the *accent* role (labels, borders, active marks);
+     `--parchment-hi` is its lighter surface/hover partner. */
+  --parchment: #e8c978;
+  --parchment-hi: #f5e8c5;
+  --gold: #dda94b;
+  --terracotta: #c8663e;
+  --clay: #a95035;
+  /* Ink for text sitting *on* a warm surface — 8:1 on --parchment. */
+  --on-warm: #26352d;
 
   /* Paper and wood — the explorer's notebook. Restored deliberately: the
      card reading as an object in the world, rather than a modal floating
@@ -45,7 +69,7 @@
   --wood-dark: #c3a985;
 
   /* --- The gate: dusk at the campsite --------------------------------- */
-  --night-top: #0b1622;
+  --night-top: #0c1b26;
   --night-mid: #16293d;
   --dusk: #2d4a63;
   --horizon: #6b5a7a;
@@ -53,14 +77,22 @@
   --firefly: #ffe9a8;
 
   /* --- Text ----------------------------------------------------------- */
-  --text: #f3f0e8;
-  --text-soft: #9aa3b2;
-  --muted: #626b79;
+  /* Green-cast rather than blue-grey, so even the quietest label belongs to
+     the world. --muted is set against --surface-raised (the lightest panel
+     it ever lands on, not --bg) — measured there it clears 4.5:1, which the
+     darker-tuned value it replaced did not. */
+  --text: #f7f3e8;
+  --text-soft: #a9b7ae;
+  --muted: #98aba4;
 
   /* --- Feedback ------------------------------------------------------- */
-  --danger: #ff6b6b;
-  --danger-bg: rgb(186 26 26 / 18%);
-  --success: #6ee7a8;
+  /* Terracotta rather than a signal red — the brief's #b9513b is meant for
+     light surfaces and only reaches 3.4:1 here, so this is the same hue
+     lifted to 5.9:1 against the night. */
+  --danger: #f0785c;
+  --danger-bg: rgb(200 102 62 / 20%);
+  --success: #8fb84a;
+  --warning: #dda94b;
 
   /* --- Type ----------------------------------------------------------- */
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -175,8 +207,12 @@ p {
     box-shadow var(--micro) var(--ease);
 }
 
+/*
+ * Dark ink on the warm fill, not white: white on this sand was ~1.6:1 and
+ * failed WCAG outright. --on-warm gives 8:1 on the same background.
+ */
 .btn-primary {
-  color: #ffffff;
+  color: var(--on-warm);
   background: var(--parchment);
   border: 1px solid var(--parchment-hi);
 }
@@ -192,19 +228,19 @@ p {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgb(255 255 255 / 6%);
-  border-color: rgb(255 255 255 / 24%);
+  background: rgb(233 240 232 / 7%);
+  border-color: rgb(233 240 232 / 26%);
 }
 
 .btn-map {
   color: var(--parchment);
-  background: rgb(18 22 30 / 72%);
-  border: 1px solid rgb(230 201 149 / 34%);
+  background: rgb(16 33 45 / 74%);
+  border: 1px solid rgb(232 201 120 / 34%);
   backdrop-filter: blur(10px);
 }
 
 .btn-map:hover:not(:disabled) {
-  border-color: rgb(230 201 149 / 62%);
+  border-color: rgb(232 201 120 / 62%);
 }
 
 .btn-primary:hover:not(:disabled),

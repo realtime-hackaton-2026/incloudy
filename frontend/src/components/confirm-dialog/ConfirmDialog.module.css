@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(6 8 12 / 72%);
+  background: rgb(8 17 24 / 72%);
   backdrop-filter: blur(6px);
   animation: overlayIn var(--small) var(--ease) both;
 }

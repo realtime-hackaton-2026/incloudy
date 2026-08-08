@@ -23,7 +23,7 @@
   position: fixed;
   inset: 0;
   z-index: 5;
-  background: #05070a;
+  background: var(--surface-deep);
   pointer-events: none;
   animation: curtainLift 800ms var(--ease) 420ms both;
 }

@@ -287,10 +287,12 @@
  * JOURNAL — the explorer's desk. Warm, papery, no map.
  * ==================================================================== */
 
+/* Forest floor rather than a brown-black: the desk sits inside the world,
+   so its darkest tone is still a green, never an absence of colour. */
 .journal {
   background:
-    radial-gradient(90% 60% at 50% 0%, rgb(230 201 149 / 10%) 0%, transparent 62%),
-    linear-gradient(180deg, #16130f 0%, #12100d 60%, #0f0d0b 100%);
+    radial-gradient(90% 60% at 50% 0%, rgb(232 201 120 / 12%) 0%, transparent 62%),
+    linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 58%, #0e1c26 100%);
 }
 
 .paperGrain {
@@ -363,16 +365,18 @@
 .worldLight {
   background: radial-gradient(
     120% 80% at 50% 0%,
-    rgb(52 120 184 / 20%) 0%,
+    rgb(60 145 182 / 22%) 0%,
     transparent 62%
   );
 }
 
+/* Ends on --bg exactly. Any darker and the vignette's edge draws a visible
+   ring against the page it sits on, which is the opposite of blending. */
 .worldVignette {
   background: radial-gradient(
     100% 86% at 50% 34%,
     transparent 30%,
-    rgb(6 8 12 / 90%) 100%
+    rgb(16 33 45 / 92%) 100%
   );
 }
 

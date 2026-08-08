@@ -146,7 +146,7 @@
   letter-spacing: normal;
   text-transform: none;
   color: var(--text);
-  background: rgb(9 12 17 / 70%);
+  background: rgb(11 23 32 / 70%);
   border: 1px solid var(--hairline);
   border-radius: 9px;
   transition:
@@ -161,7 +161,7 @@
      needs to draw its ring for keyboard focus; this only layers the border
      and background highlight on top, for every focus method. */
   border-color: rgb(230 201 149 / 46%);
-  background: rgb(12 16 22 / 88%);
+  background: rgb(14 29 40 / 88%);
 }
 
 .input::placeholder,
@@ -584,7 +584,7 @@
   padding: 14px;
   color: #171b20;
   background: rgb(255 255 255 / 72%);
-  border: 1px solid rgb(23 27 32 / 22%);
+  border: 1px solid rgb(21 40 53 / 22%);
   border-radius: 8px;
 }
 

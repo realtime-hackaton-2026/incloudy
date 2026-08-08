@@ -170,7 +170,7 @@
   font-family: var(--sans);
   font-size: 13px;
   color: #f3f5f8;
-  background: #0d131c;
+  background: var(--surface-deep);
   border: 1px solid rgb(255 255 255 / 16%);
   border-radius: 9px;
 }

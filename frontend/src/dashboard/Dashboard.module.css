@@ -5,11 +5,11 @@
 .liveBadge { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--hairline); border-radius:999px; font-family:var(--label); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-soft); }
 .liveBadge span { width:7px; height:7px; border-radius:50%; background:var(--success); box-shadow:0 0 0 4px rgb(110 231 168 / 10%); }
 .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
-.metric { min-height:100px; padding:18px; border:1px solid var(--hairline); background:rgb(22 27 37 / 88%); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; }
+.metric { min-height:100px; padding:18px; border:1px solid var(--hairline); background:rgb(22 42 57 / 88%); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; }
 .metric span,.signal span { font-family:var(--label); font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); }
 .metric strong { font-family:var(--display); font-size:28px; color:var(--parchment); }
 .layout { display:grid; grid-template-columns:260px minmax(0,1fr); gap:14px; align-items:start; }
-.caseRail,.card,.chatCard,.emptyPanel { border:1px solid var(--hairline); background:rgb(21 25 34 / 94%); border-radius:14px; }
+.caseRail,.card,.chatCard,.emptyPanel { border:1px solid var(--hairline); background:rgb(20 39 53 / 94%); border-radius:14px; }
 .caseRail { position:sticky; top:82px; overflow:hidden; }
 .sectionHeading,.cardHeading { display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .sectionHeading { padding:17px 16px 13px; border-bottom:1px solid var(--hairline); }
@@ -43,7 +43,7 @@
 .stationCurrent { color:var(--parchment); }
 .stationCurrent .stationMarker { box-shadow:0 0 0 5px rgb(230 201 149 / 8%); }
 .signalGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
-.signal { padding:14px 16px; border:1px solid var(--hairline); border-radius:10px; background:rgb(18 22 30 / 70%); display:flex; justify-content:space-between; align-items:end; gap:10px; }
+.signal { padding:14px 16px; border:1px solid var(--hairline); border-radius:10px; background:rgb(18 36 49 / 70%); display:flex; justify-content:space-between; align-items:end; gap:10px; }
 .signal strong { font-family:var(--display); font-size:19px; color:var(--text); }
 .lowerGrid { display:grid; grid-template-columns:1.05fr .95fr; gap:14px; }
 .decisions { display:grid; gap:0; margin-top:12px; }

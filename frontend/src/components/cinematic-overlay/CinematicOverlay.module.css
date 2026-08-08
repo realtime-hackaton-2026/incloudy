@@ -15,8 +15,8 @@
   pointer-events: none;
   background: radial-gradient(
     circle at center,
-    rgb(16 19 26 / 20%) 0%,
-    rgb(6 8 12 / 82%) 100%
+    rgb(16 33 45 / 20%) 0%,
+    rgb(8 17 24 / 82%) 100%
   );
   animation: veil var(--cinematic) var(--ease) both;
 }

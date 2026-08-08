@@ -29,7 +29,7 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--map-blue);
+  color: var(--river-hi);
 }
 
 .chatHint {
@@ -101,7 +101,7 @@
   font-family: var(--sans);
   font-size: 14px;
   color: var(--text);
-  background: rgb(9 12 17 / 70%);
+  background: rgb(11 23 32 / 70%);
   border: 1px solid var(--hairline);
   border-radius: 9px;
 }

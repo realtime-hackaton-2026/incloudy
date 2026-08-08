@@ -68,16 +68,29 @@
   animation: revealUp 420ms var(--ease) 980ms both;
 }
 
+/*
+ * The environment the island sits in. Only the letterbox edges of the
+ * artwork actually reveal it today: `fondo.png` ships as 24-bit RGB with
+ * the black baked in and no alpha channel, so the interior stays opaque no
+ * matter what is painted behind it. Re-exporting the map with a real alpha
+ * channel is what makes this gradient do its job — until then it at least
+ * stops the frame from being one more slab of black.
+ */
 .frame {
   position: relative;
   width: 100%;
   overflow: hidden;
   border-radius: 16px;
   border: 1px solid var(--hairline);
-  background: #05070a;
+  background: radial-gradient(
+    circle at 50% 30%,
+    #315847 0%,
+    var(--forest) 45%,
+    var(--bg) 100%
+  );
   box-shadow:
-    0 40px 80px -34px rgb(0 0 0 / 90%),
-    inset 0 1px 0 rgb(255 255 255 / 6%);
+    0 40px 80px -34px rgb(8 17 24 / 92%),
+    inset 0 1px 0 rgb(233 240 232 / 7%);
 }
 
 /*
@@ -128,7 +141,7 @@
   padding: 0;
   border: 2px solid rgb(255 255 255 / 55%);
   border-radius: 50%;
-  background: rgb(8 10 14 / 45%);
+  background: rgb(10 20 28 / 45%);
   cursor: pointer;
   transition:
     transform var(--micro) var(--ease),
@@ -164,14 +177,14 @@
 .hotspotLocked {
   opacity: 0.48;
   border-style: dashed;
-  background: rgb(8 10 14 / 28%);
+  background: rgb(10 20 28 / 28%);
 }
 
 .hotspotLocked:hover,
 .hotspotLocked:focus-visible {
   opacity: 0.8;
   border-color: var(--muted);
-  background: rgb(8 10 14 / 52%);
+  background: rgb(10 20 28 / 52%);
   box-shadow: none;
 }
 
@@ -196,7 +209,7 @@
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--text);
-  background: rgb(10 13 19 / 88%);
+  background: rgb(12 25 35 / 88%);
   border: 1px solid rgb(230 201 149 / 30%);
   border-radius: 6px;
   opacity: 0;
@@ -267,7 +280,7 @@
   padding: 16px 18px;
   border-radius: 12px;
   border: 1px solid rgb(230 201 149 / 26%);
-  background: rgb(12 16 22 / 88%);
+  background: rgb(14 29 40 / 88%);
   backdrop-filter: blur(14px);
   box-shadow: 0 24px 50px -20px rgb(0 0 0 / 90%);
   animation: hudIn var(--small) var(--ease) 120ms both;
@@ -546,7 +559,7 @@
   inset: 0;
   z-index: 20;
   overflow: auto;
-  background: #07090c;
+  background: var(--bg);
   animation: missionIn 220ms var(--ease) both;
 }
 
@@ -567,7 +580,7 @@
 .missionShade {
   position: absolute;
   inset: 0;
-  background: rgb(6 8 12 / 48%);
+  background: rgb(8 17 24 / 48%);
   backdrop-filter: blur(1px);
 }
 
@@ -625,7 +638,7 @@
 
   color: var(--text);
   background: rgb(245 240 218 / 96%);
-  border: 2px solid rgb(30 34 39 / 88%);
+  border: 2px solid rgb(26 48 63 / 88%);
   box-shadow: 0 28px 70px rgb(0 0 0 / 62%);
 }
 
@@ -650,7 +663,7 @@
   height: 30px;
   color: #171b20;
   background: transparent;
-  border: 1px solid rgb(23 27 32 / 28%);
+  border: 1px solid rgb(21 40 53 / 28%);
   cursor: pointer;
 }
 

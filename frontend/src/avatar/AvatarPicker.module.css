@@ -47,7 +47,7 @@
   object-position: top;
   border-radius: 50%;
   border: 2px solid var(--hairline-strong);
-  background: #05070a;
+  background: var(--surface-deep);
   transition:
     border-color var(--micro) var(--ease),
     transform var(--micro) var(--ease);

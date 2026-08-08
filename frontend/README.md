@@ -1,75 +1,59 @@
-# React + TypeScript + Vite
+# incloudy · Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App web de incloudy: **React 19 + TypeScript + Vite**. Cada pantalla tiene una URL propia (hash routing en `src/App.tsx`), así que se puede navegar directamente a cualquiera.
 
-Currently, two official plugins are available:
+## Puesta en marcha
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+La app queda en `http://localhost:5173`. Para iniciar sesión, ver casos y abrir el detalle de un caso necesitas el backend corriendo (por defecto en `http://localhost:8000`; cámbialo con la variable `VITE_API_URL`, ver `src/lib/http.ts`). Registro e inicio de sesión usan `/auth/register` y `/auth/login`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Pantallas
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Enlaces clicables con `npm run dev` activo:
 
+| Pantalla | URL |
+|---|---|
+| Iniciar sesión | [http://localhost:5173/#/login](http://localhost:5173/#/login) |
+| Crear cuenta | [http://localhost:5173/#/registro](http://localhost:5173/#/registro) |
+| Tus casos | [http://localhost:5173/#/casos](http://localhost:5173/#/casos) |
+| Detalle de caso | [http://localhost:5173/#/caso/ID](http://localhost:5173/#/caso/ID) |
+| Mapa (demo) | [http://localhost:5173/#/mapa](http://localhost:5173/#/mapa) |
+
+Notas:
+
+- **Sesión:** `casos`, `caso` y `mapa` requieren iniciar sesión; sin sesión la app cae al login. Al registrarse o entrar, se continúa en el `#/casos`.
+- **Detalle de caso:** el enlace `#/caso/ID` necesita un id real. Ábrelo navegando desde la lista (la URL se actualiza) o copia el `_id` de un caso desde el backend.
+- **Mapa (demo):** no está conectado a un caso real todavía; las cinco estaciones se mueven localmente.
+- **Botón atrás del navegador:** funciona entre pantallas, porque el estado vive en el hash.
+
+## Estructura
+
+```
+src/
+├── App.tsx            # Shell de la app y hash router (estado → URL)
+├── styles.css         # Tokens y estilos globales
+├── auth/              # Sesión: login/registro, token en localStorage, /auth/me
+├── cases/             # Cliente de casos (lista, detalle, guardado)
+├── lib/http.ts        # fetch con errores ya en español
+└── components/
+    ├── auth-screen/   # Fondo común de login y registro
+    ├── login/         # Iniciar sesión
+    ├── registro/      # Crear cuenta
+    ├── case-list/     # Lista de casos propios y compartidos
+    ├── case-form/     # Detalle de un caso (crear/editar)
+    ├── case-map/      # Mapa con las cinco estaciones (+ stations.ts)
+    └── confirm-dialog/ # Diálogos de confirmación
+```
+
+Assets estáticos (favicon, íconos) en `public/`.
+
+## Verificación
+
+```bash
+npm run lint
+npm run build
 ```

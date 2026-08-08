@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512" shape-rendering="crispEdges" role="img" aria-label="incloudy">
+  <title>incloudy</title>
+
+  <!-- Wood-and-paper panel, matching the app's login design -->
+  <rect x="0" y="0" width="32" height="32" fill="#c3a985"/>
+  <rect x="4" y="4" width="24" height="24" fill="#e0c9a3"/>
+  <rect x="5" y="5" width="22" height="22" fill="#fdfbf7"/>
+
+  <!-- Cloud (primary) -->
+  <rect x="12" y="5" width="8" height="1" fill="#2b4c7e"/>
+  <rect x="10" y="6" width="13" height="1" fill="#2b4c7e"/>
+  <rect x="8" y="7" width="17" height="1" fill="#2b4c7e"/>
+  <rect x="6" y="8" width="21" height="1" fill="#2b4c7e"/>
+  <rect x="5" y="9" width="22" height="1" fill="#2b4c7e"/>
+  <rect x="5" y="10" width="22" height="1" fill="#2b4c7e"/>
+  <rect x="6" y="11" width="20" height="1" fill="#2b4c7e"/>
+  <rect x="8" y="12" width="17" height="1" fill="#2b4c7e"/>
+  <rect x="11" y="13" width="11" height="1" fill="#2b4c7e"/>
+
+  <!-- Cloud highlight (light hits the upper-left) -->
+  <rect x="12" y="5" width="5" height="1" fill="#5ba8d1"/>
+  <rect x="10" y="6" width="4" height="1" fill="#5ba8d1"/>
+  <rect x="8" y="7" width="4" height="1" fill="#5ba8d1"/>
+  <rect x="6" y="8" width="4" height="1" fill="#5ba8d1"/>
+
+  <!-- The five stations, a path that ascends -->
+  <rect x="6" y="21" width="3" height="1" fill="#e0c9a3"/>
+  <rect x="6" y="22" width="3" height="1" fill="#c3a985"/>
+  <rect x="9" y="20" width="3" height="1" fill="#e0c9a3"/>
+  <rect x="9" y="21" width="3" height="1" fill="#c3a985"/>
+  <rect x="12" y="19" width="3" height="1" fill="#e0c9a3"/>
+  <rect x="12" y="20" width="3" height="1" fill="#c3a985"/>
+  <rect x="15" y="18" width="3" height="1" fill="#e0c9a3"/>
+  <rect x="15" y="19" width="3" height="1" fill="#c3a985"/>
+  <rect x="18" y="17" width="3" height="1" fill="#e0c9a3"/>
+  <rect x="18" y="18" width="3" height="1" fill="#c3a985"/>
+
+  <!-- The case is here: one step at a time. Amber, matching CaseMap's
+       .reached/.pin, not the app's danger red (that reads as an error
+       elsewhere in the UI). 3x2, not 1px: a single pixel doesn't survive
+       downscaling to real favicon sizes (verified at 16-64px). -->
+  <rect x="12" y="18" width="3" height="2" fill="#fbbf24"/>
+</svg>

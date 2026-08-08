@@ -1,6 +1,6 @@
 .wrapper {
   position: fixed;
-  right: max(24px, calc((100vw - 1180px) / 2 + 28px));
+  right: 24px;
   bottom: 24px;
   z-index: 80;
   display: flex;
@@ -197,22 +197,21 @@
 
 .activeBanner {
   position: fixed;
-  top: 70px;
-  left: 50%;
+  right: 24px;
+  bottom: 250px;
   z-index: 75;
   display: flex;
   align-items: center;
   gap: 9px;
-  width: min(600px, calc(100vw - 32px));
+  width: min(390px, calc(100vw - 32px));
   padding: 9px 10px 9px 12px;
-  transform: translateX(-50%);
   color: var(--text);
   background: linear-gradient(145deg, #202837 0%, #111722 100%);
   border: 1px solid rgb(110 231 168 / 28%);
   border-left: 3px solid var(--success);
   border-radius: 10px;
   box-shadow: 0 14px 34px rgb(0 0 0 / 44%), inset 0 1px rgb(255 255 255 / 6%);
-  animation: bannerIn var(--small) var(--ease);
+  animation: whisperIn var(--small) var(--ease);
 }
 
 .activeBannerCopy {
@@ -732,6 +731,12 @@
 
   .activeBanner {
     top: 58px;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: calc(100vw - 24px);
+    transform: translateX(-50%);
+    animation: bannerIn var(--small) var(--ease);
   }
 
   .lobbyOverlay {

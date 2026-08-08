@@ -208,3 +208,13 @@
   text-transform: none;
   color: var(--danger);
 }
+
+.portalError {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.32);
+  color: #fecaca;
+  font-size: 0.82rem;
+}

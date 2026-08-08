@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
+import type { PortalError } from '@portalsdk/core'
 import { getPortalClient } from './client'
 import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
+import { createPortalSession } from './api'
 import styles from './CaseRoom.module.css'
 
 export interface CaseRoomProps {
   token: string
   caseId: string
   minimumParticipants?: number
+  onPresenceChange?: (presence: CaseRoomPresenceState) => void
   /** Keeps the Portal channel mounted while the visual room/lobby is elsewhere. */
   hideUi?: boolean
   /** Increment to request a collaborative session start from the current teacher. */
@@ -17,15 +20,12 @@ export interface CaseRoomProps {
   onSessionActiveChange?: (active: boolean) => void
 }
 
-export interface CaseRoomPresenceProps extends CaseRoomProps {
-  onPresenceChange?: (presence: CaseRoomPresenceState) => void
-}
-
 export interface CaseRoomPresenceState {
   count: number
   participants: Array<{ id: string; username?: string; anon?: boolean }>
   detailed: boolean
   status: string
+  error?: string | null
 }
 
 export function CaseRoom({
@@ -35,6 +35,7 @@ export function CaseRoom({
   hideUi = false,
   startSessionNonce = 0,
   onSessionActiveChange,
+  onPresenceChange,
 }: CaseRoomProps) {
   const { session, status, error } = usePortalSession(token, caseId)
 
@@ -56,76 +57,31 @@ export function CaseRoom({
       : <div className={styles.room} data-testid="case-room" data-state="error"><p className={`${styles.state} ${styles.stateError}`} role="alert">{error ?? 'No se pudo abrir la sala colaborativa.'}</p></div>
   }
 
-  const client = getPortalClient(session.publishableKey)
+  const client = getPortalClient(session.publishableKey, session.channelId)
+
+  // Portal recommends a token callback so the SDK can re-resolve the signed
+  // credential after reconnect/expiry. The backend endpoint also guarantees
+  // that the same teacher keeps the same case channel.
+  const fetchFreshPortalToken = async () => {
+    const fresh = await createPortalSession(token, caseId)
+    if (fresh.channelId !== session.channelId) {
+      throw new Error('Portal devolvió otro canal para este caso.')
+    }
+    return fresh.token
+  }
 
   return (
-    <PortalProvider client={client} token={session.token}>
+    <PortalProvider client={client} token={fetchFreshPortalToken}>
       <RoomChannel
         channelId={session.channelId}
         minimumParticipants={minimumParticipants}
         hideUi={hideUi}
         startSessionNonce={startSessionNonce}
         onSessionActiveChange={onSessionActiveChange}
+        onPresenceChange={onPresenceChange}
       />
     </PortalProvider>
   )
-}
-
-/**
- * Keeps the Portal channel mounted even while the visual room is closed.
- * This is what makes the owl know in real time when a second teacher arrives.
- */
-export function CaseRoomPresence({ token, caseId, onPresenceChange }: CaseRoomPresenceProps) {
-  const { session, status, error } = usePortalSession(token, caseId)
-
-  if (status === 'loading') {
-    return <div className={styles.presenceProbe} data-testid="case-room-presence" data-state="loading" />
-  }
-
-  if (status === 'unavailable') {
-    return <PresenceBridge state={{ count: 0, participants: [], detailed: false, status: 'unavailable' }} onPresenceChange={onPresenceChange} />
-  }
-
-  if (status === 'error' || !session) {
-    return <PresenceBridge state={{ count: 0, participants: [], detailed: false, status: 'error' }} onPresenceChange={onPresenceChange} />
-  }
-
-  const client = getPortalClient(session.publishableKey)
-
-  return (
-    <PortalProvider client={client} token={session.token}>
-      <PresenceChannel channelId={session.channelId} onPresenceChange={onPresenceChange} />
-    </PortalProvider>
-  )
-}
-
-function PresenceChannel({ channelId, onPresenceChange }: { channelId: string; onPresenceChange?: (presence: CaseRoomPresenceState) => void }) {
-  const { presence, status } = useChannel<ChatMessage>({ channelId, history: 0 })
-  const participants = presence?.kind === 'detailed'
-    ? presence.participants.map((participant) => ({
-        id: participant.id,
-        username: participant.username,
-        anon: participant.anon,
-      }))
-    : []
-  const count = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
-
-  const state = useMemo<CaseRoomPresenceState>(() => ({
-    count,
-    participants,
-    detailed: presence?.kind === 'detailed',
-    status,
-  }), [count, participants, presence?.kind, status])
-
-  return <PresenceBridge state={state} onPresenceChange={onPresenceChange} />
-}
-
-function PresenceBridge({ state, onPresenceChange }: { state: CaseRoomPresenceState; onPresenceChange?: (presence: CaseRoomPresenceState) => void }) {
-  useEffect(() => {
-    onPresenceChange?.(state)
-  }, [onPresenceChange, state])
-
-  return <div className={styles.presenceProbe} data-testid="case-room-presence" data-state={state.status} />
 }
 
 function RoomChannel({
@@ -134,22 +90,43 @@ function RoomChannel({
   hideUi,
   startSessionNonce,
   onSessionActiveChange,
+  onPresenceChange,
 }: {
   channelId: string
   minimumParticipants: number
   hideUi: boolean
   startSessionNonce: number
   onSessionActiveChange?: (active: boolean) => void
+  onPresenceChange?: (presence: CaseRoomPresenceState) => void
 }) {
+  const [portalError, setPortalError] = useState<string | null>(null)
   const { messages, send, presence, status, me, typing, sendTyping } = useChannel<ChatMessage>({
     channelId,
     history: 30,
+    metadata: { role: 'docente', surface: 'case-collaboration' },
+    onError: (error: PortalError) => {
+      setPortalError(`${error.code}: ${error.message}`)
+    },
   })
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [starting, setStarting] = useState(false)
   const [lastStartNonce, setLastStartNonce] = useState(0)
-  const onlineCount = presence?.kind === 'detailed' ? presence.participants.length : presence?.count ?? 0
+  const participants = presence?.kind === 'detailed'
+    ? presence.participants.map((participant) => ({
+        id: participant.id,
+        username: participant.username,
+        anon: participant.anon,
+      }))
+    : []
+  const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
+  const presenceState = useMemo<CaseRoomPresenceState>(() => ({
+    count: onlineCount,
+    participants,
+    detailed: presence?.kind === 'detailed',
+    status,
+    error: portalError,
+  }), [onlineCount, participants, presence?.kind, portalError, status])
   const unlocked = onlineCount >= minimumParticipants
   const sessionActive = messages.some((message) => isSessionStarted(message.content))
   const chatMessages = messages.filter((message) => !isSessionStarted(message.content))
@@ -157,6 +134,10 @@ function RoomChannel({
   useEffect(() => {
     onSessionActiveChange?.(sessionActive)
   }, [onSessionActiveChange, sessionActive])
+
+  useEffect(() => {
+    onPresenceChange?.(presenceState)
+  }, [onPresenceChange, presenceState])
 
   useEffect(() => {
     if (!startSessionNonce || startSessionNonce <= lastStartNonce || !unlocked || sessionActive || starting) return
@@ -189,11 +170,15 @@ function RoomChannel({
   }
 
   if (hideUi) {
-    return <div className={styles.presenceProbe} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'} />
+    return <div className={styles.presenceProbe} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'} data-presence-count={onlineCount} data-portal-me={me?.id ?? ''} data-portal-error={portalError ?? ''} />
   }
 
   return (
     <div className={styles.roomBody} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'}>
+      {portalError && (
+        <div className={styles.portalError} role="alert">Portal: {portalError}</div>
+      )}
+
       <div className={styles.roomHeader}>
         <div>
           <h3 className={styles.roomTitle}>Mesa de docentes</h3>

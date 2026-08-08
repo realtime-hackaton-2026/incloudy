@@ -3,7 +3,7 @@ import { addCollaborator } from '../cases/api'
 import type { CollaboratorRole } from '../cases/api'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
-import { CaseRoom, CaseRoomPresence } from '../portal'
+import { CaseRoom } from '../portal'
 import type { CaseRoomPresenceState } from '../portal'
 import { OwlSprite } from './OwlSprite'
 import styles from './OwlDoor.module.css'
@@ -28,11 +28,19 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
     participants: [],
     detailed: false,
     status: 'loading',
+    error: null,
   })
   const [sessionActive, setSessionActive] = useState(false)
   const [startSessionNonce, setStartSessionNonce] = useState(0)
   const station = stationFor(stage)
-  const canOpen = presence.count >= 2
+  const portalReady = presence.status === 'ready'
+  const portalBlocked = presence.status === 'blocked' || presence.status === 'error' || Boolean(presence.error)
+  const canOpen = portalReady && presence.count >= 2
+  const presenceLabel = !portalReady
+    ? portalBlocked
+      ? presence.error ?? 'Portal no ha podido conectar'
+      : 'Conectando con Portal…'
+    : `${presence.count} ${presence.count === 1 ? 'docente conectado' : 'docentes conectados'}`
 
   const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
     setPresence(next)
@@ -88,21 +96,20 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
       {/* Portal presence and the session-control channel remain mounted even
           when no panel is visible. That is what makes 1 → 2 realtime and lets
           a colleague start the experience for everyone. */}
-      <CaseRoomPresence token={token} caseId={caseId} onPresenceChange={handlePresenceChange} />
       <aside className={`${styles.roomDock} ${roomOpen && sessionActive ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room">
         {sessionActive && (
           <>
             <div className={styles.roomDockHeader}>
               <div>
                 <span className="eyebrow">Búrix · guía de la sala</span>
-                <strong>{presence.count}/5 docentes</strong>
+                <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Cerrar sala">✕</button>
             </div>
 
             <div className={styles.roomPeopleBar}>
               <span className={styles.roomPeopleDot} />
-              <strong>{presence.count} {presence.count === 1 ? 'docente' : 'docentes'} presentes</strong>
+              <strong>{presenceLabel}</strong>
               <button type="button" onClick={() => setRosterOpen((current) => !current)}>
                 {rosterOpen ? 'Ocultar' : 'Ver usuarios'}
               </button>
@@ -134,6 +141,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
           hideUi={!roomOpen}
           startSessionNonce={startSessionNonce}
           onSessionActiveChange={handleSessionActiveChange}
+          onPresenceChange={handlePresenceChange}
         />
 
         {sessionActive && (
@@ -168,7 +176,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
           <span className={styles.activeBannerDot} />
           <div className={styles.activeBannerCopy}>
             <strong>Sala de trabajo activa</strong>
-            <span>{presence.count}/5 docentes · Búrix facilita la conversación en tiempo real</span>
+            <span>{portalReady ? `${presence.count}/5 docentes · Búrix facilita la conversación en tiempo real` : presenceLabel}</span>
           </div>
           <button type="button" className={styles.bannerButton} onClick={() => setRoomOpen(true)}>
             Ver sala
@@ -183,8 +191,10 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
             <span>
               {sessionActive
                 ? 'Seguid recorriendo el mapa y compartid aquí vuestras observaciones.'
-                : presence.count === 0
-                  ? 'Estoy buscando a los docentes de este caso…'
+                : !portalReady
+                  ? (portalBlocked ? 'No he podido conectar con la sala realtime de Portal. Comprueba la conexión y vuelve a intentarlo.' : 'Estoy conectando con la sala realtime de Portal…')
+                  : presence.count === 0
+                    ? 'Todavía no veo docentes conectados en esta sala.'
                   : presence.count === 1
                     ? 'Hay 1 docente conectado. Cuando seáis dos, podréis comenzar juntos.'
                     : `Hay ${presence.count} docentes conectados. La sala está lista para comenzar.`}
@@ -213,7 +223,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
                   setRosterOpen(true)
                 }}
               >
-                Ver sala · {presence.count}
+                Ver sala · {portalReady ? presence.count : '…'}
               </button>
               {!sessionActive && (
                 <button
@@ -244,7 +254,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
                   <strong>Búrix · sala de trabajo</strong>
                   <span>En tiempo real</span>
                 </div>
-                <strong>{presence.count} / 5</strong>
+                <strong>{portalReady ? `${presence.count} / 5` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.lobbyPanelTitle}>
                 <span>DOCENTES PRESENTES</span>
@@ -263,7 +273,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
               ) : (
                 <div className={styles.aggregatePresence}>
                   <span className={styles.participantDot} />
-                  <span>{presence.count === 1 ? 'Docente conectado' : `${presence.count} docentes conectados`}</span>
+                  <span>{portalReady ? (presence.count === 1 ? 'Docente conectado' : `${presence.count} docentes conectados`) : presenceLabel}</span>
                 </div>
               )}
             </section>
@@ -272,7 +282,7 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
               <span className={styles.lobbyStatusDot} />
               <div>
                 <strong>{canOpen ? 'Equipo listo' : 'Esperando al equipo'}</strong>
-                <span>{canOpen ? 'Dos o más docentes pueden comenzar la sesión.' : 'Necesitamos al menos 2 docentes para empezar.'}</span>
+                <span>{canOpen ? 'Dos o más docentes pueden comenzar la sesión.' : portalReady ? 'Necesitamos al menos 2 docentes para empezar.' : presenceLabel}</span>
               </div>
             </div>
 

@@ -27,10 +27,14 @@ export async function createPortalSession(token: string, caseId: string): Promis
     headers: authHeaders(token),
   })
   const wire = (await response.json()) as PortalSessionWire
+  const publishableKey = wire.publishable_key || import.meta.env.VITE_PORTAL_PUBLISHABLE_KEY || ''
+  if (!wire.token || !wire.channel_id || !publishableKey) {
+    throw new Error('La sesión de Portal está incompleta: faltan token, canal o publishable key.')
+  }
   return {
     token: wire.token,
     expiresAt: wire.expires_at,
     channelId: wire.channel_id,
-    publishableKey: wire.publishable_key,
+    publishableKey,
   }
 }

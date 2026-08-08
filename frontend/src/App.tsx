@@ -13,10 +13,11 @@ import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
 import { Registro } from './components/registro'
 import { Scene } from './components/scene'
+import { Dashboard } from './dashboard/Dashboard'
 import type { SceneVariant } from './components/scene'
 
 type AuthScreenName = 'login' | 'registro'
-type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' }
+type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' } | { name: 'dashboard' }
 
 /** How long the login → casos transition runs. Matches --cinematic. */
 const ENTRANCE_MS = 1600
@@ -31,6 +32,7 @@ const ENTRANCE_MS = 1600
 function viewFromHash(hash: string): View {
   const [first, second] = hash.replace(/^#\/?/, '').split('/')
   if (first === 'mapa') return { name: 'map-demo' }
+  if (first === 'dashboard') return { name: 'dashboard' }
   if (first === 'caso' && second) return { name: 'case', caseId: second }
   return { name: 'cases' }
 }
@@ -38,6 +40,7 @@ function viewFromHash(hash: string): View {
 function hashFor(view: View): string {
   if (view.name === 'case') return `#/caso/${view.caseId}`
   if (view.name === 'map-demo') return '#/mapa'
+  if (view.name === 'dashboard') return '#/dashboard'
   return '#/casos'
 }
 
@@ -141,7 +144,7 @@ function App() {
     )
   }
 
-  const route: RouteName = view.name === 'map-demo' ? 'mapa' : 'casos'
+  const route: RouteName = view.name === 'map-demo' ? 'mapa' : view.name === 'dashboard' ? 'dashboard' : 'casos'
   // The map is the world; everything else happens at the explorer's desk.
   const scene: SceneVariant = view.name === 'map-demo' ? 'world' : 'journal'
 
@@ -160,7 +163,7 @@ function App() {
           active={route}
           email={session.email}
           onNavigate={(next) => {
-            location.hash = next === 'mapa' ? '#/mapa' : '#/casos'
+            location.hash = next === 'mapa' ? '#/mapa' : next === 'dashboard' ? '#/dashboard' : '#/casos'
           }}
           onSignOut={() => {
             signOut()
@@ -192,6 +195,7 @@ function App() {
           />
         )}
         {view.name === 'map-demo' && <MapOverview token={session.token} />}
+        {view.name === 'dashboard' && <Dashboard token={session.token} />}
       </main>
     </>
   )

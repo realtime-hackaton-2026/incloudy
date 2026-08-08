@@ -14,10 +14,10 @@ import type { CollaboratorRole, Student } from '../../cases'
 import { useJourneyTemplate } from '../../journeys'
 import { CaseMap, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
-import { CaseRoom } from '../../portal'
 import { CaseChat } from '../../chat'
 import { AvatarPicker, useAvatar } from '../../avatar'
 import { OwlTip } from '../../guide'
+import { OwlDoor } from '../../owl'
 import { ConfirmDialog } from '../confirm-dialog'
 import { StationCard } from './JourneyStations'
 import styles from './CaseForm.module.css'
@@ -466,7 +466,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack }: CaseForm
         <p className={styles.state}>
           La sala es del equipo — todos los colaboradores la ven. El asistente es privado.
         </p>
-        <CaseRoom token={token} caseId={caseId} />
+        <OwlDoor token={token} caseId={caseId} stage={stage} />
         <CaseChat token={token} caseId={caseId} />
       </section>
 

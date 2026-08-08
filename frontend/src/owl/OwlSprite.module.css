@@ -1,0 +1,24 @@
+.eyelids {
+  opacity: 0;
+  /* Mostly open: a quick close-open once every ~5s, not a steady flicker. */
+  animation: owlBlink 5200ms ease-in-out infinite;
+}
+
+@keyframes owlBlink {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+  }
+
+  94%,
+  97% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyelids {
+    animation: none;
+  }
+}

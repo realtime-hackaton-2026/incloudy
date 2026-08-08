@@ -1,0 +1,62 @@
+/*
+ * frontend/src/portal/ConnectionStatus.module.css // a quiet band, never a
+ * modal: a degraded socket must be visible without taking the room hostage.
+ */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+/* Transient: the socket is coming back. Amber, and the dot breathes so the
+   state reads as "in progress" rather than "finished badly". */
+.transient {
+  color: var(--parchment-hi, #f1d8a6);
+  background: color-mix(in srgb, var(--parchment-hi, #f1d8a6) 10%, transparent);
+  border-color: color-mix(in srgb, var(--parchment-hi, #f1d8a6) 32%, transparent);
+}
+
+.transient .dot {
+  animation: reconnectPulse 1400ms ease-in-out infinite;
+}
+
+@keyframes reconnectPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Terminal: it is not coming back on its own. Steady, no animation — this
+   is a state, not a process. */
+.urgent {
+  color: var(--danger, #ff6b6b);
+  background: color-mix(in srgb, var(--danger, #ff6b6b) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger, #ff6b6b) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transient .dot {
+    animation: none;
+    opacity: 0.8;
+  }
+}

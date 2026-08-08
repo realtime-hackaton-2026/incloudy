@@ -6,6 +6,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import { getPortalClient } from '../portal/client'
+import { ConnectionStatus } from '../portal/ConnectionStatus'
+import type { PortalConnectionStatus } from '../portal/connectionNotice'
 import { usePortalSession } from '../portal/usePortalSession'
 import { DEBATE_TURN_EVENT, useDebate } from './useDebate'
 import { DEBATE_VOTE_EVENT, sharePercent, tallyVotes } from './votes'
@@ -79,7 +81,7 @@ function LiveDebate({
   caseId: string
   channelId: string
 }) {
-  const { messages, send, me } = useChannel<Record<string, unknown>>({ channelId })
+  const { messages, send, me, status } = useChannel<Record<string, unknown>>({ channelId })
 
   const publish = useCallback(
     (turn: DebateTurn) => send({ content: { ...turn }, type: DEBATE_TURN_EVENT }),
@@ -121,6 +123,7 @@ function LiveDebate({
       token={token}
       caseId={caseId}
       live
+      connection={status}
       publish={publish}
       channelTurns={channelTurns}
       tally={tallyVotes(ballots, me?.id)}
@@ -135,6 +138,7 @@ function DebateBody({
   token,
   caseId,
   live,
+  connection,
   publish,
   channelTurns = [],
   tally,
@@ -143,6 +147,8 @@ function DebateBody({
   token: string
   caseId: string
   live: boolean
+  /** Portal's channel status; absent when the debate runs offline. */
+  connection?: PortalConnectionStatus
   publish?: (turn: DebateTurn) => Promise<unknown>
   channelTurns?: readonly DebateTurn[]
   tally?: Tally
@@ -190,6 +196,10 @@ function DebateBody({
           {commentsRead > 0 && ` · leyeron ${commentsRead} comentario(s)`}
         </span>
       </header>
+
+      {/* A stalled socket is why a spectator would stop seeing turns arrive,
+          so the debate says so rather than just going quiet. */}
+      {connection && <ConnectionStatus status={connection} testId="debate-connection" />}
 
       {visibleTurns.length === 0 && (
         <div className={styles.stances}>

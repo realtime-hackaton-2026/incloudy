@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import type { PortalError } from '@portalsdk/core'
 import { getPortalClient } from './client'
+import { ConnectionStatus } from './ConnectionStatus'
 import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
@@ -354,6 +355,10 @@ function RoomChannel({
 
   return (
     <div className={styles.roomBody} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'}>
+      {/* A dropped socket used to be recorded only in `data-state`, which made
+          a stalled room look like a quiet one. */}
+      <ConnectionStatus status={status} testId="case-room-connection" />
+
       {portalError && (
         <div className={styles.portalError} role="alert">Portal: {portalError}</div>
       )}

@@ -112,6 +112,11 @@ class ChatResponse(BaseModel):
     respuesta: str
 
 
+class CaseAnalysisResponse(BaseModel):
+    analisis: str
+    comentarios_analizados: int = 0
+
+
 class CollaboratorRequest(BaseModel):
     email: EmailStr
     role: CollaboratorRole = CollaboratorRole.commenter

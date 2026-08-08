@@ -12,7 +12,7 @@ export {
   publishCase,
   removeCollaborator,
   resetCase,
-  setForixShare,
+  setBurixShare,
   updateStudent,
   updateSummary,
 } from './api'

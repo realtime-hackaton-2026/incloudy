@@ -20,3 +20,19 @@ export async function askAssistant(
   const body = (await response.json()) as { respuesta: string }
   return body.respuesta
 }
+
+export interface CaseAnalysis {
+  analisis: string
+  comentarios_analizados: number
+}
+
+export async function requestCaseAnalysis(
+  token: string,
+  caseId: string,
+): Promise<CaseAnalysis> {
+  const response = await apiFetch(`/cases/${encodeURIComponent(caseId)}/analysis`, {
+    method: 'POST',
+    headers: jsonHeaders(token),
+  })
+  return (await response.json()) as CaseAnalysis
+}

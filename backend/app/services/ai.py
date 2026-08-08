@@ -5,7 +5,7 @@ import httpx
 from fastapi import HTTPException
 
 from ..config import settings
-from ..models import Case, JourneyTemplate
+from ..models import Case, JourneyTemplate, PortalComment
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +120,77 @@ async def ask_gemini(
         + build_prompt(message, case, template)
     )
     return await _generate(prompt)
+
+
+def build_comments_context(comments: list[PortalComment]) -> str:
+    lines: list[str] = []
+    for comment in comments:
+        content = comment.content or {}
+        text = (
+            content.get("body")
+            or content.get("text")
+            or content.get("content")
+            or str(content)
+        )
+        if not text:
+            continue
+        lines.append(f"- Docente {comment.author_id[-4:]}: {text}")
+    return "\n".join(lines)
+
+
+async def generate_case_analysis(
+    case: Case,
+    template: Optional[JourneyTemplate],
+    comments: list[PortalComment],
+) -> str:
+    if not settings.gemini_api_key:
+        return generate_local_case_analysis(case, template, comments)
+    comments_text = build_comments_context(comments)
+    prompt = f"""Eres Búrix, el búho guía de una sala docente que acompaña a un
+estudiante ficticio. Analiza el caso y los comentarios que el equipo ha dejado en la
+sala. Estructura tu respuesta en secciones claras:
+- Diagnóstico hipotético (basado solo en las evidencias del caso)
+- Lo que el equipo ha observado en la sala
+- Puntos a considerar
+- Próximos pasos sugeridos
+No emitas un diagnóstico médico; el estudiante es ficticio o anonimizado. Escribe en
+español, con tono profesional y cálido.
+
+{build_case_context(case, template)}
+
+Comentarios de la sala (tiempo real):
+{comments_text or "Aún no hay comentarios del equipo."}
+"""
+    return await _generate(prompt)
+
+
+def generate_local_case_analysis(
+    case: Case,
+    template: Optional[JourneyTemplate],
+    comments: list[PortalComment],
+) -> str:
+    summary = (
+        generate_local_case_summary(case, template)
+        if template is not None
+        else f"Estado actual de {case.alumno.nombre}: sin plantilla activa."
+    )
+    comments_text = build_comments_context(comments)
+    room = (
+        f"{len(comments)} comentario(s) de la sala:\n{comments_text}"
+        if comments_text
+        else "sin comentarios aún en la sala."
+    )
+    return "\n".join(
+        [
+            f"Análisis local de Búrix para el caso ficticio de {case.alumno.nombre}",
+            "",
+            summary,
+            "",
+            f"La sala dice: {room}",
+            "",
+            "Conecta GEMINI_API_KEY en el servidor para un análisis completo con IA.",
+        ]
+    )
 
 
 async def generate_case_summary(case: Case, template: JourneyTemplate) -> str:

@@ -162,6 +162,7 @@ function App() {
           nombre={session.nombre}
           email={session.email}
           seccion={session.seccion}
+          token={session.token}
           onUpdateProfile={updateProfile}
           onNavigate={(next) => {
             location.hash = next === 'mapa' ? '#/mapa' : next === 'dashboard' ? '#/dashboard' : '#/casos'

@@ -303,7 +303,7 @@ describe('CaseRoom', () => {
     expect(await screen.findByText(/alguien está escribiendo/i)).toBeInTheDocument()
   })
 
-  it('publishes a question and the Forix AI answer for the whole room', async () => {
+  it('publishes a question and the Búrix AI answer for the whole room', async () => {
     mockFetch((input) => String(input).endsWith('/chat')
       ? jsonResponse({ respuesta: 'Revisen juntos el progreso de Alex.' })
       : jsonResponse({
@@ -329,7 +329,7 @@ describe('CaseRoom', () => {
     render(<CaseRoom token="tok" caseId="case-1" />)
     const input = await screen.findByPlaceholderText(/comparte una observación/i)
     await user.type(input, '¿Qué hacemos ahora?')
-    await user.click(screen.getByRole('button', { name: /preguntar a forix/i }))
+    await user.click(screen.getByRole('button', { name: /preguntar a búrix/i }))
 
     await waitFor(() => expect(send).toHaveBeenCalledWith({
       content: { type: 'ai_answer', body: 'Revisen juntos el progreso de Alex.' },
@@ -337,5 +337,80 @@ describe('CaseRoom', () => {
     expect(send).toHaveBeenCalledWith({
       content: { type: 'ai_question', body: '¿Qué hacemos ahora?' },
     })
+  })
+
+  it('opens the private Búrix analysis and shares it to the whole room', async () => {
+    mockFetch((input) => String(input).endsWith('/analysis')
+      ? jsonResponse({
+          analisis: 'Diagnóstico hipotético:\n- Atención sostenida limitada\nPróximos pasos: apoyo visual.',
+          comentarios_analizados: 2,
+        })
+      : jsonResponse({
+          token: 'ptok',
+          expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+          channel_id: 'case-1',
+          publishable_key: 'pk_test',
+        }))
+    const send = vi.fn(() => Promise.resolve({ id: 'm-share', timestamp: Date.now() }))
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+      ],
+      send,
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    const user = userEvent.setup()
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    await user.click(await screen.findByRole('button', { name: /abrir análisis de búrix/i }))
+    expect(await screen.findByTestId('burix-meta')).toHaveTextContent('2 comentarios')
+    expect(screen.getByTestId('burix-analysis')).toHaveTextContent('Diagnóstico hipotético')
+
+    await user.click(screen.getByRole('button', { name: /compartir con la sala/i }))
+    await waitFor(() => expect(send).toHaveBeenCalledWith({
+      content: {
+        type: 'burix_analysis',
+        body: expect.stringContaining('Diagnóstico hipotético'),
+      },
+    }))
+    expect(screen.queryByRole('dialog', { name: /búrix analiza el caso/i })).toBeNull()
+  })
+
+  it('labels a shared Búrix analysis as an AI contribution', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+        {
+          id: 'm-burix',
+          content: { type: 'burix_analysis', body: 'Atención sostenida limitada.' },
+          sender: { id: 'u-1', anon: false },
+          timestamp: Date.now(),
+        },
+      ],
+      send: vi.fn(),
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    expect(await screen.findByText('Atención sostenida limitada.')).toBeInTheDocument()
+    expect(screen.getByText('Búrix · análisis')).toBeInTheDocument()
   })
 })

@@ -9,7 +9,7 @@
  * reactions. The source content lives in the JourneyTemplate.
  */
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../lib/http'
@@ -200,11 +200,10 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const [showResult, setShowResult] = useState(Boolean(answer?.completado))
   const [editingAnswer, setEditingAnswer] = useState(false)
   const [finishState, setFinishState] = useState<'idle' | 'saving' | 'error'>('idle')
-  const [headerActionTarget, setHeaderActionTarget] = useState<HTMLElement | null>(null)
-
-  useEffect(() => {
-    setHeaderActionTarget(headerActionTargetId ? document.getElementById(headerActionTargetId) : null)
-  }, [headerActionTargetId])
+  // Re-read on every render so a header that mounts after this card is still
+  // found; the direct read replaces the effect the set-state-in-effect rule
+  // rejected.
+  const headerActionTarget = headerActionTargetId ? document.getElementById(headerActionTargetId) : null
 
   const editButton = editable && showResult ? (
     <button

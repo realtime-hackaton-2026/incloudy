@@ -25,6 +25,7 @@ from ..models import (
     utcnow,
 )
 from ..schemas import (
+    CaseAnalysisResponse,
     CaseCreate,
     CaseJoinRequest,
     CaseUpdate,
@@ -38,7 +39,7 @@ from ..schemas import (
     TeacherNoteCreateRequest,
     UnexpectedEventResponseRequest,
 )
-from ..services.ai import generate_case_summary
+from ..services.ai import generate_case_analysis, generate_case_summary
 from ..services.cases import (
     add_or_update_collaborator,
     calculate_interactive_state,
@@ -214,7 +215,7 @@ async def join_case(
     if not already_has_access and not case.forix_shared:
         raise HTTPException(
             status_code=409,
-            detail="El propietario todavía no compartió este caso con Forix",
+            detail="El propietario todavía no compartió este caso con Búrix",
         )
     if not already_has_access:
         add_or_update_collaborator(case, user_id, CollaboratorRole.commenter)
@@ -796,3 +797,20 @@ async def list_case_comments(
         PortalComment.case_id == str(case.id),
         PortalComment.retracted == False,  # noqa: E712
     ).sort("portal_timestamp").to_list()
+
+
+@router.post("/{case_id}/analysis", response_model=CaseAnalysisResponse)
+async def analyze_case(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> CaseAnalysisResponse:
+    case = await get_accessible_case(case_id, current_user)
+    template = await get_case_template(case)
+    comments = await PortalComment.find(
+        PortalComment.case_id == str(case.id),
+        PortalComment.retracted == False,  # noqa: E712
+    ).sort("portal_timestamp").to_list()
+    return CaseAnalysisResponse(
+        analisis=await generate_case_analysis(case, template, comments),
+        comentarios_analizados=len(comments),
+    )

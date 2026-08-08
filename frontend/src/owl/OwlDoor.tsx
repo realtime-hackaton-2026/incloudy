@@ -35,7 +35,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const [sessionActive, setSessionActive] = useState(false)
   const [startSessionNonce, setStartSessionNonce] = useState(0)
   const [closeSessionNonce, setCloseSessionNonce] = useState(0)
-  const [forixCases, setForixCases] = useState<Case[]>([])
+  const [burixCases, setBurixCases] = useState<Case[]>([])
   const station = stationFor(stage)
   const portalReady = presence.status === 'ready'
   const portalBlocked = presence.status === 'blocked' || presence.status === 'error' || Boolean(presence.error)
@@ -55,7 +55,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     let timer: ReturnType<typeof setInterval> | null = null
     const refresh = () => {
       void listCases(token).then((cases) => {
-        if (active) setForixCases(cases.filter((item) => item.forixShared))
+        if (active) setBurixCases(cases.filter((item) => item.burixShared))
       }).catch(() => {})
     }
     refresh()
@@ -66,7 +66,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     }
   }, [token])
 
-  function openForixCase(selectedCaseId: string) {
+  function openBurixCase(selectedCaseId: string) {
     if (!selectedCaseId || selectedCaseId === caseId) return
     location.hash = `#/caso/${selectedCaseId}`
   }
@@ -291,10 +291,10 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
             <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {joinCode}</p>
 
             <label className={styles.forixCasePicker}>
-              Caso compartido con Forix
-              <select value={caseId} onChange={(event) => openForixCase(event.target.value)}>
-                {forixCases.length === 0 && <option value={caseId}>Este caso aún no está compartido</option>}
-                {forixCases.map((item) => (
+              Caso compartido con Búrix
+              <select value={caseId} onChange={(event) => openBurixCase(event.target.value)}>
+                {burixCases.length === 0 && <option value={caseId}>Este caso aún no está compartido</option>}
+                {burixCases.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.alumno.nombre} · {item.status.replace('_', ' ')} · {item.progreso.porcentaje}%
                   </option>

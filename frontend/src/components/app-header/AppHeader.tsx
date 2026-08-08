@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import logo from '../../assets/images/logo.webp'
 import type { ProfileUpdate } from '../../auth'
+import { useNotifications } from '../../notifications/useNotifications'
 import styles from './AppHeader.module.css'
 
 export type RouteName = 'casos' | 'mapa' | 'dashboard'
@@ -20,6 +21,8 @@ export interface AppHeaderProps {
   email: string
   seccion?: string | null
   signingOut?: boolean
+  /** Signed Portal+API token; enables the notification bell. */
+  token?: string
   onNavigate: (route: RouteName) => void
   onSignOut: () => void
   onUpdateProfile?: (input: ProfileUpdate) => Promise<boolean>
@@ -36,14 +39,22 @@ export function AppHeader({
   email,
   seccion,
   signingOut = false,
+  token,
   onNavigate,
   onSignOut,
   onUpdateProfile = async () => false,
 }: AppHeaderProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profile, setProfile] = useState({ nombre, email, seccion: seccion ?? '', currentPassword: '', newPassword: '' })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const notifications = useNotifications(token)
+
+  function openNotifications() {
+    setNotificationsOpen(true)
+    void notifications.refresh()
+  }
 
   // The draft is seeded when the dialog opens, not synced from props — an
   // effect would either clobber what the teacher is typing or fight the
@@ -115,6 +126,17 @@ export function AppHeader({
         <span className={styles.teacher} title={`${nombre} · ${email}`}>
           Docente: <strong>{nombre}</strong>
         </span>
+        <button type="button" className={styles.bell} aria-label="Abrir notificaciones"
+          title="Notificaciones" onClick={openNotifications} data-unread={notifications.unreadCount}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+          </svg>
+          {notifications.unreadCount > 0 && (
+            <span className={styles.bellBadge} data-testid="notifications-badge">{notifications.unreadCount}</span>
+          )}
+        </button>
         <button type="button" className={styles.settingsButton} aria-label="Abrir ajustes del perfil"
           title="Ajustes" onClick={openSettings}>⚙</button>
         <button type="button" className={styles.signOut} onClick={onSignOut}>
@@ -142,6 +164,40 @@ export function AppHeader({
               {message && <p className={styles.settingsMessage} role="status">{message}</p>}
               <button className={styles.saveButton} disabled={saving}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>
             </form>
+          </section>
+        </div>
+      , document.body)}
+      {notificationsOpen && createPortal(
+        <div className={styles.settingsBackdrop} role="presentation" onMouseDown={() => setNotificationsOpen(false)}>
+          <section className={styles.settingsPanel} role="dialog" aria-modal="true" aria-labelledby="notifications-title"
+            onMouseDown={(event) => event.stopPropagation()}>
+            <div className={styles.settingsHeading}>
+              <div><span>AVISOS</span><h2 id="notifications-title">Notificaciones</h2></div>
+              <button type="button" onClick={() => setNotificationsOpen(false)} aria-label="Cerrar notificaciones">×</button>
+            </div>
+            {notifications.error && <p className={styles.settingsMessage} role="alert">{notifications.error}</p>}
+            {notifications.unread.length === 0 && !notifications.error && (
+              <p className={styles.notificationsEmpty}>Sin avisos pendientes. Recibirás uno cuando un caso avance de estación.</p>
+            )}
+            <ul className={styles.notificationsList}>
+              {notifications.unread.map((item) => (
+                <li key={item.id}>
+                  <button type="button" className={styles.notificationItem} onClick={() => void notifications.markRead(item.id)}>
+                    <span className={styles.notificationDot} aria-hidden="true" />
+                    <span className={styles.notificationCopy}>
+                      <strong>{item.titulo}</strong>
+                      <small>{item.mensaje}</small>
+                    </span>
+                    <time>{new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(item.created_at))}</time>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {notifications.unreadCount > 0 && (
+              <button type="button" className={styles.markAllRead} onClick={() => void notifications.markAllRead()}>
+                Marcar todas como leídas
+              </button>
+            )}
           </section>
         </div>
       , document.body)}

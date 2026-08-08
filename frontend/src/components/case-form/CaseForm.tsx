@@ -51,7 +51,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     setAlumno,
     answerStation,
     answerUnexpectedEvent,
-    setForixShared,
+    setBurixShared,
     completeCase,
     publishCase,
     generateSummary,
@@ -92,8 +92,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [summaryBusy, setSummaryBusy] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
   const [pendingRegenerate, setPendingRegenerate] = useState(false)
-  const [sharingWithForix, setSharingWithForix] = useState(false)
-  const [forixShareError, setForixShareError] = useState<string | null>(null)
+  const [sharingWithBurix, setSharingWithBurix] = useState(false)
+  const [burixShareError, setBurixShareError] = useState<string | null>(null)
   // A locked tap is the loudest thing the owl has to say, so it outranks the
   // standing "how far is left" message until it expires.
   const [lockedNotice, setLockedNotice] = useState<Guidance | null>(null)
@@ -249,15 +249,15 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     return value.replace(/\bAlex\b/g, current.alumno.nombre || 'el alumno')
   }
 
-  async function handleForixShare() {
-    setSharingWithForix(true)
-    setForixShareError(null)
+  async function handleBurixShare() {
+    setSharingWithBurix(true)
+    setBurixShareError(null)
     try {
-      await setForixShared(!current.forixShared)
+      await setBurixShared(!current.burixShared)
     } catch (cause) {
-      setForixShareError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar Forix.')
+      setBurixShareError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar Búrix.')
     } finally {
-      setSharingWithForix(false)
+      setSharingWithBurix(false)
     }
   }
 
@@ -422,25 +422,25 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
 
       {isOwner && (
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Forix · colaboración docente</h3>
+          <h3 className={styles.sectionTitle}>Búrix · colaboración docente</h3>
           <p className={styles.state}>
-            {current.forixShared
-              ? `Este caso aparece en Forix. Comparte el código ${current.joinCode} para que otros docentes entren.`
-              : 'Este caso permanece privado y no aparece en el selector de Forix.'}
+            {current.burixShared
+              ? `Este caso aparece en Búrix. Comparte el código ${current.joinCode} para que otros docentes entren.`
+              : 'Este caso permanece privado y no aparece en el selector de Búrix.'}
           </p>
           <button
             type="button"
-            className={current.forixShared ? 'btn-secondary' : 'btn-primary'}
-            disabled={sharingWithForix}
-            onClick={() => void handleForixShare()}
+            className={current.burixShared ? 'btn-secondary' : 'btn-primary'}
+            disabled={sharingWithBurix}
+            onClick={() => void handleBurixShare()}
           >
-            {sharingWithForix
+            {sharingWithBurix
               ? 'Actualizando…'
-              : current.forixShared
-                ? 'Dejar de compartir con Forix'
-                : 'Compartir este caso con Forix'}
+              : current.burixShared
+                ? 'Dejar de compartir con Búrix'
+                : 'Compartir este caso con Búrix'}
           </button>
-          {forixShareError && <p className={`${styles.state} ${styles.stateError}`} role="alert">{forixShareError}</p>}
+          {burixShareError && <p className={`${styles.state} ${styles.stateError}`} role="alert">{burixShareError}</p>}
         </section>
       )}
 

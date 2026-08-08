@@ -33,6 +33,7 @@ from app.schemas import (
 from app.services.cases import get_editable_case
 from app.services.seeds import ensure_alex_case_for_user, ensure_seed_content
 from app.services.webhooks import process_portal_webhook
+from app.models import utcnow
 
 
 @pytest.mark.asyncio
@@ -302,3 +303,75 @@ async def test_alex_content_and_case_are_seeded_idempotently() -> None:
     await ensure_seed_content()
     recreated = await Case.find(Case.profesor_id == str(professor.id)).to_list()
     assert recreated == []
+
+
+@pytest.mark.asyncio
+async def test_case_analysis_includes_live_room_comments(monkeypatch) -> None:
+    client = AsyncMongoMockClient()
+    await init_beanie(
+        database=client.test_analysis,
+        document_models=[
+            User,
+            JourneyTemplate,
+            CaseScenario,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+            TeacherNote,
+        ],
+    )
+    owner = User(nombre="María", email="maria@example.com", hashed_password="hash")
+    await owner.insert()
+    template = JourneyTemplate(
+        nombre="Recorrido",
+        version=1,
+        created_by=str(owner.id),
+        activa=True,
+        estaciones=[
+            TemplateStation(
+                id="observar",
+                orden=1,
+                titulo="Observar",
+                opciones=[StationOption(id="atencion", texto="Atención")],
+            )
+        ],
+    )
+    await template.insert()
+    case = Case(
+        profesor_id=str(owner.id),
+        template_id=str(template.id),
+        template_version=template.version,
+        alumno=Student(nombre="Caso Análisis"),
+        progreso={"completadas": 0, "total": 1, "porcentaje": 0},
+    )
+    await case.insert()
+    for order, body in [
+        (1, "Muestra dificultad para seguir instrucciones"),
+        (2, "Respeta turnos con apoyos visuales"),
+    ]:
+        await PortalComment(
+            event_id=f"event-{order}",
+            message_id=f"message-{order}",
+            case_id=str(case.id),
+            channel_id=f"case-{case.id}",
+            author_id=f"user-{order}",
+            content={"text": body},
+            portal_timestamp=utcnow(),
+        ).insert()
+
+    captured: dict = {}
+
+    async def fake_analysis(
+        _case: Case, _template: JourneyTemplate, comments: list[PortalComment]
+    ) -> str:
+        captured["count"] = len(comments)
+        return "Diagnóstico hipotético y próximos pasos"
+
+    monkeypatch.setattr(cases_router, "generate_case_analysis", fake_analysis)
+    analysis = await cases_router.analyze_case(str(case.id), owner)
+
+    assert analysis.analisis == "Diagnóstico hipotético y próximos pasos"
+    assert analysis.comentarios_analizados == 2
+    assert captured["count"] == 2

@@ -1,0 +1,129 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface-deep) 70%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  width: min(34rem, 100%);
+  max-height: min(80vh, 40rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--river);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, var(--surface-raised) 0%, var(--surface-deep) 100%);
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 45%);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 2px solid var(--river);
+  background: var(--surface);
+  object-fit: cover;
+}
+
+.eyebrow {
+  font: 700 0.62rem/1.4 var(--label);
+  letter-spacing: 0.08em;
+  color: var(--river-hi);
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.close {
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--surface-raised);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: var(--river);
+  color: var(--text);
+}
+
+.status {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--river-deep) 30%, transparent);
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--clay);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--clay) 15%, transparent);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.error p {
+  margin: 0;
+}
+
+.retry {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--river);
+  border-radius: 0.5rem;
+  background: var(--river-deep);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.meta {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-soft);
+}
+
+.body {
+  overflow-y: auto;
+  padding: 0.9rem;
+  border: 1px solid var(--surface-raised);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  white-space: pre-wrap;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

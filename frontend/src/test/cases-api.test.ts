@@ -16,7 +16,7 @@ import {
   getCase,
   joinCase,
   publishCase,
-  setForixShare,
+  setBurixShare,
   updateStudent,
   updateSummary,
 } from '../cases/api'
@@ -84,7 +84,7 @@ describe('getCase', () => {
       id: 'case-1',
       profesorId: 'u-1',
       joinCode: 'ROOM42',
-      forixShared: true,
+      burixShared: true,
       colaboradores: [{ userId: 'u-2', role: 'editor' }],
       colaboradoresIds: ['u-2'],
       templateId: 'tmpl-1',
@@ -136,10 +136,10 @@ describe('joinCase', () => {
   })
 })
 
-describe('setForixShare', () => {
-  it('updates whether the case appears in Forix', async () => {
+describe('setBurixShare', () => {
+  it('updates whether the case appears in Búrix', async () => {
     const fetchMock = mockFetch(() => jsonResponse(CASE_WIRE))
-    await setForixShare('tok', 'case-1', true)
+    await setBurixShare('tok', 'case-1', true)
     const [url, init] = fetchMock.mock.calls[0]
     expect(String(url)).toMatch(/\/cases\/case-1\/forix-share$/)
     expect((init as RequestInit).method).toBe('PUT')

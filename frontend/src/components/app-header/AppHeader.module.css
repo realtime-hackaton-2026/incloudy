@@ -99,8 +99,8 @@
 }
 
 .navItemActive {
-  color: #f7fbff;
-  background: var(--primary);
+  color: var(--text);
+  background: var(--river-deep);
   border-radius: 999px;
 }
 
@@ -150,10 +150,10 @@
 }
 
 .dashboardLinkActive {
-  background: var(--primary);
-  color: #f7fbff;
+  background: var(--river-deep);
+  color: var(--text);
   border-color: var(--map-blue);
-  box-shadow: 0 0 0 2px rgb(114 188 208 / 18%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--river-hi) 18%, transparent);
 }
 
 .teacher {
@@ -176,6 +176,117 @@
   border: 1px solid rgb(230 201 149 / 24%);
   border-radius: 9px;
   cursor: pointer;
+}
+
+.bell {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--parchment-hi);
+  background: rgb(230 201 149 / 8%);
+  border: 1px solid rgb(230 201 149 / 24%);
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.bell:hover {
+  border-color: var(--river);
+  color: var(--text);
+}
+
+.bellBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  font: 700 11px/1 var(--sans);
+  color: var(--text);
+  background: var(--clay);
+  border: 2px solid var(--surface-deep);
+  border-radius: 999px;
+}
+
+.notificationsList {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.notificationItem {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface-deep);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.notificationItem:hover {
+  border-color: var(--river);
+}
+
+.notificationDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--river-hi);
+}
+
+.notificationCopy {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+}
+
+.notificationCopy strong {
+  font: 700 14px/1.4 var(--sans);
+  color: var(--text);
+}
+
+.notificationCopy small {
+  font: 400 13px/1.45 var(--sans);
+  color: var(--text-soft);
+}
+
+.notificationItem time {
+  flex: none;
+  font: 500 11px/1.6 var(--label);
+  color: var(--text-soft);
+}
+
+.notificationsEmpty {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.markAllRead {
+  padding: 8px 14px;
+  font: 700 13px/1 var(--sans);
+  color: var(--text);
+  background: var(--river-deep);
+  border: 1px solid var(--river);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.markAllRead:hover {
+  background: var(--river);
 }
 
 .settingsBackdrop {
@@ -294,6 +405,7 @@
   .dashboardLink { min-height: 34px; padding: 6px 8px; font-size: 0; border-radius: 999px; }
   .dashboardLink::before { content: 'Dashboard'; font-size: 9px; }
   .settingsButton { width: 32px; height: 32px; border-radius: 50%; font-size: 14px; }
+  .bell { width: 32px; height: 32px; border-radius: 50%; }
   .signOut { width: 32px; height: 32px; padding: 0; overflow: hidden; font-size: 0; border-radius: 50%; }
   .signOut::before { content: '↪'; font-size: 17px; }
 
@@ -322,4 +434,5 @@
   .dashboardLink { padding-inline: 6px; }
   .dashboardLink::before { font-size: 9px; }
   .settingsButton, .signOut { width: 31px; height: 31px; }
+  .bell { width: 31px; height: 31px; }
 }

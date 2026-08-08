@@ -7,6 +7,7 @@ import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
 import { askAssistant } from '../chat/api'
+import { BurixPanel } from './BurixPanel'
 import styles from './CaseRoom.module.css'
 
 export interface CaseRoomProps {
@@ -127,6 +128,7 @@ function RoomChannel({
   const [closing, setClosing] = useState(false)
   const [askingAi, setAskingAi] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [burixOpen, setBurixOpen] = useState(false)
   // A guard, not display state: it only decides whether this particular
   // nonce has already been acted on. Keeping it in state made the effect
   // write state synchronously on every bump, which is the cascading-render
@@ -210,7 +212,7 @@ function RoomChannel({
     }
   }
 
-  async function handleAskForix() {
+  async function handleAskBurix() {
     const question = draft.trim()
     if (!question || !unlocked || !sessionActive || askingAi) return
     setDraft('')
@@ -221,7 +223,7 @@ function RoomChannel({
       const answer = await askAssistant(token, question, caseId)
       await send({ content: { type: 'ai_answer', body: answer } })
     } catch (cause) {
-      setAiError(cause instanceof Error ? cause.message : 'Forix no pudo responder.')
+      setAiError(cause instanceof Error ? cause.message : 'Búrix no pudo responder.')
     } finally {
       setAskingAi(false)
     }
@@ -230,6 +232,12 @@ function RoomChannel({
   function handleDraftChange(value: string) {
     setDraft(value)
     if (value.trim() && unlocked && sessionActive) sendTyping()
+  }
+
+  function handleShareAnalysis(analysis: string) {
+    if (!sessionActive || !unlocked) return
+    void send({ content: { type: 'burix_analysis', body: analysis } })
+    setBurixOpen(false)
   }
 
   if (hideUi) {
@@ -253,9 +261,14 @@ function RoomChannel({
                 : `La sala necesita ${minimumParticipants} docentes para continuar.`}
           </p>
         </div>
-        <span className={`${styles.presence} ${unlocked ? styles.presenceReady : ''}`}>
-          {onlineCount} {onlineCount === 1 ? 'conectado' : 'conectados'}
-        </span>
+        <div className={styles.headerActions}>
+          <button type="button" className={styles.burixButton} onClick={() => setBurixOpen(true)} aria-label="Abrir análisis de Búrix">
+            Búrix · IA
+          </button>
+          <span className={`${styles.presence} ${unlocked ? styles.presenceReady : ''}`}>
+            {onlineCount} {onlineCount === 1 ? 'conectado' : 'conectados'}
+          </span>
+        </div>
       </div>
 
       {!sessionActive && (
@@ -282,7 +295,7 @@ function RoomChannel({
           <ul className={styles.historyMessages}>
             {previousMessages.map((message) => (
               <li key={message.id}>
-                <strong>{message.content && typeof message.content !== 'string' && message.content.type === 'ai_answer' ? 'Forix · IA' : message.sender.username ?? 'Docente'}</strong>
+                <strong>{messageAuthorLabel(message, me?.id)}</strong>
                 <span>{messageBody(message.content)}</span>
                 <time>{formatTime(message.timestamp)}</time>
               </li>
@@ -299,11 +312,7 @@ function RoomChannel({
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
                 <span className={styles.messageAuthor}>
-                  {message.content && typeof message.content !== 'string' && message.content.type === 'ai_answer'
-                    ? 'Forix · IA'
-                    : me && message.sender.id === me.id
-                      ? 'Tú'
-                      : message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`}
+                  {messageAuthorLabel(message, me?.id)}
                 </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
@@ -328,8 +337,8 @@ function RoomChannel({
             <button type="submit" className="btn-primary" disabled={sending || !unlocked || !draft.trim()}>
               {sending ? '…' : 'Enviar'}
             </button>
-            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !draft.trim()} onClick={() => void handleAskForix()}>
-              {askingAi ? 'Pensando…' : 'Preguntar a Forix'}
+            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !draft.trim()} onClick={() => void handleAskBurix()}>
+              {askingAi ? 'Pensando…' : 'Preguntar a Búrix'}
             </button>
           </form>
           {aiError && <p className={styles.portalError} role="alert">{aiError}</p>}
@@ -338,6 +347,14 @@ function RoomChannel({
 
       {starting && <p className={styles.typing}>Iniciando la experiencia colaborativa…</p>}
       {closing && <p className={styles.typing}>Cerrando la mesa para el equipo…</p>}
+
+      <BurixPanel
+        token={token}
+        caseId={caseId}
+        open={burixOpen}
+        onClose={() => setBurixOpen(false)}
+        onShare={handleShareAnalysis}
+      />
     </div>
   )
 }
@@ -353,6 +370,14 @@ function isSessionControl(content: ChatMessage | string) {
 function messageBody(content: ChatMessage | string) {
   if (typeof content === 'string') return content
   return content.body
+}
+
+function messageAuthorLabel(message: { content: ChatMessage | string; sender: { id: string; username?: string } }, meId?: string) {
+  const content = message.content
+  if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
+  if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
+  if (meId && message.sender.id === meId) return 'Tú'
+  return message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`
 }
 
 function formatTime(timestamp: number) {

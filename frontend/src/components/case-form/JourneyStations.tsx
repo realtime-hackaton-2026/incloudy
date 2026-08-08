@@ -9,7 +9,8 @@
  * reactions. The source content lives in the JourneyTemplate.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../lib/http'
 import type { QuestionType, StationOption, TemplateStation } from '../../journeys'
@@ -45,6 +46,7 @@ export interface StationCardProps {
   ) => Promise<void>
   onContinue?: () => void
   onFinish?: () => Promise<void>
+  headerActionTargetId?: string
 }
 
 function optionContent(option: StationOption, key: string): unknown {
@@ -190,7 +192,7 @@ function renderInteraction(station: TemplateStation, selected: string[], student
   return null
 }
 
-export function StationCard({ station, student, answer, editable, onAnswer, onContinue, onFinish }: StationCardProps) {
+export function StationCard({ station, student, answer, editable, onAnswer, onContinue, onFinish, headerActionTargetId }: StationCardProps) {
   const [selected, setSelected] = useState<string[]>(answer?.opcionesSeleccionadas ?? [])
   const [comentario, setComentario] = useState(answer?.comentario ?? '')
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -198,6 +200,26 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const [showResult, setShowResult] = useState(Boolean(answer?.completado))
   const [editingAnswer, setEditingAnswer] = useState(false)
   const [finishState, setFinishState] = useState<'idle' | 'saving' | 'error'>('idle')
+  const [headerActionTarget, setHeaderActionTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setHeaderActionTarget(headerActionTargetId ? document.getElementById(headerActionTargetId) : null)
+  }, [headerActionTargetId])
+
+  const editButton = editable && showResult ? (
+    <button
+      type="button"
+      className={styles.stationEditButton}
+      onClick={() => {
+        setEditingAnswer(true)
+        setShowResult(false)
+        setSaveState('idle')
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm13.5-16.5 3 3-1.5 1.5-3-3 1.5-1.5Z" /></svg>
+      <span>Editar decisión</span>
+    </button>
+  ) : null
 
   function toggle(optionId: string) {
     // When correcting an already completed station, a new choice replaces
@@ -343,22 +365,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
             {station.id === 'compartir' && 'Caso compartido con el equipo.'}
           </strong>
           {station.id === 'orientar' && <p>Aún no sabes si se sostendrá cuando lleguen los resultados.</p>}
-          {editable && (
-            <button
-              type="button"
-              className={styles.stationEditButton}
-              onClick={() => {
-                setEditingAnswer(true)
-                setShowResult(false)
-                setSaveState('idle')
-              }}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 20h4l11-11-4-4L4 16v4Zm13.5-16.5 3 3-1.5 1.5-3-3 1.5-1.5Z" />
-              </svg>
-              <span>Editar decisión</span>
-            </button>
-          )}
+          {editButton && (headerActionTarget ? createPortal(editButton, headerActionTarget) : editButton)}
           {editable && station.id === 'compartir' && onFinish ? (
             <button
               type="button"

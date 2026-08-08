@@ -335,6 +335,7 @@ export function CaseMap({
                       />
                     ))}
                   </div>
+                  <div id={`mission-actions-${focusedStation.stage}`} className={styles.missionActions} />
                   <button
                     type="button"
                     className={styles.missionClose}

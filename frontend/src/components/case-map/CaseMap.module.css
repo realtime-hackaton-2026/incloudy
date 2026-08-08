@@ -883,6 +883,11 @@
   margin-left: auto;
 }
 
+.missionActions {
+  flex: none;
+  width: 0;
+}
+
 .missionBead {
   width: 10px;
   height: 10px;
@@ -941,6 +946,12 @@
 }
 
 @media (max-width: 720px) {
+  .frame[data-state='focused'] {
+    height: min(76dvh, 680px);
+    min-height: 520px;
+    aspect-ratio: auto !important;
+  }
+
   .hotspot {
     width: clamp(34px, 8vw, 44px);
     border-width: 1.5px;
@@ -968,9 +979,21 @@
   }
 
   .missionPanel {
-    width: calc(100% - 20px);
-    max-height: calc(100% - 20px);
-    margin: 10px auto;
-    padding: 12px;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 14px 12px;
+    border-width: 1px;
+    border-radius: 12px;
   }
+
+  .missionOverlay { padding: 8px; }
+  .missionHeader { position: relative; min-height: 48px; padding-right: 0; }
+  .missionIdentity { max-width: calc(100% - 150px); }
+  .missionKicker { font-size: 9px; line-height: 1.35; }
+  .missionStation { font-size: 18px; }
+  .missionBeads { gap: 5px; }
+  .missionBead { width: 8px; height: 8px; }
+  .missionClose { flex: none; width: 38px; height: 38px; }
 }

@@ -1,0 +1,339 @@
+/*
+ * Ported from the static mockup that lived at `src/index.html`.
+ *
+ * That file leaned on the Tailwind CDN, the Material Symbols font and a
+ * remote background image — three network calls the built app should not
+ * make. The look is the same; the dependencies are gone. Palette tokens are
+ * in `src/styles.css`, shared with the rest of the app.
+ */
+
+.screen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* The case map itself, out of focus. The login already stands where the work
+   happens, so the palette carries over without repainting anything. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(4px);
+  transform: scale(1.06);
+  z-index: 0;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background: rgb(195 169 133 / 32%);
+  backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+/* --- The wooden frame -------------------------------------------------- */
+
+.panel {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 520px;
+  padding: 20px;
+  margin: 8px;
+  box-sizing: border-box;
+  border: 4px solid var(--wood-dark);
+  border-radius: 8px;
+  background-color: var(--wood);
+  background-image:
+    linear-gradient(90deg, rgb(195 169 133 / 20%) 1px, transparent 1px),
+    linear-gradient(0deg, rgb(195 169 133 / 20%) 1px, transparent 1px);
+  background-size: 8px 8px;
+  box-shadow:
+    /* Two stepped rings — the pixel-art frame the mockup calls for. */
+    0 -4px 0 var(--wood-dark),
+    0 4px 0 var(--wood-dark),
+    -4px 0 0 var(--wood-dark),
+    4px 0 0 var(--wood-dark),
+    0 -8px 0 var(--surface-dim),
+    0 8px 0 var(--surface-dim),
+    -8px 0 0 var(--surface-dim),
+    8px 0 0 var(--surface-dim),
+    /* Offset block shadow, pushed clear of the rings. */ 12px 12px 0
+      rgb(195 169 133 / 40%);
+}
+
+.paper {
+  position: relative;
+  /* Trimmed from the mockup's flat 40px so the panel clears a 720px-tall
+     window without scrolling. */
+  padding: 32px 40px;
+  border: 4px solid var(--wood-dark);
+  background-color: var(--paper);
+  /* 4×4 dot of ink: paper grain that survives any zoom level. */
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmY4ZjIiLz48cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJyZ2JhKDc1LDQ0LDMyLDAuMDUpIi8+PC9zdmc+');
+}
+
+.corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--wood-dark);
+}
+
+.cornerTopLeft {
+  top: -4px;
+  left: -4px;
+}
+
+.cornerTopRight {
+  top: -4px;
+  right: -4px;
+}
+
+.cornerBottomLeft {
+  bottom: -4px;
+  left: -4px;
+}
+
+.cornerBottomRight {
+  bottom: -4px;
+  right: -4px;
+}
+
+/* --- Branding ---------------------------------------------------------- */
+
+.branding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.logo {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 44px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.tagline {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+/* --- Form -------------------------------------------------------------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--label);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 14px;
+  width: 20px;
+  height: 20px;
+  color: var(--outline);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 16px 16px 46px;
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--ink);
+  background: #fff;
+  border: 4px solid var(--wood-dark);
+  border-radius: 0;
+  box-shadow: inset 4px 4px 0 0 rgb(195 169 133 / 20%);
+  transition: border-color 200ms ease;
+}
+
+.input::placeholder {
+  color: var(--outline-soft);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+.input:disabled {
+  background: var(--surface-dim);
+  cursor: not-allowed;
+}
+
+/* --- Feedback ---------------------------------------------------------- */
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 4px solid var(--danger);
+}
+
+.errorIcon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/* --- Actions ----------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding-top: 4px;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 20px;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  /* The mockup asked for white here; on this wood it lands near 1.7:1, so the
+     ink blue takes its place at 5.4:1. */
+  color: var(--primary);
+  background: var(--wood);
+  border: 4px solid var(--wood-dark);
+  border-bottom-width: 8px;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 0 rgb(195 169 133 / 40%);
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    filter 200ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.submit:active:not(:disabled) {
+  border-bottom-width: 4px;
+  box-shadow: 0 0 0 0 rgb(195 169 133 / 40%);
+  transform: translate(4px, 4px);
+}
+
+.submit:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 3px;
+}
+
+.submit:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.submitIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.help {
+  font-family: var(--label);
+  font-size: 14px;
+  color: var(--outline);
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+  transition: color 200ms ease;
+}
+
+.help:hover {
+  color: var(--secondary);
+}
+
+/* --- Small screens ----------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .screen {
+    padding: 16px;
+  }
+
+  .paper {
+    padding: 28px 20px;
+  }
+
+  .wordmark {
+    font-size: 32px;
+  }
+
+  .branding {
+    margin-bottom: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit {
+    transition: none;
+  }
+
+  .submit:active:not(:disabled) {
+    transform: none;
+  }
+}

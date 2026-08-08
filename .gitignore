@@ -1,0 +1,11 @@
+# Agent instructions stay local — never published.
+CLAUDE.md
+.claude/
+
+# Session log and verification tracking — internal, not published.
+docs/
+
+# Secrets
+.env
+.env.local
+.env.*.local

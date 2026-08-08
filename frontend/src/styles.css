@@ -15,6 +15,29 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /*
+   * Wood-and-paper palette, lifted from the login mockup that shipped as
+   * `src/index.html`. Same names it used, minus the Tailwind indirection.
+   * The case map keeps its own colours: it is artwork, not a themed surface.
+   */
+  --primary: #2b4c7e;
+  --secondary: #5ba8d1;
+  --wood: #e0c9a3;
+  --wood-dark: #c3a985;
+  --paper: #fdfbf7;
+  --ink: #212529;
+  --ink-soft: #475569;
+  --outline: #64748b;
+  --outline-soft: #cbd5e1;
+  --surface-dim: #e9ecef;
+  --danger: #ba1a1a;
+  --danger-bg: #ffdad6;
+
+  /* Space Grotesk and JetBrains Mono when the machine has them; no CDN fetch
+     either way, so the first paint never waits on fonts.googleapis.com. */
+  --display: 'Space Grotesk', var(--heading);
+  --label: 'JetBrains Mono', var(--mono);
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -50,20 +73,89 @@
   }
 }
 
+/* Full bleed: the login paints its own background edge to edge. Screens that
+   want a column instead set their own width — see `.app` below. */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+}
+
+/* --- App shell (the signed-in view) ------------------------------------ */
+
+.app {
+  flex: 1;
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  box-sizing: border-box;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  font-family: var(--display);
+  font-size: 40px;
+  letter-spacing: -1.2px;
+  margin: 0;
+  color: var(--primary);
+
+  @media (max-width: 1024px) {
+    font-size: 30px;
+  }
+}
+
+.app-header p {
+  flex: 1 1 320px;
+  font-size: 16px;
+}
+
+.app-session {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--label);
+  font-size: 13px;
+  color: var(--outline);
+}
+
+.app-signout {
+  font: inherit;
+  padding: 6px 12px;
+  color: var(--primary);
+  background: var(--wood);
+  border: 3px solid var(--wood-dark);
+  cursor: pointer;
+}
+
+.app-signout:hover {
+  filter: brightness(1.05);
+}
+
+.app-signout:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Shown for the moment it takes /auth/me to vet a stored token. */
+.app-restoring {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  font-family: var(--label);
+  font-size: 14px;
+  color: var(--outline);
 }
 
 h1,

@@ -946,6 +946,42 @@
 }
 
 @media (max-width: 720px) {
+  .wrapper {
+    overflow: hidden;
+    padding-bottom: 10px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgb(12 47 39 / 94%), rgb(9 38 34 / 98%));
+    box-shadow: 0 18px 38px -24px rgb(4 12 17 / 90%);
+  }
+
+  .wrapper > :last-child {
+    margin-inline: clamp(14px, 5vw, 24px);
+  }
+
+  .caption {
+    gap: 8px 14px;
+    margin-top: 0;
+    padding: 16px clamp(14px, 5vw, 24px) 2px;
+  }
+
+  .current {
+    flex: 1 1 auto;
+  }
+
+  .journey {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .hint {
+    flex-basis: 100%;
+    margin-top: 2px;
+  }
+
+  .frame {
+    border-radius: 18px 18px 12px 12px;
+  }
+
   .frame[data-state='focused'] {
     height: min(76dvh, 680px);
     min-height: 520px;

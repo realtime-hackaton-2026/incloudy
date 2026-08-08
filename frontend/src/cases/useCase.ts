@@ -10,6 +10,7 @@ import { ApiError } from '../lib/http'
 import {
   addCollaborator,
   answerStation as answerStationRequest,
+  answerUnexpectedEvent as answerUnexpectedEventRequest,
   completeCase as completeCaseRequest,
   deleteCase,
   generateSummary as generateSummaryRequest,
@@ -38,6 +39,7 @@ export interface CaseState {
     orden: number,
     input: { opcionesSeleccionadas: string[]; comentario?: string },
   ) => Promise<void>
+  answerUnexpectedEvent: (eventId: string, opcionId: string) => Promise<void>
   completeCase: () => Promise<void>
   publishCase: () => Promise<void>
   resetCase: () => Promise<void>
@@ -99,6 +101,14 @@ export function useCase(token: string, caseId: string): CaseState {
   const answerStation = useCallback(
     async (orden: number, input: { opcionesSeleccionadas: string[]; comentario?: string }) => {
       const saved = await answerStationRequest(token, caseId, orden, input)
+      setItem(saved)
+    },
+    [token, caseId],
+  )
+
+  const answerUnexpectedEvent = useCallback(
+    async (eventId: string, opcionId: string) => {
+      const saved = await answerUnexpectedEventRequest(token, caseId, eventId, opcionId)
       setItem(saved)
     },
     [token, caseId],
@@ -185,6 +195,7 @@ export function useCase(token: string, caseId: string): CaseState {
     saveError,
     setAlumno,
     answerStation,
+    answerUnexpectedEvent,
     completeCase,
     publishCase,
     resetCase,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { addCollaborator } from '../cases/api'
 import type { CollaboratorRole } from '../cases/api'
 import { stationFor } from '../components/case-map/stations'
@@ -46,17 +46,19 @@ export function OwlDoor({ token, caseId, stage }: OwlDoorProps) {
     setPresence(next)
   }, [])
 
+  /*
+   * Once any teacher starts the shared experience, everyone leaves the lobby
+   * and lands in the live room. This runs on the event itself rather than in
+   * an effect watching `sessionActive`: an effect would fire again on every
+   * later render where the flag is still true, re-opening the room after a
+   * teacher had deliberately closed it.
+   */
   const handleSessionActiveChange = useCallback((active: boolean) => {
     setSessionActive(active)
-  }, [])
-
-  // Once any teacher starts the shared experience, everyone returns to the
-  // map and the live room becomes available from the top banner / owl dock.
-  useEffect(() => {
-    if (!sessionActive) return
-    if (lobbyOpen) setLobbyOpen(false)
+    if (!active) return
+    setLobbyOpen(false)
     setRoomOpen(true)
-  }, [sessionActive])
+  }, [])
 
   async function handleInvite() {
     const value = email.trim()

@@ -244,7 +244,7 @@ describe('CaseForm — stations open as popups on the map, not as a list below i
 
     const panel = await screen.findByTestId('station-orientar')
     await user.click(within(panel).getByLabelText(/necesita más reto/i))
-    await user.click(within(panel).getByRole('button', { name: /guardar respuesta/i }))
+    await user.click(within(panel).getByRole('button', { name: /^continuar$/i }))
 
     await waitFor(() => expect(within(panel).getByText(/completada/i)).toBeInTheDocument())
     const [, init] = fetchMock.mock.calls.find(([input]) =>
@@ -276,7 +276,7 @@ describe('CaseForm — stations open as popups on the map, not as a list below i
     await user.click(screen.getByRole('button', { name: /orientar en la montaña/i }))
     const panel = await screen.findByTestId('station-orientar')
     await user.click(within(panel).getByLabelText(/necesita más reto/i))
-    await user.click(within(panel).getByRole('button', { name: /guardar respuesta/i }))
+    await user.click(within(panel).getByRole('button', { name: /^continuar$/i }))
 
     const warning = await within(panel).findByRole('alert')
     expect(warning).toHaveTextContent('Completa primero la estación Explorar')

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import type { PortalError } from '@portalsdk/core'
@@ -111,14 +111,25 @@ function RoomChannel({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [starting, setStarting] = useState(false)
-  const [lastStartNonce, setLastStartNonce] = useState(0)
-  const participants = presence?.kind === 'detailed'
-    ? presence.participants.map((participant) => ({
-        id: participant.id,
-        username: participant.username,
-        anon: participant.anon,
-      }))
-    : []
+  // A guard, not display state: it only decides whether this particular
+  // nonce has already been acted on. Keeping it in state made the effect
+  // write state synchronously on every bump, which is the cascading-render
+  // pattern the lint rule flags.
+  const lastStartNonce = useRef(0)
+  // Memoized on its own: rebuilt inline it was a fresh array every render,
+  // which made `presenceState` below re-memo every time and fire the
+  // `onPresenceChange` effect on every render instead of on real changes.
+  const participants = useMemo(
+    () =>
+      presence?.kind === 'detailed'
+        ? presence.participants.map((participant) => ({
+            id: participant.id,
+            username: participant.username,
+            anon: participant.anon,
+          }))
+        : [],
+    [presence],
+  )
   const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,
@@ -140,8 +151,8 @@ function RoomChannel({
   }, [onPresenceChange, presenceState])
 
   useEffect(() => {
-    if (!startSessionNonce || startSessionNonce <= lastStartNonce || !unlocked || sessionActive || starting) return
-    setLastStartNonce(startSessionNonce)
+    if (!startSessionNonce || startSessionNonce <= lastStartNonce.current || !unlocked || sessionActive || starting) return
+    lastStartNonce.current = startSessionNonce
     setStarting(true)
     void send({
       content: {
@@ -149,7 +160,7 @@ function RoomChannel({
         body: 'La experiencia colaborativa ha comenzado.',
       },
     }).finally(() => setStarting(false))
-  }, [lastStartNonce, send, sessionActive, startSessionNonce, starting, unlocked])
+  }, [send, sessionActive, startSessionNonce, starting, unlocked])
 
   async function handleSend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

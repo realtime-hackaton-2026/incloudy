@@ -55,6 +55,8 @@ export interface InteractiveState {
   hipotesisSostenida: string | null
   estrategiaElegida: string | null
   seguimientoElegido: string | null
+  /** Each entry is `"{eventId}:{opcionId}"` — see answerUnexpectedEvent. */
+  imprevistosResueltos: string[]
 }
 
 export interface StationAnswer {
@@ -126,6 +128,7 @@ interface CaseWire {
     hipotesis_sostenida: string | null
     estrategia_elegida: string | null
     seguimiento_elegido: string | null
+    imprevistos_resueltos: string[]
   }
   status: CaseStatus
   created_at: string
@@ -170,6 +173,7 @@ function normalizeCase(wire: CaseWire): Case {
       hipotesisSostenida: wire.estado_interactivo.hipotesis_sostenida,
       estrategiaElegida: wire.estado_interactivo.estrategia_elegida,
       seguimientoElegido: wire.estado_interactivo.seguimiento_elegido,
+      imprevistosResueltos: wire.estado_interactivo.imprevistos_resueltos,
     },
     status: wire.status,
     createdAt: wire.created_at,
@@ -228,6 +232,20 @@ export async function answerStation(
       opciones_seleccionadas: input.opcionesSeleccionadas,
       comentario: input.comentario ?? '',
     }),
+  })
+  return normalizeCase((await response.json()) as CaseWire)
+}
+
+export async function answerUnexpectedEvent(
+  token: string,
+  caseId: string,
+  eventId: string,
+  opcionId: string,
+): Promise<Case> {
+  const response = await apiFetch(`/cases/${caseId}/unexpected-events/${eventId}/response`, {
+    method: 'PUT',
+    headers: jsonHeaders(token),
+    body: JSON.stringify({ opcion_id: opcionId }),
   })
   return normalizeCase((await response.json()) as CaseWire)
 }

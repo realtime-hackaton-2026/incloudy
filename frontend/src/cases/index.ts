@@ -1,6 +1,7 @@
 export {
   addCollaborator,
   answerStation,
+  answerUnexpectedEvent,
   completeCase,
   createCase,
   deleteCase,

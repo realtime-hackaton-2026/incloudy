@@ -7,10 +7,20 @@ import { apiFetch, authHeaders } from '../lib/http'
 
 export type QuestionType = 'unica' | 'multiple'
 
+/**
+ * Free-form per-station and per-option content the seed data carries —
+ * intro copy, "imprevistos" (unexpected events), cost/confidence deltas.
+ * Untyped on the backend too (`dict[str, Any]`), so this stays a loose bag
+ * rather than a guessed shape; read what you need with `as` at the call
+ * site, same as the backend reads it with `.get()`.
+ */
+export type StationContent = Record<string, unknown>
+
 export interface StationOption {
   id: string
   texto: string
   icono?: string | null
+  contenido: StationContent
 }
 
 export interface TemplateStation {
@@ -22,6 +32,7 @@ export interface TemplateStation {
   tipo: QuestionType
   obligatoria: boolean
   opciones: StationOption[]
+  contenido: StationContent
 }
 
 export interface JourneyTemplate {
@@ -29,6 +40,7 @@ export interface JourneyTemplate {
   nombre: string
   version: number
   estaciones: TemplateStation[]
+  contenido: StationContent
 }
 
 interface TemplateWire {
@@ -37,12 +49,19 @@ interface TemplateWire {
   nombre: string
   version: number
   estaciones: TemplateStation[]
+  contenido?: StationContent
 }
 
 function normalizeTemplate(wire: TemplateWire): JourneyTemplate {
   const id = wire.id ?? wire._id
   if (!id) throw new Error('La plantilla llegó sin id.')
-  return { id, nombre: wire.nombre, version: wire.version, estaciones: wire.estaciones }
+  return {
+    id,
+    nombre: wire.nombre,
+    version: wire.version,
+    estaciones: wire.estaciones,
+    contenido: wire.contenido ?? {},
+  }
 }
 
 export async function getActiveTemplate(token: string): Promise<JourneyTemplate> {

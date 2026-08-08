@@ -142,10 +142,13 @@ describe('CaseRoom', () => {
     const send = vi.fn(() => Promise.resolve({ id: 'm2', timestamp: Date.now() }))
     const sendTyping = vi.fn()
     useChannelMock.mockReturnValue({
+      // The chat only renders once the team has started the session, so the
+      // channel has to carry that event for the composer to exist at all.
       messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
         {
           id: 'm1',
-          content: 'Hola equipo',
+          content: { body: 'Hola equipo' },
           sender: { id: 'u-2', anon: false },
         },
       ],
@@ -198,9 +201,15 @@ describe('CaseRoom', () => {
 
     render(<CaseRoom token="tok" caseId="case-1" />)
 
-    expect(await screen.findByText(/falta 1 docente/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/esperando al segundo docente/i)).toBeDisabled()
-    expect(screen.getByRole('button', { name: /enviar/i })).toBeDisabled()
+    /*
+     * With one teacher present and no session started, the room shows the
+     * waiting state — the composer isn't rendered at all rather than
+     * rendered-and-disabled, so there's no input or Enviar button to assert
+     * on. What matters is that nothing can be published from here.
+     */
+    expect(await screen.findByText(/esperando al equipo/i)).toBeInTheDocument()
+    expect(screen.getByTestId('case-room')).toHaveAttribute('data-session-active', 'false')
+    expect(screen.queryByRole('button', { name: /enviar/i })).toBeNull()
     expect(send).not.toHaveBeenCalled()
   })
 
@@ -255,7 +264,14 @@ describe('CaseRoom', () => {
 
     render(<CaseRoom token="tok" caseId="case-1" />)
 
-    expect(await screen.findByTestId('case-room')).toHaveAttribute('data-session-active', 'true')
+    /*
+     * `findByTestId` alone resolves on the loading branch — it carries the
+     * same testid but no `data-session-active` — so this waits on the
+     * attribute rather than on the element existing.
+     */
+    await waitFor(() =>
+      expect(screen.getByTestId('case-room')).toHaveAttribute('data-session-active', 'true'),
+    )
     expect(screen.getByText('Vamos con la primera estación.')).toBeInTheDocument()
     expect(screen.queryByText('La experiencia colaborativa ha comenzado.')).not.toBeInTheDocument()
   })
@@ -270,7 +286,10 @@ describe('CaseRoom', () => {
       }),
     )
     useChannelMock.mockReturnValue({
-      messages: [],
+      // Same gate as above: no session, no composer, so no typing line.
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+      ],
       send: vi.fn(),
       presence: { kind: 'aggregate', count: 2, recent: [] },
       status: 'ready',

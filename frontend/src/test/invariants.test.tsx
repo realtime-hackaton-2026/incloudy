@@ -130,7 +130,8 @@ describe('Invariant 5 — progress stays inside its bounds', () => {
 describe('Invariant 7 — a selected station always exists in the catalog', () => {
   it('only ever surfaces stations from STATIONS', async () => {
     const user = userEvent.setup()
-    render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
+    // Focus only opens on the station the case has actually reached.
+    render(<CaseMap stage="actuar" onSelectStage={() => {}} />)
     const hotspot = screen.getByRole('button', { name: /actuar en la escuela/i })
     await user.click(hotspot)
     // The HUD names a real station, not an invented one.

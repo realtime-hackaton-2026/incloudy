@@ -20,6 +20,28 @@ import type { CaseStage, Station } from './stations'
 /** How far the camera pushes in on a selected station. */
 const CAMERA_ZOOM = 1.08
 
+/**
+ * Where a station stands relative to the case's current position.
+ *
+ * `estacion_actual` is the first station the server still considers
+ * unanswered, so it splits the five cleanly: anything before it is done,
+ * anything after it is not yet reachable.
+ */
+export type StationState = 'completed' | 'available' | 'locked'
+
+function stationStateAt(index: number, activeIndex: number): StationState {
+  if (index < activeIndex) return 'completed'
+  if (index === activeIndex) return 'available'
+  return 'locked'
+}
+
+/** Spoken state, so it does not depend on seeing the colour. */
+const STATE_SUFFIX: Record<StationState, string> = {
+  completed: ' · completada',
+  available: ' · disponible',
+  locked: ' · bloqueada',
+}
+
 export interface CaseMapProps {
   stage: CaseStage
   /** Omit to render a read-only map: stations stop being clickable. */
@@ -29,6 +51,12 @@ export interface CaseMapProps {
   /** Reports the station under the pointer, so a case list can light up in turn. */
   onHoverStage?: (stage: CaseStage | null) => void
   className?: string
+  /**
+   * Lets the map break out of the app's reading-width shell. The map is the
+   * game on its own route and one section among many inside a case, so the
+   * caller decides which it is.
+   */
+  wide?: boolean
   /**
    * Fills the popup with real content — a station's actual form — instead
    * of the small "Explorar →" preview. This is what turns a click on the
@@ -45,6 +73,7 @@ export function CaseMap({
   highlightStage = null,
   onHoverStage,
   className,
+  wide = false,
   renderStationPanel,
 }: CaseMapProps) {
   // Where the camera is pointed. Null is the wide view; picking a station
@@ -75,6 +104,10 @@ export function CaseMap({
     : 'translate(26px, -50%)'
 
   function focus(next: CaseStage | null) {
+    // A locked station has nothing to open: the server would reject the
+    // answer with a 409 anyway, so the map refuses the click here rather
+    // than presenting a form that cannot be submitted.
+    if (next !== null && stationStateAt(stationIndex(next), activeIndex) === 'locked') return
     setFocused(next)
     onHoverStage?.(next)
   }
@@ -91,7 +124,11 @@ export function CaseMap({
   }, [renderStationPanel, focused])
 
   return (
-    <div className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
+    <div
+      className={[styles.wrapper, wide ? styles.wide : '', className ?? '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div
         className={styles.frame}
         style={{ aspectRatio: MAP_ASPECT_RATIO }}
@@ -122,11 +159,15 @@ export function CaseMap({
           />
 
           {STATIONS.map((station, index) => {
-            const reached = index <= activeIndex
-            const locked = index > activeIndex
+            // Three states, not two. `reached` used to cover the current
+            // station as well as the finished ones, so "where I am" and
+            // "where I have been" looked identical on the map.
+            const state = stationStateAt(index, activeIndex)
+            const locked = state === 'locked'
             const isActive = station.stage === stage
             const classes = [styles.hotspot]
-            if (reached) classes.push(styles.reached)
+            if (state === 'completed') classes.push(styles.completed)
+            if (state === 'available') classes.push(styles.available)
             // The pin already marks the current station; a bead there would
             // collide with it.
             if (isActive) classes.push(styles.underPin)
@@ -137,7 +178,10 @@ export function CaseMap({
               <button
                 key={station.stage}
                 type="button"
-                disabled={!interactive}
+                // Locked is disabled rather than merely styled: it must not be
+                // reachable by keyboard either, and `disabled` is what stops a
+                // click opening a form the server will reject.
+                disabled={!interactive || locked}
                 onClick={() => focus(focused === station.stage ? null : station.stage)}
                 onMouseEnter={() => onHoverStage?.(station.stage)}
                 onMouseLeave={() => onHoverStage?.(focused)}
@@ -146,7 +190,10 @@ export function CaseMap({
                 // lettering.
                 style={{ left: `${station.x}%`, top: `${station.y - 5.2}%` }}
                 aria-current={isActive ? 'step' : undefined}
-                aria-label={`${station.label} ${station.place}${locked ? ' · bloqueada' : ''}`}
+                // State is in the name, not only in colour — a locked or done
+                // station has to be distinguishable without seeing it.
+                aria-label={`${station.label} ${station.place}${STATE_SUFFIX[state]}`}
+                data-station-state={state}
               >
                 <span className={styles.hotspotLabel}>{station.label}</span>
               </button>

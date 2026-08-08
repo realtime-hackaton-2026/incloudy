@@ -52,7 +52,9 @@ describe('CaseMap reports its camera as state', () => {
 
   it('reports the focused station immediately on selection, not once the camera settles', async () => {
     const user = userEvent.setup()
-    render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
+    // Must click the *available* station: anything past the case's current
+    // position is locked and refuses focus by design.
+    render(<CaseMap stage="actuar" onSelectStage={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: /actuar en la escuela/i }))
 
@@ -204,7 +206,7 @@ describe('Overlays report presence as state', () => {
 describe('Double interaction does not corrupt state', () => {
   it('toggles the camera back to wide instead of stacking a second focus', async () => {
     const user = userEvent.setup()
-    render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
+    render(<CaseMap stage="orientar" onSelectStage={() => {}} />)
 
     const hotspot = screen.getByRole('button', { name: /orientar en la montaña/i })
     const map = screen.getByTestId('case-map')
@@ -220,22 +222,47 @@ describe('Double interaction does not corrupt state', () => {
 
   it('never focuses two stations, however the hotspots are hammered', async () => {
     const user = userEvent.setup()
-    render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
+    render(<CaseMap stage="acompanar" onSelectStage={() => {}} />)
 
+    // Completed and locked stations are in the list on purpose: hammering
+    // the ones that must refuse is exactly where a stale focus would show.
     const hotspots = [
       /orientar en la montaña/i,
-      /actuar en la escuela/i,
-      /actuar en la escuela/i,
+      /acompanar en el bosque|acompañar en el bosque/i,
       /compartir en la aldea/i,
-      /orientar en la montaña/i,
+      /acompanar en el bosque|acompañar en el bosque/i,
+      /explorar en la selva/i,
     ]
 
     for (const name of hotspots) {
-      await user.click(screen.getByRole('button', { name }))
+      const button = screen.getByRole('button', { name })
+      if (!(button as HTMLButtonElement).disabled) await user.click(button)
       const focused = screen.getByTestId('case-map').getAttribute('data-focused-station')
       expect(STATIONS.filter((s) => s.stage === focused).length).toBeLessThanOrEqual(1)
     }
 
     expect(screen.getAllByTestId('case-map')).toHaveLength(1)
+  })
+
+  /* The rule the three edits above exist to protect. */
+  it('refuses to focus a station the case has not reached', async () => {
+    const user = userEvent.setup()
+    render(<CaseMap stage="explorar" onSelectStage={() => {}} />)
+
+    const locked = screen.getByRole('button', { name: /compartir en la aldea/i })
+    expect(locked).toBeDisabled()
+    expect(locked).toHaveAttribute('data-station-state', 'locked')
+
+    await user.click(locked)
+    const map = screen.getByTestId('case-map')
+    expect(map).toHaveAttribute('data-state', 'wide')
+    expect(map).toHaveAttribute('data-focused-station', '')
+  })
+
+  it('labels each station with its state, not only its colour', () => {
+    render(<CaseMap stage="actuar" onSelectStage={() => {}} />)
+    expect(screen.getByRole('button', { name: /explorar en la selva · completada/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /actuar en la escuela · disponible/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /compartir en la aldea · bloqueada/i })).toBeTruthy()
   })
 })

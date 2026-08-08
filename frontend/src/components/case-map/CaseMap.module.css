@@ -11,6 +11,32 @@
 }
 
 /*
+ * The map breaking out of the app's reading-width shell.
+ *
+ * On its own route the map *is* the game, and 1180px of text column is the
+ * wrong frame for it. The negative margin escapes the parent's padding
+ * without needing the shell to know the map exists; `100vw` minus the
+ * scrollbar keeps it from causing horizontal overflow, which is the usual
+ * way this trick goes wrong.
+ */
+.wide {
+  width: min(100vw - var(--scrollbar, 0px), 1560px);
+  max-width: none;
+  margin-inline: auto;
+  /* Pull back out of `.app`'s side padding, but never past the viewport. */
+  margin-left: calc(50% - min(50vw - var(--scrollbar, 0px) / 2, 780px));
+  margin-right: 0;
+}
+
+@media (max-width: 900px) {
+  /* Below the shell's own width there is nothing to escape from. */
+  .wide {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/*
  * Staged reveal — "show first, explain second".
  *
  * The world arrives alone, then the markers, then the progress. Landing on
@@ -169,9 +195,40 @@
 }
 
 /* Stations the case has already passed through. */
-.reached {
-  background: rgb(52 120 184 / 78%);
-  border-color: rgb(241 216 166 / 85%);
+/*
+ * Three states, three readings. `.reached` used to cover both finished and
+ * current, so the child could not tell "I have been here" from "I am here".
+ */
+
+/* Behind you: settled river blue, no glow — it is history, not a call to act. */
+.completed {
+  background: rgb(52 120 184 / 82%);
+  border-color: rgb(241 216 166 / 70%);
+}
+
+/* Where you can go now: warm, lit, and quietly breathing so the eye finds it. */
+.available {
+  background: rgb(240 200 106 / 90%);
+  border-color: var(--parchment-hi);
+  box-shadow: 0 0 16px 3px rgb(240 200 106 / 45%);
+  animation: availablePulse 2600ms ease-in-out infinite;
+}
+
+@keyframes availablePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 14px 2px rgb(240 200 106 / 38%);
+  }
+
+  50% {
+    box-shadow: 0 0 22px 6px rgb(240 200 106 / 60%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .available {
+    animation: none;
+  }
 }
 
 .hotspotLocked {

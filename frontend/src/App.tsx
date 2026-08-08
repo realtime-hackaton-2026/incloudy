@@ -9,8 +9,9 @@ import { CaseMap } from './components/case-map'
 import type { CaseStage } from './components/case-map'
 import { CinematicOverlay } from './components/cinematic-overlay'
 import { Login } from './components/login'
-import { MapEnvironment } from './components/map-environment'
 import { Registro } from './components/registro'
+import { Scene } from './components/scene'
+import type { SceneVariant } from './components/scene'
 
 type AuthScreenName = 'login' | 'registro'
 type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' }
@@ -84,12 +85,19 @@ function App() {
   // unreconciled data models — see docs/memoria.md for why this waits.
   const [demoStage, setDemoStage] = useState<CaseStage>('explorar')
 
-  /** Only a fresh sign-in plays the entrance; restoring a token must not. */
+  /**
+   * Only a fresh sign-in plays the entrance; restoring a token must not.
+   *
+   * Signing in lands on the map, not on casos: the map is the reward for
+   * entering, and it is the only screen that shows it.
+   */
   async function enterWorld(
     credentials: Credentials,
     authenticate: (credentials: Credentials) => Promise<boolean>,
   ) {
-    if (await authenticate(credentials)) setEntering(true)
+    if (!(await authenticate(credentials))) return
+    location.hash = '#/mapa'
+    setEntering(true)
   }
 
   // A stored token is being checked. Rendering the login here would flash it
@@ -97,7 +105,7 @@ function App() {
   if (status === 'restoring') {
     return (
       <>
-        <MapEnvironment depth="ambient" />
+        <Scene variant="journal" />
         <p className="app-restoring">Recuperando tu sesión…</p>
       </>
     )
@@ -106,12 +114,9 @@ function App() {
   if (!session) {
     return (
       <>
-        <MapEnvironment
-          depth="full"
-          // Scene 02 on a cold open; a focused field pushes the world back
-          // so the panel owns the attention.
-          phase={authFocused ? 'idle' : 'entering'}
-        />
+        {/* The campsite at dusk — deliberately not the map. Seeing the map
+            here would spend its impact before the user ever arrives. */}
+        <Scene variant="gate" entering attentive={authFocused} />
         {authScreen === 'login' ? (
           <Login
             onSubmit={(credentials) => enterWorld(credentials, signIn)}
@@ -138,11 +143,13 @@ function App() {
   }
 
   const route: RouteName = view.name === 'map-demo' ? 'mapa' : 'casos'
+  // The map is the world; everything else happens at the explorer's desk.
+  const scene: SceneVariant = view.name === 'map-demo' ? 'world' : 'journal'
 
   return (
     <>
-      <MapEnvironment depth="ambient" phase={entering ? 'sharpening' : 'idle'} />
-      {entering && <CinematicOverlay />}
+      <Scene variant={scene} entering={entering} />
+      {entering && <CinematicOverlay caption="Tu mundo te espera" />}
 
       <main className="app">
         <AppHeader

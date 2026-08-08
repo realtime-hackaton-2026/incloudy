@@ -24,6 +24,24 @@
   --parchment: #e6c995;
   --parchment-hi: #f1d8a6;
 
+  /* Paper and wood — the explorer's notebook. Restored deliberately: the
+     card reading as an object in the world, rather than a modal floating
+     over it, is the strongest thing the original login had. */
+  --paper: #fdfbf7;
+  --paper-edge: #efe4d2;
+  --ink: #3a3226;
+  --ink-soft: #6d6152;
+  --wood: #e0c9a3;
+  --wood-dark: #c3a985;
+
+  /* --- The gate: dusk at the campsite --------------------------------- */
+  --night-top: #0b1622;
+  --night-mid: #16293d;
+  --dusk: #2d4a63;
+  --horizon: #6b5a7a;
+  --ember: #ff9d5c;
+  --firefly: #ffe9a8;
+
   /* --- Text ----------------------------------------------------------- */
   --text: #f3f0e8;
   --text-soft: #9aa3b2;

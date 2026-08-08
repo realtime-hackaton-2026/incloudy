@@ -168,8 +168,8 @@ export function AppHeader({
         </div>
       , document.body)}
       {notificationsOpen && createPortal(
-        <div className={styles.settingsBackdrop} role="presentation" onMouseDown={() => setNotificationsOpen(false)}>
-          <section className={styles.settingsPanel} role="dialog" aria-modal="true" aria-labelledby="notifications-title"
+        <div className={styles.notificationsBackdrop} role="presentation" onMouseDown={() => setNotificationsOpen(false)}>
+          <section className={styles.notificationsPanel} role="dialog" aria-modal="true" aria-labelledby="notifications-title"
             onMouseDown={(event) => event.stopPropagation()}>
             <div className={styles.settingsHeading}>
               <div><span>AVISOS</span><h2 id="notifications-title">Notificaciones</h2></div>
@@ -181,8 +181,8 @@ export function AppHeader({
             )}
             <ul className={styles.notificationsList}>
               {notifications.unread.map((item) => (
-                <li key={item.id}>
-                  <button type="button" className={styles.notificationItem} onClick={() => void notifications.markRead(item.id)}>
+                <li key={item.id} className={styles.notificationItem}>
+                  <button type="button" className={styles.notificationBody} onClick={() => void notifications.markRead(item.id)}>
                     <span className={styles.notificationDot} aria-hidden="true" />
                     <span className={styles.notificationCopy}>
                       <strong>{item.titulo}</strong>
@@ -190,6 +190,8 @@ export function AppHeader({
                     </span>
                     <time>{new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(item.created_at))}</time>
                   </button>
+                  <button type="button" className={styles.notificationDismiss} aria-label={`Descartar aviso: ${item.titulo}`}
+                    onClick={() => void notifications.markRead(item.id)}>×</button>
                 </li>
               ))}
             </ul>

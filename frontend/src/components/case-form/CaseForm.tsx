@@ -15,6 +15,7 @@ import { useJourneyTemplate } from '../../journeys'
 import { CaseMap, STATIONS, stationIndex, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
 import { CaseChat } from '../../chat'
+import { DebateRoom } from '../../debate'
 import { AvatarPicker, useAvatar } from '../../avatar'
 import { OwlSays, OwlTip, journeyProgress, lockedStation } from '../../guide'
 import type { Guidance } from '../../guide'
@@ -664,6 +665,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           La conversación privada del caso está disponible desde el búho del mapa. El asistente sigue siendo privado.
         </p>
         <CaseChat token={token} caseId={caseId} />
+        <DebateRoom token={token} caseId={caseId} />
       </section>
 
       {isOwner && (

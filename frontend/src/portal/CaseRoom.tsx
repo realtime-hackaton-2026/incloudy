@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import type { PortalError } from '@portalsdk/core'
@@ -8,7 +8,11 @@ import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
 import { askAssistant } from '../chat/api'
 import { BurixPanel } from './BurixPanel'
+import logo from '../assets/images/logo.webp'
 import styles from './CaseRoom.module.css'
+
+const REACTION_DEBOUNCE_MS = 5_000
+const REACTION_COOLDOWN_MS = 45_000
 
 export interface CaseRoomProps {
   token: string
@@ -166,6 +170,27 @@ function RoomChannel({
   const sessionActive = latestControl ? isSessionStarted(latestControl.content) : false
   const currentMessages = messages.slice(latestControlIndex + 1).filter((message) => !isSessionControl(message.content))
   const previousMessages = messages.slice(0, Math.max(0, latestControlIndex)).filter((message) => !isSessionControl(message.content))
+  // The bubble mirrors the room: the latest thing Búrix said — an answer to a
+  // question or a proactive reaction to the team's comments — or a greeting
+  // while he has nothing to say yet.
+  const burixLine = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const content = messages[index].content
+      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction')) {
+        return content.body
+      }
+    }
+    return null
+  }, [messages])
+  const burixBubbleText = burixLine
+    ?? (sessionActive
+      ? 'Sala abierta. Comentad lo que estáis viendo: leo el caso y respondo aquí, al momento.'
+      : 'Espero al equipo. Cuando abráis la sala, contadme lo que veis en el caso.')
+  // Guard against the reaction effect running while a question is in flight,
+  // and a count of the comments already considered, so the debounce only
+  // restarts when a genuinely new comment arrives.
+  const reactionInFlight = useRef(false)
+  const lastReactionCheck = useRef(0)
 
   useEffect(() => {
     onSessionActiveChange?.(sessionActive)
@@ -211,6 +236,75 @@ function RoomChannel({
       setSending(false)
     }
   }
+
+  const reactToComments = useCallback(
+    async (comments: string[]) => {
+      if (reactionInFlight.current) return
+      reactionInFlight.current = true
+      try {
+        const evidence = comments.length === 1
+          ? comments[0]
+          : `${comments.slice(0, -1).map((item) => `«${item}»`).join(', ')} y «${comments[comments.length - 1]}»`
+        const answer = await askAssistant(
+          token,
+          `El equipo de docentes acaba de comentar en la sala: ${evidence}. ` +
+            'Como Búrix, el búho guía del caso (ficticio o anonimizado), reacciona con una ' +
+            'observación breve y cálida: refuerza, matiza o pregunta, conectándola con el caso. Máximo dos frases.',
+          caseId,
+        )
+        if (answer.trim()) await send({ content: { type: 'burix_reaction', body: answer.trim() } })
+      } catch {
+        // Búrix pierde esta vez; un fallo de IA no debe romper la sala.
+      } finally {
+        reactionInFlight.current = false
+      }
+    },
+    [caseId, send, token],
+  )
+
+  // Proactive Búrix: when the team writes comments during an open session, the
+  // owl waits for a quiet moment and answers the burst with one reaction,
+  // respecting a cooldown so the assistant is not called on every keystroke.
+  useEffect(() => {
+    const othersChat = messages.filter(
+      (message) =>
+        typeof message.content !== 'string' &&
+        !message.content.type &&
+        message.sender.id !== me?.id,
+    )
+    const newCount = othersChat.length
+    if (newCount === lastReactionCheck.current) return
+    lastReactionCheck.current = newCount
+    if (!sessionActive || !unlocked || askingAi || newCount === 0) return
+    let lastAiIndex = -1
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const content = messages[index].content
+      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction' || content.type === 'ai_question')) {
+        lastAiIndex = index
+        break
+      }
+    }
+    const lastMessage = messages[messages.length - 1]
+    const lastMessageContent = lastMessage?.content
+    if (lastMessageContent && typeof lastMessageContent !== 'string' && lastMessageContent.type === 'ai_question') return
+    const lastAiAt = lastAiIndex >= 0 ? messages[lastAiIndex].timestamp : undefined
+    if (typeof lastAiAt === 'number' && Date.now() - lastAiAt < REACTION_COOLDOWN_MS) return
+    const comments = messages
+      .slice(lastAiIndex + 1)
+      .filter(
+        (message) =>
+          typeof message.content !== 'string' &&
+          !message.content.type &&
+          message.sender.id !== me?.id,
+      )
+      .slice(-3)
+      .map((message) => (typeof message.content !== 'string' ? message.content.body : ''))
+    if (comments.length === 0) return
+    const timer = window.setTimeout(() => {
+      void reactToComments(comments)
+    }, REACTION_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [askingAi, me?.id, messages, reactToComments, sessionActive, unlocked])
 
   async function handleAskBurix() {
     const question = draft.trim()
@@ -268,6 +362,14 @@ function RoomChannel({
           <span className={`${styles.presence} ${unlocked ? styles.presenceReady : ''}`}>
             {onlineCount} {onlineCount === 1 ? 'conectado' : 'conectados'}
           </span>
+        </div>
+      </div>
+
+      <div className={styles.burixStrip} data-testid="burix-bubble">
+        <img className={styles.burixOwl} src={logo} alt="Búrix" />
+        <div className={styles.burixBubble}>
+          <span className={styles.burixName}>Búrix · guía de la sala</span>
+          <p>{burixBubbleText}</p>
         </div>
       </div>
 
@@ -375,6 +477,7 @@ function messageBody(content: ChatMessage | string) {
 function messageAuthorLabel(message: { content: ChatMessage | string; sender: { id: string; username?: string } }, meId?: string) {
   const content = message.content
   if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
+  if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
   if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
   if (meId && message.sender.id === meId) return 'Tú'
   return message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`

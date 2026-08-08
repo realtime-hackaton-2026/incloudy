@@ -72,6 +72,48 @@
   background: var(--river);
 }
 
+.burixStrip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.burixOwl {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border: 2px solid var(--river);
+  border-radius: 50%;
+  background: var(--surface-raised);
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.burixBubble {
+  flex: 1;
+  padding: 8px 12px 9px 14px;
+  border: 1px solid var(--river);
+  border-radius: 12px 12px 12px 3px;
+  background: color-mix(in srgb, var(--river-deep) 28%, transparent);
+}
+
+.burixName {
+  display: block;
+  margin-bottom: 3px;
+  font: 700 10px/1.4 var(--label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--river-hi);
+}
+
+.burixBubble p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
 .waiting,
 .liveStrip {
   display: flex;

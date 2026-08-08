@@ -1,0 +1,276 @@
+/*
+ * Two opposed stances: Búrix in parchment (observes), Tero in river (acts).
+ * Colour separates the speakers before you read either name.
+ */
+
+.debate {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--parchment);
+}
+
+.hint {
+  font-family: var(--label);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* --- The two stances, before anyone has spoken ----------------------- */
+
+.stances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stance {
+  padding: 12px;
+  border-radius: 11px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.stanceBurix {
+  border-color: rgb(232 201 120 / 34%);
+}
+
+.stanceTero {
+  border-color: rgb(60 145 182 / 38%);
+}
+
+.stanceName {
+  display: block;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stanceBurix .stanceName {
+  color: var(--parchment);
+}
+
+.stanceTero .stanceName {
+  color: var(--river-hi);
+}
+
+.stancePosture {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+/* --- Turns ----------------------------------------------------------- */
+
+.turns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.turn {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--hairline);
+}
+
+.turnBurix {
+  border-left: 3px solid var(--parchment);
+  background: rgb(232 201 120 / 7%);
+}
+
+.turnTero {
+  border-left: 3px solid var(--map-blue);
+  background: rgb(60 145 182 / 9%);
+}
+
+.turnHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.turnName {
+  font-family: var(--label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.turnBurix .turnName {
+  color: var(--parchment);
+}
+
+.turnTero .turnName {
+  color: var(--river-hi);
+}
+
+.turnRound {
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.argument {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* Gains and risks side by side: a stance never shows without its cost. */
+.ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 560px) {
+  .ledger,
+  .stances {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ledgerCol h5 {
+  margin: 0 0 4px;
+  font-family: var(--label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gains h5 {
+  color: var(--success);
+}
+
+.risks h5 {
+  color: var(--danger);
+}
+
+.ledgerCol ul {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ledgerCol li {
+  position: relative;
+  padding-left: 15px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+/* The sign carries gain-vs-risk, so it never rests on colour alone. */
+.gains li::before {
+  content: '+';
+  position: absolute;
+  left: 0;
+  color: var(--success);
+}
+
+.risks li::before {
+  content: '−';
+  position: absolute;
+  left: 0;
+  color: var(--danger);
+}
+
+/* --- State ----------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.thinking {
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.closed {
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 10px;
+}
+
+.state {
+  margin: 0;
+  font-family: var(--label);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stateError {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .turn {
+    animation: turnIn var(--small) var(--ease) both;
+  }
+
+  @keyframes turnIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

@@ -211,6 +211,7 @@ describe('CaseRoom', () => {
     expect(screen.getByTestId('case-room')).toHaveAttribute('data-session-active', 'false')
     expect(screen.queryByRole('button', { name: /enviar/i })).toBeNull()
     expect(send).not.toHaveBeenCalled()
+    expect(screen.getByTestId('burix-bubble')).toHaveTextContent(/espero al equipo/i)
   })
 
   it('publishes the shared session-start event when requested with two teachers', async () => {
@@ -413,4 +414,87 @@ describe('CaseRoom', () => {
     expect(await screen.findByText('Atención sostenida limitada.')).toBeInTheDocument()
     expect(screen.getByText('Búrix · análisis')).toBeInTheDocument()
   })
+
+  it('mirrors an answered question in the Búrix bubble', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+        {
+          id: 'm-ai',
+          content: { type: 'ai_answer', body: 'Revisad juntos el progreso del caso.' },
+          sender: { id: 'u-2', anon: false },
+          timestamp: Date.now(),
+        },
+      ],
+      send: vi.fn(),
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    expect(await screen.findByTestId('burix-bubble')).toHaveTextContent('Revisad juntos el progreso del caso.')
+  })
+
+  it('reacts proactively to a teammate comment after a quiet moment', async () => {
+    mockFetch((input) => String(input).endsWith('/chat')
+      ? jsonResponse({ respuesta: 'Tomo nota: parece que el reto es lo que está en juego.' })
+      : jsonResponse({
+          token: 'ptok',
+          expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+          channel_id: 'case-1',
+          publishable_key: 'pk_test',
+        }))
+    const messages: Array<Record<string, unknown>> = [
+      { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+      {
+        id: 'c1',
+        content: { body: 'El alumno termina antes que todos.' },
+        sender: { id: 'u-2', anon: false },
+        timestamp: Date.now(),
+      },
+    ]
+    const channel: Record<string, unknown> = {
+      messages,
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    }
+    const send = vi.fn((msg: { content: unknown }) => {
+      channel.messages = [...messages, {
+        id: 'm-reaction',
+        content: msg.content,
+        sender: { id: 'u-2', anon: false },
+        timestamp: Date.now(),
+      }]
+      return Promise.resolve({ id: 'm-reaction', timestamp: Date.now() })
+    })
+    channel.send = send
+    useChannelMock.mockReturnValue(channel)
+
+    const view = render(<CaseRoom token="tok" caseId="case-1" />)
+
+    // The owl waits the debounce (5s) before answering the burst.
+    await waitFor(() => expect(send).toHaveBeenCalledWith({
+      content: {
+        type: 'burix_reaction',
+        body: 'Tomo nota: parece que el reto es lo que está en juego.',
+      },
+    }), { timeout: 8_000 })
+    view.rerender(<CaseRoom token="tok" caseId="case-1" />)
+    expect(await screen.findByTestId('burix-bubble')).toHaveTextContent('Tomo nota: parece que el reto es lo que está en juego.')
+  }, 12_000)
 })

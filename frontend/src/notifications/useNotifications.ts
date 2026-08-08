@@ -12,7 +12,9 @@ import {
 } from './api'
 import type { AppNotification } from './api'
 
-const POLL_INTERVAL_MS = 15_000
+// Near-real-time: four seconds is imperceptible for a station advance, while
+// an SSE push channel would need backend work (see memoria, sesión 9ª).
+const POLL_INTERVAL_MS = 4_000
 
 export interface NotificationsState {
   unread: AppNotification[]
@@ -53,13 +55,20 @@ export function useNotifications(token?: string): NotificationsState {
           if (active) setError(cause instanceof Error ? cause.message : 'No se pudieron cargar las notificaciones.')
         })
     }
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') void refresh()
+    }
     poll()
     const interval = window.setInterval(poll, POLL_INTERVAL_MS)
+    window.addEventListener('focus', refreshOnVisible)
+    document.addEventListener('visibilitychange', refreshOnVisible)
     return () => {
       active = false
       window.clearInterval(interval)
+      window.removeEventListener('focus', refreshOnVisible)
+      document.removeEventListener('visibilitychange', refreshOnVisible)
     }
-  }, [token])
+  }, [token, refresh])
 
   const markRead = useCallback(
     async (notificationId: string) => {

@@ -17,15 +17,18 @@ app/
 ├── main.py          # Aplicación, CORS y WebSocket
 ├── config.py        # Configuración por variables de entorno
 ├── models.py        # Modelos Beanie (User, Case, Station)
+├── schemas.py       # Contratos y validación de entrada/salida
 ├── auth.py          # JWT, hashing y dependencias de seguridad
 ├── ws.py            # Gestión de conexiones WebSocket
-└── routers/         # Endpoints: auth, cases, chat
+├── services/        # Casos compartidos e integración con Gemini
+└── routers/         # Endpoints HTTP: auth, cases, chat
 ```
 
 ## Ejecución
 
 ```bash
 uv pip install -r requirements.txt
+copy .env.example .env
 uvicorn app.main:app --reload
 ```
 
@@ -41,7 +44,7 @@ La documentación interactiva queda en `http://localhost:8000/docs`. Toda operac
 | GET, POST | `/cases` | Listar y crear casos |
 | GET, PUT, DELETE | `/cases/{id}` | Consultar, editar y eliminar casos |
 | POST | `/chat` | Asistente IA con contexto del caso |
-| WS | `/ws` | Evento `case_published` en tiempo real |
+| WS | `/ws?token=<JWT>` | Evento privado `case_published` en tiempo real |
 | GET | `/health` | Estado del servicio |
 
 ## Configuración
@@ -52,6 +55,20 @@ Variables de entorno (ver `.env.example`):
 - `JWT_SECRET` — clave para firmar tokens
 - `GEMINI_API_KEY` — clave de Gemini (opcional; sin ella el chat responde un fallback)
 - `CORS_ORIGINS` — orígenes permitidos en el navegador
+
+`JWT_SECRET` es obligatorio y debe tener al menos 32 caracteres. En `.env`,
+`CORS_ORIGINS` se escribe como una lista JSON, por ejemplo
+`["http://localhost:5173"]`.
+
+## Pruebas
+
+```bash
+uv pip install -r requirements-dev.txt
+pytest
+```
+
+Las pruebas rápidas comprueban tokens JWT, validación de contraseñas y estaciones,
+y la construcción del contexto enviado al asistente.
 
 ## Despliegue
 

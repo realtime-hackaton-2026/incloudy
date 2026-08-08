@@ -1,33 +1,13 @@
 from datetime import datetime, timezone
-from typing import Optional
-
-from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 
 from ..auth import get_current_user
-from ..models import Case, CaseStatus, Station, Student, User
+from ..models import Case, CaseStatus, Station, User
+from ..schemas import CaseCreate, CaseUpdate, StationInput
+from ..services.cases import get_owned_case
 from ..ws import manager
 
 router = APIRouter()
-
-
-class StationInput(BaseModel):
-    orden: int
-    titulo: str
-    descripcion: str = ""
-    completado: bool = False
-
-
-class CaseCreate(BaseModel):
-    alumno: Student
-    estaciones: list[StationInput] = []
-
-
-class CaseUpdate(BaseModel):
-    alumno: Optional[Student] = None
-    estaciones: Optional[list[StationInput]] = None
-    status: Optional[CaseStatus] = None
 
 
 def utcnow() -> datetime:
@@ -67,19 +47,15 @@ async def create_case(
 async def get_case(
     case_id: str, current_user: User = Depends(get_current_user)
 ) -> Case:
-    if not ObjectId.is_valid(case_id):
-        raise HTTPException(status_code=404, detail="Caso no encontrado")
-    case = await Case.get(case_id)
-    if case is None or case.profesor_id != str(current_user.id):
-        raise HTTPException(status_code=404, detail="Caso no encontrado")
-    return case
+    return await get_owned_case(case_id, current_user)
 
 
 @router.put("/{case_id}")
 async def update_case(
     case_id: str, body: CaseUpdate, current_user: User = Depends(get_current_user)
 ) -> Case:
-    case = await get_case(case_id, current_user)
+    case = await get_owned_case(case_id, current_user)
+    was_published = case.status == CaseStatus.published
     if body.alumno is not None:
         case.alumno = body.alumno
     if body.estaciones is not None:
@@ -88,8 +64,11 @@ async def update_case(
         case.status = body.status
     case.updated_at = utcnow()
     await case.save()
-    if case.status == CaseStatus.published:
-        await manager.broadcast({"event": "case_published", "case_id": case_id})
+    if not was_published and case.status == CaseStatus.published:
+        await manager.send_to_user(
+            str(current_user.id),
+            {"event": "case_published", "case_id": case_id},
+        )
     return case
 
 
@@ -97,5 +76,5 @@ async def update_case(
 async def delete_case(
     case_id: str, current_user: User = Depends(get_current_user)
 ) -> None:
-    case = await get_case(case_id, current_user)
+    case = await get_owned_case(case_id, current_user)
     await case.delete()

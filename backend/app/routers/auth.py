@@ -1,21 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 
 from ..auth import create_access_token, get_current_user, hash_password, verify_password
 from ..models import User
+from ..schemas import RegisterRequest, TokenResponse
 
 router = APIRouter()
-
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)

@@ -448,6 +448,11 @@
   transform: translateY(-1px);
 }
 
+/* When portalled into the mission header, layout owns its position. */
+.stationEditButtonHeader {
+  position: static;
+}
+
 /* Mission actions use the same visual language as the selected answer. */
 .stationChoiceAction {
   color: var(--text);

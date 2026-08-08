@@ -209,7 +209,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
   const editButton = editable && showResult ? (
     <button
       type="button"
-      className={styles.stationEditButton}
+      className={`${styles.stationEditButton} ${headerActionTarget ? styles.stationEditButtonHeader : ''}`}
       onClick={() => {
         setEditingAnswer(true)
         setShowResult(false)

@@ -415,6 +415,45 @@ describe('CaseRoom', () => {
     expect(screen.getByText('Búrix · análisis')).toBeInTheDocument()
   })
 
+  it('renders a shared Búrix analysis markdown in the room, not literal stars', async () => {
+    mockFetch(() =>
+      jsonResponse({
+        token: 'ptok',
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+        channel_id: 'case-1',
+        publishable_key: 'pk_test',
+      }),
+    )
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+        {
+          id: 'm-burix',
+          content: {
+            type: 'burix_analysis',
+            body: '### Diagnóstico hipotético\n\nJuan presenta **dificultades** en lógica matemática.\n\n- Confianza del equipo: **50%**',
+          },
+          sender: { id: 'u-1', anon: false },
+          timestamp: Date.now(),
+        },
+      ],
+      send: vi.fn(),
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: { canPublish: true } },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    render(<CaseRoom token="tok" caseId="case-1" />)
+
+    expect(await screen.findByText('Diagnóstico hipotético')).toBeInTheDocument()
+    expect(screen.getByText('dificultades')).toBeInTheDocument()
+    expect(screen.getByText('Confianza del equipo:')).toBeInTheDocument()
+    expect(screen.queryByText(/#{1,6}\s/)).toBeNull()
+    expect(screen.queryByText(/\*\*/)).toBeNull()
+  })
+
   it('mirrors an answered question in the Búrix bubble', async () => {
     mockFetch(() =>
       jsonResponse({

@@ -205,6 +205,12 @@
   overflow-wrap: anywhere;
 }
 
+.messageRich {
+  font-size: var(--text-md);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
 .empty {
   padding: 10px;
   font-size: var(--text-sm);
@@ -319,7 +325,8 @@
 
 .historyMessages strong,
 .historyMessages time { font-size: var(--text-xs); }
-.historyMessages span { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text); }
+.historyMessages span,
+.historyMessages .rich { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text); }
 
 /* El panel lateral se consulta mientras se conversa: todos sus textos de
    contenido conservan una medida cómoda incluso en pantallas estrechas. */

@@ -8,6 +8,7 @@ import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
 import { askAssistant } from '../chat/api'
+import { RichText } from '../chat/RichText'
 import { BurixPanel } from './BurixPanel'
 import logo from '../assets/images/logo.webp'
 import styles from './CaseRoom.module.css'
@@ -416,7 +417,9 @@ function RoomChannel({
             {previousMessages.map((message) => (
               <li key={message.id}>
                 <strong>{messageAuthorLabel(message, me?.id)}</strong>
-                <span>{messageBody(message.content)}</span>
+                {isAiMessage(message.content)
+                  ? <RichText text={messageBody(message.content)} />
+                  : <span>{messageBody(message.content)}</span>}
                 <time>{formatTime(message.timestamp)}</time>
               </li>
             ))}
@@ -436,7 +439,11 @@ function RoomChannel({
                 </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
-                <p>{messageBody(message.content)}</p>
+                {/* Búrix's own contributions arrive as Markdown: headings,
+                    bold and lists must render, not show as literal stars. */}
+                {isAiMessage(message.content)
+                  ? <div className={styles.messageRich}><RichText text={messageBody(message.content)} /></div>
+                  : <p>{messageBody(message.content)}</p>}
               </li>
             ))}
           </ul>
@@ -495,6 +502,13 @@ function RoomChannel({
 
 function isSessionStarted(content: ChatMessage | string) {
   return typeof content !== 'string' && content.type === 'session_started'
+}
+
+// Búrix's own messages carry Markdown the model writes; team comments are
+// plain text and must not be re-parsed.
+function isAiMessage(content: ChatMessage | string) {
+  return typeof content !== 'string' &&
+    (content.type === 'burix_analysis' || content.type === 'ai_answer' || content.type === 'burix_reaction')
 }
 
 function isSessionControl(content: ChatMessage | string) {

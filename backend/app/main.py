@@ -7,18 +7,44 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from .config import settings
 from .auth import decode_access_token
-from .models import Case, User
+from .models import (
+    Case,
+    CaseEvent,
+    Invitation,
+    JourneyTemplate,
+    Notification,
+    PortalComment,
+    User,
+)
 from .routers import auth as auth_router
 from .routers import cases as cases_router
 from .routers import chat as chat_router
 from .routers import portal as portal_router
+from .routers import invitations as invitations_router
+from .routers import journeys as journeys_router
+from .routers import notifications as notifications_router
+from .services.seeds import ensure_default_journey
+from .services.privacy import archive_expired_cases
 from .ws import manager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.mongodb_uri)
-    await init_beanie(database=client[settings.mongodb_db], document_models=[User, Case])
+    await init_beanie(
+        database=client[settings.mongodb_db],
+        document_models=[
+            User,
+            JourneyTemplate,
+            Case,
+            Invitation,
+            CaseEvent,
+            Notification,
+            PortalComment,
+        ],
+    )
+    await ensure_default_journey()
+    await archive_expired_cases()
     yield
     client.close()
 
@@ -37,6 +63,13 @@ app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 app.include_router(cases_router.router, prefix="/cases", tags=["cases"])
 app.include_router(chat_router.router, prefix="/chat", tags=["chat"])
 app.include_router(portal_router.router, prefix="/portal", tags=["portal"])
+app.include_router(journeys_router.router, prefix="/journeys", tags=["journeys"])
+app.include_router(invitations_router.router, tags=["invitations"])
+app.include_router(
+    notifications_router.router,
+    prefix="/notifications",
+    tags=["notifications"],
+)
 
 
 @app.get("/health")

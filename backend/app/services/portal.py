@@ -6,8 +6,9 @@ import httpx
 from fastapi import HTTPException
 
 from ..config import settings
-from ..models import Case, User
+from ..models import Case, CaseStatus, User
 from ..schemas import PortalSessionResponse
+from .cases import user_role
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,15 @@ async def portal_delete(path: str) -> None:
 async def create_case_session(user: User, case: Case) -> PortalSessionResponse:
     channel_id = case_channel_id(case)
     user_id = str(user.id)
-    claims = {"email": str(user.email)}
+    role = user_role(case, user_id)
+    if role is None:
+        raise HTTPException(status_code=403, detail="No tienes acceso a la sala")
+    if case.status == CaseStatus.archived:
+        raise HTTPException(status_code=409, detail="El caso está archivado")
+    claims = {"email": str(user.email), "role": role, "username": user.nombre}
+    grants = ["connect"]
+    if role != "lector" and case.status != CaseStatus.closed:
+        grants.append("publish")
 
     await portal_post(
         f"/v1/channels/{quote(channel_id, safe='')}/members",
@@ -83,7 +92,7 @@ async def create_case_session(user: User, case: Case) -> PortalSessionResponse:
         {
             "userId": user_id,
             "claims": claims,
-            "channels": {channel_id: ["connect", "publish"]},
+            "channels": {channel_id: grants},
             "ttl": settings.portal_token_ttl,
         },
     )

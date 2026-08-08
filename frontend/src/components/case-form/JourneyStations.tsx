@@ -340,7 +340,7 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
                 }
               }}
             >
-              {finishState === 'saving' ? 'Cerrando…' : 'Cerrar el caso'}
+              {finishState === 'saving' ? 'Concluyendo…' : 'Concluir caso'}
             </button>
           ) : editable && onContinue ? (
             <button type="button" className="btn-primary" onClick={onContinue}>Continuar →</button>

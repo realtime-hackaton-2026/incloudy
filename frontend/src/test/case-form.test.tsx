@@ -105,7 +105,7 @@ function routedFetch(routes: Record<string, () => Response>) {
 }
 
 describe('CaseForm — the complete → publish state machine', () => {
-  it('offers "Completar caso" once progress hits 100%, and moves the case to completado', async () => {
+  it('offers "Concluir caso" once progress hits 100%, and moves the case to completado', async () => {
     let status = 'en_progreso'
     const fetchMock = routedFetch({
       'GET /cases/case-1': () => jsonResponse(caseWire({ status })),
@@ -130,7 +130,7 @@ describe('CaseForm — the complete → publish state machine', () => {
     // The map reads the real estado_interactivo field, not a client guess.
     expect(screen.getByTestId('case-map')).toHaveAttribute('data-active-station', 'compartir')
 
-    const completeButton = await screen.findByRole('button', { name: /completar caso/i })
+    const completeButton = await screen.findByRole('button', { name: /concluir caso/i })
     await user.click(completeButton)
 
     await waitFor(() => expect(form).toHaveAttribute('data-case-status', 'completado'))
@@ -161,8 +161,8 @@ describe('CaseForm — the complete → publish state machine', () => {
     const form = await screen.findByTestId('case-form')
     await waitFor(() => expect(form).toHaveAttribute('data-case-status', 'completado'))
 
-    // "Completar caso" must not reappear once the case is already completed.
-    expect(screen.queryByRole('button', { name: /completar caso/i })).toBeNull()
+    // "Concluir caso" must not reappear once the case is already completed.
+    expect(screen.queryByRole('button', { name: /concluir caso/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: /publicar caso/i }))
     const dialog = await screen.findByTestId('confirm-dialog')

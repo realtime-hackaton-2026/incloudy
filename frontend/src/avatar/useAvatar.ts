@@ -22,6 +22,15 @@ export interface AvatarState {
   setAvatarId: (id: string) => void
 }
 
+export function saveAvatarId(caseId: string, id: string): void {
+  if (!AVATARS.some((avatar) => avatar.id === id)) return
+  try {
+    localStorage.setItem(storageKey(caseId), id)
+  } catch {
+    // El caso sigue siendo utilizable aunque el navegador bloquee storage.
+  }
+}
+
 export function useAvatar(caseId?: string): AvatarState {
   const [avatarId, setAvatarIdState] = useState<string>(() => readAvatarId(caseId))
 

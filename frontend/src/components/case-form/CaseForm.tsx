@@ -520,7 +520,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
             onClick={handleComplete}
             disabled={completing}
           >
-            {completing ? 'Completando…' : 'Completar caso'}
+            {completing ? 'Concluyendo…' : 'Concluir caso'}
           </button>
         )}
         {isEditor && !canComplete && current.progreso.porcentaje < 100 && (

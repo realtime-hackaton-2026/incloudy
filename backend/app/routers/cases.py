@@ -177,6 +177,7 @@ async def create_case(
     total_required = sum(station.obligatoria for station in template.estaciones)
     case = Case(
         profesor_id=str(current_user.id),
+        status=CaseStatus.in_progress,
         join_code=await new_join_code(),
         template_id=str(template.id),
         template_version=template.version,

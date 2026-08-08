@@ -59,6 +59,7 @@ export function useCase(token: string, caseId: string): CaseState {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const editVersion = useRef(0)
 
   useEffect(() => {
     let active = true
@@ -81,17 +82,26 @@ export function useCase(token: string, caseId: string): CaseState {
 
   const setAlumno = useCallback(
     (alumno: Student) => {
+      editVersion.current += 1
+      const version = editVersion.current
       setItem((current) => (current ? { ...current, alumno } : current))
       if (timer.current) clearTimeout(timer.current)
       setSaveStatus('saving')
       timer.current = setTimeout(() => {
         updateStudent(token, caseId, alumno)
           .then((saved) => {
-            setItem(saved)
-            setSaveStatus('saved')
-            setSaveError(null)
+            if (editVersion.current === version) {
+              setItem(saved)
+              setSaveStatus('saved')
+              setSaveError(null)
+              return
+            }
+            // Se siguió escribiendo mientras esta petición viajaba: conserva
+            // el texto nuevo y deja que el temporizador más reciente lo guarde.
+            setItem((current) => current ? { ...saved, alumno: current.alumno } : saved)
           })
           .catch((cause) => {
+            if (editVersion.current !== version) return
             setSaveStatus('error')
             setSaveError(cause instanceof ApiError ? cause.message : 'No se pudo guardar.')
           })

@@ -155,16 +155,28 @@ function RoomChannel({
   // updates (frame `meta` → `not_permitted`), so names can only arrive in the
   // handshake metadata of a peer; until then the UI falls back to "Docente · id".
   const participants = useMemo(
-    () =>
-      presence?.kind === 'detailed'
+    () => {
+      const connected = presence?.kind === 'detailed'
         ? presence.participants.map((participant) => ({
             id: participant.id,
             username: participant.username
               ?? (typeof participant.metadata?.username === 'string' ? participant.metadata.username : undefined),
             anon: participant.anon,
           }))
-        : [],
-    [presence],
+        : []
+      // Some Portal presence snapshots omit the current socket. Add the
+      // verified local identity explicitly so the owner and every joining
+      // teacher can always see themselves in the realtime roster.
+      if (me?.id && !connected.some((participant) => participant.id === me.id)) {
+        connected.push({
+          id: me.id,
+          username: typeof me.claims?.username === 'string' ? me.claims.username : undefined,
+          anon: false,
+        })
+      }
+      return connected
+    },
+    [me, presence],
   )
   // Mirrors the backend's own `publish` grant (see `services/portal.py`):
   // a lector, or anyone in a closed case, never has it. Gates the composer
@@ -174,12 +186,12 @@ function RoomChannel({
   // never pushed through presence metadata — the roster falls back to
   // "Docente · id" until names are joined app-side.
   const canPublish = me?.claims?.canPublish === true
-  const realtimeCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
+  const realtimeCount = Math.max(participants.length, presence?.count ?? 0)
   const onlineCount = Math.max(realtimeCount, persistentPresenceCount)
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,
     participants,
-    detailed: presence?.kind === 'detailed',
+    detailed: participants.length > 0 || presence?.kind === 'detailed',
     status,
     error: portalError,
   }), [onlineCount, participants, presence?.kind, portalError, status])
@@ -476,10 +488,10 @@ function RoomChannel({
               disabled={sending || !unlocked || !canPublish}
               onChange={(event) => handleDraftChange(event.target.value)}
             />
-            <button type="submit" className="btn-primary" disabled={sending || !unlocked || !canPublish || !draft.trim()}>
+            <button type="submit" className={`btn-primary ${styles.sendButton}`} disabled={sending || !unlocked || !canPublish || !draft.trim()}>
               {sending ? '…' : 'Enviar'}
             </button>
-            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !canPublish || !draft.trim()} onClick={() => void handleAskBurix()}>
+            <button type="button" className={`btn-secondary ${styles.askButton}`} disabled={askingAi || !unlocked || !canPublish || !draft.trim()} onClick={() => void handleAskBurix()}>
               {askingAi ? 'Pensando…' : 'Preguntar a Búrix'}
             </button>
           </form>

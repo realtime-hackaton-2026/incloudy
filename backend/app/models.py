@@ -171,6 +171,7 @@ class Case(Document):
     # Short room code shared between teachers. Older documents may not have
     # one yet; the cases router assigns it lazily when they are read.
     join_code: Optional[str] = Field(default=None, min_length=6, max_length=6)
+    forix_shared: bool = False
     colaboradores: list[Collaborator] = Field(default_factory=list)
     colaboradores_ids: list[str] = Field(default_factory=list)
     template_id: Optional[str] = None

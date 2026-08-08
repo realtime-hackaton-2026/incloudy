@@ -1,4 +1,4 @@
-export type PortalRoomMessageType = 'chat' | 'session_started'
+export type PortalRoomMessageType = 'chat' | 'session_started' | 'ai_question' | 'ai_answer'
 
 export interface ChatMessage {
   body: string

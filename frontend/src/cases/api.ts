@@ -75,6 +75,7 @@ export interface Case {
   id: string
   profesorId: string
   joinCode: string
+  forixShared: boolean
   colaboradores: Collaborator[]
   colaboradoresIds: string[]
   templateId: string | null
@@ -104,6 +105,7 @@ interface CaseWire {
   id?: string
   profesor_id: string
   join_code?: string | null
+  forix_shared?: boolean
   colaboradores: { user_id: string; role: CollaboratorRole }[]
   colaboradores_ids: string[]
   template_id: string | null
@@ -150,6 +152,7 @@ function normalizeCase(wire: CaseWire): Case {
     id,
     profesorId: wire.profesor_id,
     joinCode: wire.join_code ?? id.slice(-6).toUpperCase(),
+    forixShared: wire.forix_shared ?? false,
     colaboradores: wire.colaboradores.map((item) => ({ userId: item.user_id, role: item.role })),
     colaboradoresIds: wire.colaboradores_ids,
     templateId: wire.template_id,
@@ -213,6 +216,19 @@ export async function joinCase(token: string, code: string): Promise<Case> {
     method: 'POST',
     headers: jsonHeaders(token),
     body: JSON.stringify({ code: code.trim().toUpperCase() }),
+  })
+  return normalizeCase((await response.json()) as CaseWire)
+}
+
+export async function setForixShare(
+  token: string,
+  caseId: string,
+  shared: boolean,
+): Promise<Case> {
+  const response = await apiFetch(`/cases/${caseId}/forix-share`, {
+    method: 'PUT',
+    headers: jsonHeaders(token),
+    body: JSON.stringify({ shared }),
   })
   return normalizeCase((await response.json()) as CaseWire)
 }

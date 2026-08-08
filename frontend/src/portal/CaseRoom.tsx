@@ -6,6 +6,7 @@ import { getPortalClient } from './client'
 import { usePortalSession } from './usePortalSession'
 import type { ChatMessage } from './types'
 import { createPortalSession } from './api'
+import { askAssistant } from '../chat/api'
 import styles from './CaseRoom.module.css'
 
 export interface CaseRoomProps {
@@ -73,6 +74,8 @@ export function CaseRoom({
   return (
     <PortalProvider client={client} token={fetchFreshPortalToken}>
       <RoomChannel
+        token={token}
+        caseId={caseId}
         channelId={session.channelId}
         minimumParticipants={minimumParticipants}
         hideUi={hideUi}
@@ -85,6 +88,8 @@ export function CaseRoom({
 }
 
 function RoomChannel({
+  token,
+  caseId,
   channelId,
   minimumParticipants,
   hideUi,
@@ -92,6 +97,8 @@ function RoomChannel({
   onSessionActiveChange,
   onPresenceChange,
 }: {
+  token: string
+  caseId: string
   channelId: string
   minimumParticipants: number
   hideUi: boolean
@@ -111,6 +118,8 @@ function RoomChannel({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [askingAi, setAskingAi] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   // A guard, not display state: it only decides whether this particular
   // nonce has already been acted on. Keeping it in state made the effect
   // write state synchronously on every bump, which is the cascading-render
@@ -175,6 +184,23 @@ function RoomChannel({
     }
   }
 
+  async function handleAskForix() {
+    const question = draft.trim()
+    if (!question || !unlocked || !sessionActive || askingAi) return
+    setDraft('')
+    setAskingAi(true)
+    setAiError(null)
+    try {
+      await send({ content: { type: 'ai_question', body: question } })
+      const answer = await askAssistant(token, question, caseId)
+      await send({ content: { type: 'ai_answer', body: answer } })
+    } catch (cause) {
+      setAiError(cause instanceof Error ? cause.message : 'Forix no pudo responder.')
+    } finally {
+      setAskingAi(false)
+    }
+  }
+
   function handleDraftChange(value: string) {
     setDraft(value)
     if (value.trim() && unlocked && sessionActive) sendTyping()
@@ -231,7 +257,13 @@ function RoomChannel({
             {chatMessages.map((message) => (
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
-                  <span className={styles.messageAuthor}>{me && message.sender.id === me.id ? 'Tú' : message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`}</span>
+                <span className={styles.messageAuthor}>
+                  {message.content && typeof message.content !== 'string' && message.content.type === 'ai_answer'
+                    ? 'Forix · IA'
+                    : me && message.sender.id === me.id
+                      ? 'Tú'
+                      : message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`}
+                </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
                 <p>{messageBody(message.content)}</p>
@@ -255,7 +287,11 @@ function RoomChannel({
             <button type="submit" className="btn-primary" disabled={sending || !unlocked || !draft.trim()}>
               {sending ? '…' : 'Enviar'}
             </button>
+            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !draft.trim()} onClick={() => void handleAskForix()}>
+              {askingAi ? 'Pensando…' : 'Preguntar a Forix'}
+            </button>
           </form>
+          {aiError && <p className={styles.portalError} role="alert">{aiError}</p>}
         </>
       )}
 

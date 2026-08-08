@@ -16,6 +16,7 @@ import {
   getCase,
   joinCase,
   publishCase,
+  setForixShare,
   updateStudent,
   updateSummary,
 } from '../cases/api'
@@ -43,6 +44,7 @@ const CASE_WIRE = {
   _id: 'case-1',
   profesor_id: 'u-1',
   join_code: 'ROOM42',
+  forix_shared: true,
   colaboradores: [{ user_id: 'u-2', role: 'editor' }],
   colaboradores_ids: ['u-2'],
   template_id: 'tmpl-1',
@@ -82,6 +84,7 @@ describe('getCase', () => {
       id: 'case-1',
       profesorId: 'u-1',
       joinCode: 'ROOM42',
+      forixShared: true,
       colaboradores: [{ userId: 'u-2', role: 'editor' }],
       colaboradoresIds: ['u-2'],
       templateId: 'tmpl-1',
@@ -130,6 +133,17 @@ describe('joinCase', () => {
     expect((init as RequestInit).method).toBe('POST')
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({ code: 'ROOM42' })
     expect(joined.joinCode).toBe('ROOM42')
+  })
+})
+
+describe('setForixShare', () => {
+  it('updates whether the case appears in Forix', async () => {
+    const fetchMock = mockFetch(() => jsonResponse(CASE_WIRE))
+    await setForixShare('tok', 'case-1', true)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(String(url)).toMatch(/\/cases\/case-1\/forix-share$/)
+    expect((init as RequestInit).method).toBe('PUT')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ shared: true })
   })
 })
 

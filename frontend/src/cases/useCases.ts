@@ -42,19 +42,25 @@ export function useCases(token: string): CasesState {
     // which the effect lint flags. `status` already starts at 'loading', so
     // the mount-time fetch only needs to resolve it, not reset it.
     let active = true
-    listCases(token)
-      .then((list) => {
-        if (!active) return
-        setCases(list)
-        setStatus('ready')
-      })
-      .catch((cause) => {
-        if (!active) return
-        setError(cause instanceof ApiError ? cause.message : 'No se pudieron cargar los casos.')
-        setStatus('error')
-      })
+    const load = () => {
+      void listCases(token)
+        .then((list) => {
+          if (!active) return
+          setCases(list)
+          setStatus('ready')
+          setError(null)
+        })
+        .catch((cause) => {
+          if (!active) return
+          setError(cause instanceof ApiError ? cause.message : 'No se pudieron cargar los casos.')
+          setStatus('error')
+        })
+    }
+    load()
+    const refreshTimer = setInterval(load, 5_000)
     return () => {
       active = false
+      clearInterval(refreshTimer)
     }
   }, [token])
 

@@ -18,6 +18,7 @@ import {
   publishCase as publishCaseRequest,
   removeCollaborator,
   resetCase as resetCaseRequest,
+  setForixShare as setForixShareRequest,
   updateStudent,
   updateSummary as updateSummaryRequest,
 } from './api'
@@ -43,6 +44,7 @@ export interface CaseState {
   completeCase: () => Promise<void>
   publishCase: () => Promise<void>
   resetCase: () => Promise<void>
+  setForixShared: (shared: boolean) => Promise<void>
   generateSummary: (overwriteManual?: boolean) => Promise<void>
   updateSummary: (contenido: string) => Promise<void>
   remove: () => Promise<void>
@@ -129,6 +131,14 @@ export function useCase(token: string, caseId: string): CaseState {
     setItem(saved)
   }, [token, caseId])
 
+  const setForixShared = useCallback(
+    async (shared: boolean) => {
+      const saved = await setForixShareRequest(token, caseId, shared)
+      setItem(saved)
+    },
+    [token, caseId],
+  )
+
   const generateSummary = useCallback(
     async (overwriteManual = false) => {
       const saved = await generateSummaryRequest(token, caseId, overwriteManual)
@@ -199,6 +209,7 @@ export function useCase(token: string, caseId: string): CaseState {
     completeCase,
     publishCase,
     resetCase,
+    setForixShared,
     generateSummary,
     updateSummary,
     remove,

@@ -304,6 +304,30 @@
   color: #aeb7c5;
 }
 
+.forixCasePicker {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 16px;
+  font-family: var(--label);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.forixCasePicker select {
+  width: 100%;
+  padding: 11px 12px;
+  font: 500 13px var(--sans);
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+  background: rgb(10 14 21 / 88%);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+}
+
 .lobbyPanel {
   padding: 13px;
   background: #151b25;

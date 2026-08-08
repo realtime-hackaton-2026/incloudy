@@ -48,6 +48,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     setAlumno,
     answerStation,
     answerUnexpectedEvent,
+    setForixShared,
     completeCase,
     publishCase,
     generateSummary,
@@ -84,6 +85,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [summaryBusy, setSummaryBusy] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
   const [pendingRegenerate, setPendingRegenerate] = useState(false)
+  const [sharingWithForix, setSharingWithForix] = useState(false)
+  const [forixShareError, setForixShareError] = useState<string | null>(null)
 
   if (loadStatus === 'loading') return <p className={styles.state}>Cargando caso…</p>
 
@@ -221,6 +224,18 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     await answerUnexpectedEvent(eventId, optionId)
   }
 
+  async function handleForixShare() {
+    setSharingWithForix(true)
+    setForixShareError(null)
+    try {
+      await setForixShared(!current.forixShared)
+    } catch (cause) {
+      setForixShareError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar Forix.')
+    } finally {
+      setSharingWithForix(false)
+    }
+  }
+
   function renderUnexpectedEvents() {
     if (!template) return null
     const events = (template.contenido?.imprevistos as Array<{
@@ -348,6 +363,30 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           {saveStatus === 'error' && (saveError ?? 'No se pudo guardar')}
         </span>
       </header>
+
+      {isOwner && (
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Forix · colaboración docente</h3>
+          <p className={styles.state}>
+            {current.forixShared
+              ? `Este caso aparece en Forix. Comparte el código ${current.joinCode} para que otros docentes entren.`
+              : 'Este caso permanece privado y no aparece en el selector de Forix.'}
+          </p>
+          <button
+            type="button"
+            className={current.forixShared ? 'btn-secondary' : 'btn-primary'}
+            disabled={sharingWithForix}
+            onClick={() => void handleForixShare()}
+          >
+            {sharingWithForix
+              ? 'Actualizando…'
+              : current.forixShared
+                ? 'Dejar de compartir con Forix'
+                : 'Compartir este caso con Forix'}
+          </button>
+          {forixShareError && <p className={`${styles.state} ${styles.stateError}`} role="alert">{forixShareError}</p>}
+        </section>
+      )}
 
       <fieldset className={styles.section} disabled={!isEditor}>
         <legend className={styles.sectionTitle}>Alumno</legend>

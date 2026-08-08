@@ -31,6 +31,7 @@ from ..schemas import (
     CollaboratorRequest,
     CollaboratorResponse,
     FollowUpRequest,
+    ForixShareRequest,
     StationResponseRequest,
     SummaryGenerateRequest,
     SummaryUpdateRequest,
@@ -209,6 +210,11 @@ async def join_case(
     already_has_access = user_id == case.profesor_id or any(
         collaborator.user_id == user_id for collaborator in case.colaboradores
     ) or user_id in case.colaboradores_ids
+    if not already_has_access and not case.forix_shared:
+        raise HTTPException(
+            status_code=409,
+            detail="El propietario todavía no compartió este caso con Forix",
+        )
     if not already_has_access:
         add_or_update_collaborator(case, user_id, CollaboratorRole.commenter)
         case.updated_at = utcnow()
@@ -226,6 +232,27 @@ async def join_case(
             f"{current_user.nombre} se unió al caso de {case.alumno.nombre}.",
             str(case.id),
         )
+    return case
+
+
+@router.put("/{case_id}/forix-share")
+async def set_forix_share(
+    case_id: str,
+    body: ForixShareRequest,
+    current_user: User = Depends(get_current_user),
+) -> Case:
+    case = await get_owned_case(case_id, current_user)
+    if case.status == CaseStatus.archived:
+        raise HTTPException(status_code=409, detail="No se puede compartir un caso archivado")
+    await ensure_join_code(case)
+    case.forix_shared = body.shared
+    case.updated_at = utcnow()
+    await case.save()
+    await record_event(
+        case,
+        str(current_user.id),
+        "caso_compartido_con_forix" if body.shared else "caso_retirado_de_forix",
+    )
     return case
 
 

@@ -302,4 +302,40 @@ describe('CaseRoom', () => {
 
     expect(await screen.findByText(/alguien está escribiendo/i)).toBeInTheDocument()
   })
+
+  it('publishes a question and the Forix AI answer for the whole room', async () => {
+    mockFetch((input) => String(input).endsWith('/chat')
+      ? jsonResponse({ respuesta: 'Revisen juntos el progreso de Alex.' })
+      : jsonResponse({
+          token: 'ptok',
+          expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+          channel_id: 'case-1',
+          publishable_key: 'pk_test',
+        }))
+    const send = vi.fn(() => Promise.resolve({ id: 'm-ai', timestamp: Date.now() }))
+    useChannelMock.mockReturnValue({
+      messages: [
+        { id: 'system-1', content: { type: 'session_started' }, sender: { id: 'u-2', anon: false } },
+      ],
+      send,
+      presence: { kind: 'aggregate', count: 2, recent: [] },
+      status: 'ready',
+      me: { id: 'u-1', anon: false, claims: {} },
+      typing: [],
+      sendTyping: vi.fn(),
+    })
+
+    const user = userEvent.setup()
+    render(<CaseRoom token="tok" caseId="case-1" />)
+    const input = await screen.findByPlaceholderText(/comparte una observación/i)
+    await user.type(input, '¿Qué hacemos ahora?')
+    await user.click(screen.getByRole('button', { name: /preguntar a forix/i }))
+
+    await waitFor(() => expect(send).toHaveBeenCalledWith({
+      content: { type: 'ai_answer', body: 'Revisen juntos el progreso de Alex.' },
+    }))
+    expect(send).toHaveBeenCalledWith({
+      content: { type: 'ai_question', body: '¿Qué hacemos ahora?' },
+    })
+  })
 })

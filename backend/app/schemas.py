@@ -70,6 +70,10 @@ class CaseJoinRequest(BaseModel):
     code: str = Field(min_length=6, max_length=6, pattern=r"^[A-Za-z0-9]{6}$")
 
 
+class ForixShareRequest(BaseModel):
+    shared: bool
+
+
 class StationResponseRequest(BaseModel):
     opciones_seleccionadas: list[str] = Field(default_factory=list)
     comentario: str = Field(default="", max_length=2_000)

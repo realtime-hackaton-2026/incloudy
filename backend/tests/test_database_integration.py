@@ -25,6 +25,7 @@ from app.models import (
 from app.routers import cases as cases_router
 from app.schemas import (
     CaseJoinRequest,
+    ForixShareRequest,
     StationResponseRequest,
     TeacherNoteCreateRequest,
     UnexpectedEventResponseRequest,
@@ -58,6 +59,7 @@ async def test_teacher_can_join_existing_case_with_room_code() -> None:
     case = Case(
         profesor_id=str(owner.id),
         join_code="TEAM42",
+        forix_shared=True,
         alumno=Student(nombre="Caso compartido"),
     )
     await case.insert()
@@ -69,6 +71,11 @@ async def test_teacher_can_join_existing_case_with_room_code() -> None:
     assert joined_again.id == case.id
     assert [item.user_id for item in joined_again.colaboradores] == [str(guest.id)]
     assert joined_again.colaboradores[0].role == CollaboratorRole.commenter
+
+    unshared = await cases_router.set_forix_share(
+        str(case.id), ForixShareRequest(shared=False), owner
+    )
+    assert not unshared.forix_shared
 
 
 @pytest.mark.asyncio

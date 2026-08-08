@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react'
-import { addCollaborator } from '../cases/api'
-import type { CollaboratorRole } from '../cases/api'
+import { useCallback, useEffect, useState } from 'react'
+import { addCollaborator, listCases } from '../cases/api'
+import type { Case, CollaboratorRole } from '../cases/api'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
 import { CaseRoom } from '../portal'
@@ -33,6 +33,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   })
   const [sessionActive, setSessionActive] = useState(false)
   const [startSessionNonce, setStartSessionNonce] = useState(0)
+  const [forixCases, setForixCases] = useState<Case[]>([])
   const station = stationFor(stage)
   const portalReady = presence.status === 'ready'
   const portalBlocked = presence.status === 'blocked' || presence.status === 'error' || Boolean(presence.error)
@@ -46,6 +47,27 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
     setPresence(next)
   }, [])
+
+  useEffect(() => {
+    let active = true
+    let timer: ReturnType<typeof setInterval> | null = null
+    const refresh = () => {
+      void listCases(token).then((cases) => {
+        if (active) setForixCases(cases.filter((item) => item.forixShared))
+      }).catch(() => {})
+    }
+    refresh()
+    timer = setInterval(refresh, 5_000)
+    return () => {
+      active = false
+      if (timer) clearInterval(timer)
+    }
+  }, [token])
+
+  function openForixCase(selectedCaseId: string) {
+    if (!selectedCaseId || selectedCaseId === caseId) return
+    location.hash = `#/caso/${selectedCaseId}`
+  }
 
   /*
    * Once any teacher starts the shared experience, everyone leaves the lobby
@@ -250,6 +272,18 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
             <div className={styles.lobbyKicker}>BRÚIX · COLABORACIÓN</div>
             <h2 id="owl-lobby-title">Sala de trabajo de Búrix</h2>
             <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {joinCode}</p>
+
+            <label className={styles.forixCasePicker}>
+              Caso compartido con Forix
+              <select value={caseId} onChange={(event) => openForixCase(event.target.value)}>
+                {forixCases.length === 0 && <option value={caseId}>Este caso aún no está compartido</option>}
+                {forixCases.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.alumno.nombre} · {item.status.replace('_', ' ')} · {item.progreso.porcentaje}%
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <section className={styles.lobbyPanel} aria-label="Docentes presentes">
               <div className={styles.lobbyPanelTop}>

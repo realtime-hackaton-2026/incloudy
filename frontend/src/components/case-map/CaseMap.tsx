@@ -16,7 +16,7 @@ import { MAP_ASPECT_RATIO, STATIONS, stationFor, stationIndex } from './stations
 import type { CaseStage, Station } from './stations'
 
 /** How far the camera pushes in on a selected station. */
-const CAMERA_ZOOM = 1.08
+const CAMERA_ZOOM = 1.28
 
 /**
  * Where a station stands relative to the case's current position.
@@ -54,6 +54,10 @@ export interface CaseMapProps {
    * a bare "bloqueada".
    */
   onLockedAttempt?: (station: Station, mustFinishFirst: Station | null) => void
+  /** Estaciones con una respuesta guardada, aunque luego se hayan editado. */
+  completedStages?: readonly CaseStage[]
+  /** Personaje que funciona como marcador GPS de la estación actual. */
+  markerAvatar?: { src: string; name: string }
   className?: string
   /**
    * Lets the map break out of the app's reading-width shell. The map is the
@@ -77,6 +81,8 @@ export function CaseMap({
   highlightStage = null,
   onHoverStage,
   onLockedAttempt,
+  completedStages = [],
+  markerAvatar,
   className,
   wide = false,
   renderStationPanel,
@@ -92,6 +98,12 @@ export function CaseMap({
   // A custom panel makes the map interactive on its own — a preview HUD
   // with only "Explorar →" still needs onSelectStage to mean anything.
   const interactive = Boolean(onSelectStage) || Boolean(renderStationPanel)
+  const completed = new Set(completedStages)
+
+  function stateFor(next: CaseStage): StationState {
+    if (completed.has(next)) return 'completed'
+    return stationStateAt(stationIndex(next), activeIndex)
+  }
 
   // The journey trail: the stations themselves are the progress indicator,
   // so the route is drawn between their signposts instead of restated as a
@@ -121,7 +133,7 @@ export function CaseMap({
     // A locked station has nothing to open: the server would reject the
     // answer with a 409 anyway, so the map refuses the click here rather
     // than presenting a form that cannot be submitted.
-    if (next !== null && stationStateAt(stationIndex(next), activeIndex) === 'locked') return
+    if (next !== null && stateFor(next) === 'locked') return
     setFocused(next)
     onHoverStage?.(next)
   }
@@ -193,15 +205,12 @@ export function CaseMap({
             // Three states, not two. `reached` used to cover the current
             // station as well as the finished ones, so "where I am" and
             // "where I have been" looked identical on the map.
-            const state = stationStateAt(index, activeIndex)
+            const state = stateFor(station.stage)
             const locked = state === 'locked'
             const isActive = station.stage === stage
             const classes = [styles.hotspot]
             if (state === 'completed') classes.push(styles.completed)
             if (state === 'available') classes.push(styles.available)
-            // The pin already marks the current station; a bead there would
-            // collide with it.
-            if (isActive) classes.push(styles.underPin)
             if (locked) classes.push(styles.hotspotLocked)
             if (lit?.stage === station.stage) classes.push(styles.hotspotHighlighted)
 
@@ -238,17 +247,26 @@ export function CaseMap({
                 aria-label={`${station.label} ${station.place}${STATE_SUFFIX[state]}`}
                 data-station-state={state}
               >
-                <span className={styles.hotspotLabel}>{station.label}</span>
+                <span className={styles.hotspotLabel}>
+                  {station.label}
+                  <small className={styles.hotspotStatus}>
+                    {state === 'completed' ? '✓ Completada · editar' : state === 'locked' ? 'Bloqueada' : 'Abrir estación'}
+                  </small>
+                </span>
               </button>
             )
           })}
 
           <div
             className={styles.marker}
-            style={{ left: `${active.x}%`, top: `${active.y}%` }}
+            style={{ left: `${active.x}%`, top: `${active.y - 5.2}%` }}
             aria-hidden="true"
           >
-            <svg className={styles.pin} viewBox="0 0 24 32" fill="none">
+            {markerAvatar ? (
+              <span className={styles.avatarMarker}>
+                <img src={markerAvatar.src} alt="" className={styles.markerAvatarImage} />
+              </span>
+            ) : <svg className={styles.pin} viewBox="0 0 24 32" fill="none">
               <path
                 d="M12 1c5 0 9 3.9 9 8.8 0 6.6-9 20.2-9 20.2S3 16.4 3 9.8C3 4.9 7 1 12 1Z"
                 fill="currentColor"
@@ -256,7 +274,7 @@ export function CaseMap({
                 strokeWidth="2"
               />
               <circle cx="12" cy="9.6" r="3.4" fill="#10131a" />
-            </svg>
+            </svg>}
             <span className={styles.pulse} />
           </div>
         </div>

@@ -1,6 +1,6 @@
 export { AVATARS, DEFAULT_AVATAR_ID, avatarById } from './catalog'
 export type { Avatar } from './catalog'
-export { useAvatar } from './useAvatar'
+export { readAvatarId, useAvatar } from './useAvatar'
 export type { AvatarState } from './useAvatar'
 export { AvatarPicker } from './AvatarPicker'
 export type { AvatarPickerProps } from './AvatarPicker'

@@ -32,6 +32,7 @@ export interface CaseFormProps {
   onBack: () => void
   /** Render only the interactive journey map. Used by the world/map route. */
   mapOnly?: boolean
+  onAvatarChange?: () => void
 }
 
 const ROLE_LABELS: Record<CollaboratorRole, string> = {
@@ -40,7 +41,7 @@ const ROLE_LABELS: Record<CollaboratorRole, string> = {
   lector: 'Lector',
 }
 
-export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = false }: CaseFormProps) {
+export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = false, onAvatarChange }: CaseFormProps) {
   const {
     item,
     loadStatus,
@@ -66,7 +67,11 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     error: templateError,
   } = useJourneyTemplate(token, item?.templateId ?? null)
 
-  const { avatarId, setAvatarId } = useAvatar()
+  const { avatar, avatarId, setAvatarId } = useAvatar(caseId)
+  const selectAvatar = (id: string) => {
+    setAvatarId(id)
+    onAvatarChange?.()
+  }
 
   const [collaboratorEmail, setCollaboratorEmail] = useState('')
   const [collaboratorRole, setCollaboratorRole] = useState<CollaboratorRole>('comentarista')
@@ -349,7 +354,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
             <XpCounter value={current.estadoInteractivo.xpTotal} />
           </div>
         </div>
-        <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
+        <AvatarPicker avatarId={avatarId} onSelect={selectAvatar} />
         <OwlTip tipId="map-guide" />
         {/* The owl in the moment: it answers a locked tap, and otherwise says
             how much of the recorrido is left. Both are read off state that
@@ -360,6 +365,8 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <CaseMap
           stage={stage}
           wide
+          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
+          markerAvatar={avatar}
           onLockedAttempt={(blocked, mustFinishFirst) =>
             setLockedNotice(lockedStation(blocked.label, mustFinishFirst?.label ?? null))
           }
@@ -471,11 +478,16 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           <span className={styles.percent}>{current.progreso.porcentaje}% completado</span>
         </div>
 
-        <AvatarPicker avatarId={avatarId} onSelect={setAvatarId} />
+        <AvatarPicker avatarId={avatarId} onSelect={selectAvatar} />
 
         <OwlTip tipId="map-guide" />
 
-        <CaseMap stage={stage} renderStationPanel={template ? renderStationPanel : undefined} />
+        <CaseMap
+          stage={stage}
+          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
+          markerAvatar={avatar}
+          renderStationPanel={template ? renderStationPanel : undefined}
+        />
 
         {renderUnexpectedEvents()}
 

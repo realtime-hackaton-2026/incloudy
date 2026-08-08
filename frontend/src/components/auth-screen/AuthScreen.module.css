@@ -296,6 +296,12 @@
 }
 
 .help {
+  /* Reset in case this class lands on a <button> — Registro's link back to
+     Login is an in-app view switch, not a navigation, so it isn't an <a>. */
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-family: var(--label);
   font-size: 14px;
   color: var(--outline);
@@ -306,6 +312,11 @@
 
 .help:hover {
   color: var(--secondary);
+}
+
+.help:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 3px;
 }
 
 /* --- Small screens ----------------------------------------------------- */

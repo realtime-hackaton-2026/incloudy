@@ -1,9 +1,7 @@
 /**
- * The first screen: nothing else renders until someone signs in.
- *
- * Presentational, like the case map — it collects two fields and hands them
- * over. Whether that call hits the API, a mock or a demo fixture is the
- * caller's business.
+ * Account creation. Same shell as Login (see ../auth-screen) — this screen
+ * only adds a password confirmation, since /auth/register logs the new
+ * teacher in immediately and there's no separate verification step.
  */
 
 import { useState } from 'react'
@@ -11,37 +9,54 @@ import type { FormEvent } from 'react'
 import { AuthScreen } from '../auth-screen'
 import styles from '../auth-screen/AuthScreen.module.css'
 
-export interface LoginProps {
+export interface RegistroProps {
   onSubmit: (credentials: { email: string; password: string }) => void
-  /** Credentials are in flight: the form locks and the button says so. */
   pending?: boolean
-  /** Last failure, already in Spanish. */
+  /** Last failure, already in Spanish — from the server, or from the local mismatch check. */
   error?: string | null
-  onSwitchToRegister: () => void
+  onSwitchToLogin: () => void
 }
 
-export function Login({ onSubmit, pending = false, error = null, onSwitchToRegister }: LoginProps) {
+const MIN_PASSWORD_LENGTH = 8
+
+export function Registro({ onSubmit, pending = false, error = null, onSwitchToLogin }: RegistroProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  // Only shown once both fields have something to compare — no red border
+  // while the second field is still empty.
+  const [localError, setLocalError] = useState<string | null>(null)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (pending) return
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setLocalError(`El código secreto debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
+      return
+    }
+    if (password !== confirmPassword) {
+      setLocalError('Los códigos no coinciden.')
+      return
+    }
+    setLocalError(null)
     onSubmit({ email: email.trim(), password })
   }
 
+  const shownError = localError ?? error
+
   return (
-    <AuthScreen tagline="Un lugar acogedor para aprender">
+    <AuthScreen tagline="Crea tu cuenta de profesor">
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="login-email">
+          <label className={styles.label} htmlFor="registro-email">
             ID de Explorador
           </label>
           <div className={styles.inputWrap}>
             <PersonIcon />
             <input
               className={styles.input}
-              id="login-email"
+              id="registro-email"
               name="email"
               type="email"
               autoComplete="username"
@@ -55,53 +70,68 @@ export function Login({ onSubmit, pending = false, error = null, onSwitchToRegis
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="login-password">
+          <label className={styles.label} htmlFor="registro-password">
             Código Secreto
           </label>
           <div className={styles.inputWrap}>
             <KeyIcon />
             <input
               className={styles.input}
-              id="login-password"
+              id="registro-password"
               name="password"
               type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               disabled={pending}
               required
+              minLength={MIN_PASSWORD_LENGTH}
               onChange={(event) => setPassword(event.target.value)}
             />
           </div>
         </div>
 
-        {error && (
-          // Polite, not assertive: the message appears next to a control the
-          // teacher is still holding, so it should not cut off the reader.
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="registro-confirm">
+            Repite el Código Secreto
+          </label>
+          <div className={styles.inputWrap}>
+            <KeyIcon />
+            <input
+              className={styles.input}
+              id="registro-confirm"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              disabled={pending}
+              required
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </div>
+        </div>
+
+        {shownError && (
           <p className={styles.error} role="alert" aria-live="polite">
             <WarningIcon />
-            {error}
+            {shownError}
           </p>
         )}
 
         <div className={styles.actions}>
           <button className={styles.submit} type="submit" disabled={pending}>
             <LoginIcon />
-            {pending ? 'Entrando…' : 'Entrar al mapa'}
+            {pending ? 'Creando cuenta…' : 'Crear cuenta'}
           </button>
-          <button className={styles.help} type="button" onClick={onSwitchToRegister}>
-            ¿No tienes cuenta? Regístrate
+          <button className={styles.help} type="button" onClick={onSwitchToLogin}>
+            ¿Ya tienes cuenta? Inicia sesión
           </button>
         </div>
       </form>
     </AuthScreen>
   )
 }
-
-/*
- * The mockup pulled these from the Material Symbols web font. Inlining them
- * drops a render-blocking request and keeps the form readable offline.
- */
 
 function PersonIcon() {
   return (

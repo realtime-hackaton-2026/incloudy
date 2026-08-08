@@ -1,0 +1,227 @@
+Términos y condiciones oficiales de The Realtime Hackathon by Portal
+1. Información general
+The Realtime Hackathon by Portal es un hackathon online de 39 horas organizado por Portal y Crafter Station.
+
+El evento se realizará del viernes 7 al domingo 9 de agosto de 2026 y reunirá a desarrolladores, diseñadores y creadores de productos de Latinoamérica y otras partes del mundo.
+
+Este documento contiene la información oficial del hackathon y es la fuente principal para consultar sus fechas, reglas, requisitos, entregables, premios y condiciones de participación.
+
+2. Objetivo del hackathon
+La mayoría de los productos de inteligencia artificial todavía están pensados para una persona, un prompt y una pantalla de carga. Este hackathon busca explorar lo que viene después.
+
+El objetivo es crear productos de inteligencia artificial capaces de reaccionar, colaborar y evolucionar mientras las cosas suceden.
+
+Los participantes tendrán un fin de semana para construir un producto funcional usando inteligencia artificial y Portal. El resultado debe ser un producto que pueda probarse y demostrarse, no solo una idea o una presentación.
+
+3. Qué es Portal
+Portal es una plataforma para desarrolladores que permite agregar funciones en tiempo real a una aplicación sin construir toda la infraestructura desde cero.
+
+Portal ofrece a personas, agentes de inteligencia artificial, aplicaciones y fuentes de datos en vivo una forma compartida de enviar y recibir actualizaciones mientras suceden.
+
+Con Portal se pueden crear funciones como:
+
+Chats en vivo.
+Indicadores de presencia.
+Cursores colaborativos.
+Actividad de agentes.
+Seguimiento de ubicación.
+Reacciones de la audiencia.
+Notificaciones.
+Sincronización entre usuarios, agentes y aplicaciones.
+Esto permite que los participantes se concentren en la experiencia del producto, en lugar de dedicar el hackathon a construir la infraestructura necesaria para mantener sincronizados a los usuarios, agentes y pantallas.
+
+4. Quiénes pueden participar
+El hackathon está dirigido a desarrolladores, diseñadores, creadores de productos y personas interesadas en construir experiencias con inteligencia artificial y tecnología en tiempo real.
+
+La participación es online y está abierta a personas de Latinoamérica y otras partes del mundo.
+
+Se puede participar:
+
+De manera individual.
+En un equipo de hasta cuatro integrantes.
+Las personas que participen individualmente podrán usar los espacios de Discord para presentarse, conocer a otros participantes y formar un equipo.
+
+5. Discord oficial
+La comunidad y las comunicaciones del hackathon estarán disponibles en el servidor de Discord de Portal:
+
+Unirse al Discord de Portal
+
+Los participantes podrán usar los siguientes canales:
+
+#announcements
+Este es el canal oficial para compartir información importante del hackathon.
+
+La organización utilizará este canal para publicar:
+
+Calendarios y enlaces para agendar mentorías.
+Fechas y horas límite.
+Recordatorios sobre las entregas.
+Actualizaciones del cronograma.
+Anuncios importantes durante el evento.
+Cualquier otra información que los participantes deban conocer.
+#team-lookup
+Este canal se usará para que los participantes se presenten y busquen personas con quienes formar un equipo.
+
+#general
+Este canal se usará para conversar sobre el hackathon, conocer a otros participantes y organizar equipos.
+
+#soporte-hackathon
+Este canal se usará para preguntas puntuales sobre las reglas, el cronograma, las entregas y la organización del hackathon.
+
+#soporte-portal
+Este canal se usará para preguntas técnicas o puntuales relacionadas con Portal.
+
+6. Requisitos de los proyectos
+Para ser elegible, cada proyecto debe cumplir con todos los siguientes requisitos:
+
+Incluir una capacidad de inteligencia artificial.
+Utilizar Portal como parte del producto.
+Incluir una interacción significativa en tiempo real impulsada por Portal.
+Conectar usuarios, clientes de software, agentes o fuentes de datos en vivo independientes.
+Contar con un producto funcional que pueda probarse y demostrarse.
+Tener un repositorio público en GitHub.
+Tener una versión desplegada del producto.
+Presentar todos los entregables antes del cierre de las entregas.
+Una presentación, una idea o un concepto sin un producto funcional no será suficiente para participar como proyecto elegible.
+
+La integración con Portal debe ser una parte importante de la experiencia. No basta con mencionar Portal o agregarlo al proyecto sin una interacción real entre usuarios, agentes, aplicaciones o fuentes de datos en vivo.
+
+7. Periodo válido de commits
+Para la evaluación, solo se tendrán en cuenta los commits realizados dentro del siguiente periodo:
+
+Inicio: viernes 7 de agosto de 2026 a las 19:00, UTC menos 5.
+
+Cierre: domingo 9 de agosto de 2026 a las 10:00, UTC menos 5.
+
+Los commits realizados antes o después de este periodo no se tendrán en cuenta durante la evaluación.
+
+Los participantes deben asegurarse de que todos los commits relevantes estén disponibles en el repositorio público de GitHub enviado como parte de la entrega.
+
+Si la entrega se basa en un producto existente, el repositorio debe incluir un tag llamado the-realtime-hackathon que agrupe los commits realizados durante el periodo oficial. En estos casos, solo se evaluará el trabajo incluido en esos commits.
+
+8. Requisitos de la entrega
+Las entregas deben enviarse mediante el formulario oficial de The Realtime Hackathon.
+
+Cada entrega debe incluir:
+
+El nombre del equipo.
+Los nombres de todos los integrantes del equipo, separados por comas.
+El nombre de usuario de Discord de al menos un integrante, que será el contacto del equipo.
+Un pitch del producto de 280 caracteres o menos.
+La URL del producto desplegado, donde el equipo evaluador pueda probarlo.
+La URL de una demo grabada de 1 minuto y 30 segundos como máximo.
+La URL del repositorio público en GitHub.
+Una explicación de cómo se utilizó Portal en el producto.
+Demo en vivo
+La URL del producto desplegado debe permitir que el equipo evaluador pruebe una versión funcional del producto.
+
+Demo grabada
+La demo grabada debe presentar y explicar el producto construido y puede estar editada. Debe durar como máximo 1 minuto y 30 segundos y estar disponible mediante una URL accesible para el equipo evaluador, por ejemplo, en YouTube, Loom, Screen Studio, LinkedIn, Instagram o X.
+
+Repositorio de GitHub
+El repositorio de GitHub debe ser público. Si corresponde a un producto existente, debe incluir un tag llamado the-realtime-hackathon que agrupe los commits realizados durante el evento.
+
+La entrega debe explicar claramente:
+
+Qué hace el producto mediante un pitch de 280 caracteres o menos.
+Cómo se utilizó Portal.
+La entrega debe completarse antes de las 10:00 del domingo 9 de agosto de 2026, UTC menos 5.
+
+9. Idiomas permitidos
+Los proyectos, videos y demostraciones pueden presentarse en:
+
+Español.
+Inglés.
+10. Evaluación
+La evaluación tendrá en cuenta el uso de Portal dentro del producto.
+
+El equipo evaluador revisará la explicación incluida en el formulario de entrega para entender cómo se utilizó Portal y qué papel cumple dentro de la experiencia. También podrá revisar el repositorio público, la demo en vivo y la demo grabada.
+
+Durante la evaluación, solo se tendrán en cuenta los commits realizados dentro del periodo oficial indicado en este documento. Para productos existentes, se evaluarán únicamente los commits agrupados en el tag the-realtime-hackathon.
+
+11. Ideas de proyectos
+Los participantes pueden construir cualquier producto que cumpla con los requisitos del hackathon. Algunos ejemplos son:
+
+Un espacio de trabajo multijugador donde personas y agentes de inteligencia artificial investiguen, escriban o diseñen juntos.
+Una sala de operaciones con inteligencia artificial que monitoree eventos en vivo y coordine varios agentes.
+Un canvas colaborativo donde todos los participantes puedan ver los cambios mientras suceden.
+Un mapa en vivo donde la inteligencia artificial reaccione al movimiento, las entregas, los incidentes o los reportes de la comunidad.
+Una transmisión interactiva donde las reacciones de la audiencia influyan en un presentador de inteligencia artificial.
+Una experiencia de voz en tiempo real.
+Un juego, marketplace o experimento social con interacciones en tiempo real.
+Una propuesta nueva que todavía no tenga una categoría definida.
+Estos ejemplos son referenciales. Se pueden presentar ideas diferentes siempre que cumplan con los requisitos de elegibilidad.
+
+12. Cronograma oficial
+Todos los horarios están expresados en UTC menos 5, correspondiente a la hora de Lima.
+
+Viernes 7 de agosto de 2026
+19:00: Inicio oficial del hackathon y del periodo válido de commits.
+
+20:00: Portal Quick Start con Rodrigo Weilg, fundador de Portal.
+
+21:00: Inicio de la ventana principal de construcción.
+
+Sábado 8 de agosto de 2026
+09:00 a 21:00: Mentorías para los participantes.
+
+La organización compartirá los calendarios individuales de los mentores en el canal #announcements.
+
+Los participantes podrán agendar una sesión directamente mediante los enlaces de Cal.com o Calendly de cada mentor.
+
+Domingo 9 de agosto de 2026
+00:00: Apertura de las entregas.
+
+10:00: Cierre de las entregas y del periodo válido de commits.
+
+19:00: Reunión final en vivo por Discord, presentación de las demos ganadoras y anuncio del primer y segundo puesto.
+
+13. Mentorías y soporte
+Las mentorías se realizarán el sábado 8 de agosto de 2026, entre las 09:00 y las 21:00, UTC menos 5.
+
+Los calendarios y enlaces para reservar sesiones se compartirán en el canal #announcements. Cada mentor utilizará Cal.com o Calendly para gestionar sus reservas.
+
+Además de las mentorías, los participantes podrán hacer consultas durante el hackathon en:
+
+#soporte-hackathon para preguntas sobre el evento.
+#soporte-portal para preguntas relacionadas con Portal.
+14. Presentación final
+La reunión final se realizará el domingo 9 de agosto de 2026 a las 19:00, UTC menos 5, en vivo por Discord.
+
+Durante esta reunión:
+
+Se presentarán las demos de los proyectos ganadores.
+Se anunciará el proyecto que obtuvo el primer puesto.
+Se anunciará el proyecto que obtuvo el segundo puesto.
+15. Premios
+El hackathon entregará un total de US$800 en premios en efectivo, distribuidos de la siguiente manera:
+
+🥇 Primer puesto: US$500.
+
+🥈 Segundo puesto: US$300.
+
+16. Galería de proyectos
+Los proyectos construidos durante el hackathon podrán formar parte de una galería permanente dedicada a mostrar los productos creados durante el evento.
+
+17. Resumen de condiciones principales
+Para participar, cada proyecto debe:
+
+Ser presentado por una persona o un equipo de hasta cuatro integrantes.
+Contar con un producto funcional.
+Incluir una capacidad de inteligencia artificial.
+Utilizar Portal para crear una interacción significativa en tiempo real.
+Conectar usuarios, clientes de software, agentes o fuentes de datos independientes.
+Tener un repositorio público en GitHub.
+Tener una versión desplegada.
+Incluir una demo grabada de 1 minuto y 30 segundos como máximo.
+Incluir el nombre del equipo y los nombres de todos sus integrantes.
+Incluir el nombre de usuario de Discord de al menos un integrante como contacto.
+Incluir un pitch de 280 caracteres o menos.
+Explicar cómo utiliza Portal.
+Tener commits realizados dentro del periodo oficial y, si se trata de un producto existente, agruparlos en el tag the-realtime-hackathon.
+Presentarse en español o inglés.
+Entregarse antes del domingo 9 de agosto de 2026 a las 10:00, UTC menos 5.
+18. Organización
+The Realtime Hackathon by Portal es organizado por:
+
+Portal × Crafter Station

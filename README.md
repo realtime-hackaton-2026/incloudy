@@ -171,7 +171,7 @@ Gracias a quienes construyeron y mantienen incloudy:
 
 - [LuisAlejandroCR](https://github.com/LuisAlejandroCR) 
 - [CristhAXe](https://github.com/CristhAXe) 
-- [alusilco](https://github.com/alusilco) 
+- [alusilcof5](https://github.com/alusilcof5) 
 
 Las cifras corresponden al historial del repositorio al **8 de agosto de 2026**.
 

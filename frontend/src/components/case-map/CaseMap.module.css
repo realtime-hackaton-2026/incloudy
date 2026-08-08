@@ -840,12 +840,50 @@
   margin-bottom: 8px;
 }
 
-.missionStation {
+.missionIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.missionKicker {
   font-family: var(--label);
-  font-size: 12px;
-  letter-spacing: .14em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: #7a4d17;
+}
+
+.missionStation {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: #171b20;
+}
+
+/* Beads for the quest chain — the same collected-badge language as the HUD,
+   re-tinted for the cream panel (white strokes would vanish on it). */
+.missionBeads {
+  display: flex;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.missionBead {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(32 26 16 / 32%);
+  background: transparent;
+}
+
+.missionBeadDone {
+  background: #7a4d17;
+  border-color: #7a4d17;
+  box-shadow: 0 0 8px rgb(122 77 23 / 45%);
 }
 
 .missionClose {

@@ -10,11 +10,29 @@
  */
 
 import { useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { CSSProperties, FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../lib/http'
 import type { QuestionType, StationOption, TemplateStation } from '../../journeys'
 import type { StationAnswer, Student } from '../../cases'
 import styles from './CaseForm.module.css'
+
+/**
+ * Deterministic particle burst for the completion beat — angles and delays
+ * are fixed values, not `Math.random()`, so a render is reproducible (and a
+ * test can assert the celebration without seeding anything).
+ */
+const BURST: ReadonlyArray<{ dx: number; dy: number; delay: number; size: number }> = [
+  { dx: -84, dy: -38, delay: 0, size: 9 },
+  { dx: 0, dy: -92, delay: 30, size: 7 },
+  { dx: 84, dy: -38, delay: 60, size: 10 },
+  { dx: 96, dy: 22, delay: 15, size: 7 },
+  { dx: -96, dy: 22, delay: 45, size: 8 },
+  { dx: 56, dy: 84, delay: 0, size: 7 },
+  { dx: -56, dy: 84, delay: 75, size: 6 },
+  { dx: 0, dy: 96, delay: 90, size: 8 },
+  { dx: -30, dy: -70, delay: 105, size: 5 },
+  { dx: 30, dy: -70, delay: 55, size: 5 },
+]
 
 export interface StationCardProps {
   station: TemplateStation
@@ -299,7 +317,23 @@ export function StationCard({ station, student, answer, editable, onAnswer, onCo
       )}
 
       {showResult && (
-        <div className={styles.stationResult} role="status">
+        <div className={styles.stationResult} role="status" data-quest-state="done">
+          <span className={styles.questBurst} data-testid="quest-burst" aria-hidden="true">
+            {BURST.map((particle, index) => (
+              <i
+                key={index}
+                className={styles.burstParticle}
+                style={
+                  {
+                    '--dx': `${particle.dx}px`,
+                    '--dy': `${particle.dy}px`,
+                    '--delay': `${particle.delay}ms`,
+                    '--size': `${particle.size}px`,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </span>
           <span className={styles.stationResultIcon}>✦</span>
           <strong>
             {station.id === 'explorar' && 'Has investigado todo lo que había que ver aquí.'}

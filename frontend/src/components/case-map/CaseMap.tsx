@@ -71,8 +71,16 @@ export interface CaseMapProps {
    * map into the place a teacher answers that station, rather than a
    * summary card. Also makes hotspots clickable on its own, independent of
    * `onSelectStage`.
+   *
+   * `goTo` switches the mission straight to another station — the
+   * "Continuar →" chain — and skips the locked refusal because the panel
+   * decides for itself what to render for that station.
    */
-  renderStationPanel?: (station: Station, close: () => void) => ReactNode
+  renderStationPanel?: (
+    station: Station,
+    close: () => void,
+    goTo: (stage: CaseStage) => void,
+  ) => ReactNode
 }
 
 export function CaseMap({
@@ -134,6 +142,13 @@ export function CaseMap({
     // answer with a 409 anyway, so the map refuses the click here rather
     // than presenting a form that cannot be submitted.
     if (next !== null && stateFor(next) === 'locked') return
+    setFocused(next)
+    onHoverStage?.(next)
+  }
+
+  // Used by the "Continuar →" chain inside the mission: the panel has
+  // already vetted the station, so it skips the locked guard above.
+  function goTo(next: CaseStage) {
     setFocused(next)
     onHoverStage?.(next)
   }
@@ -281,7 +296,13 @@ export function CaseMap({
 
         {focusedStation && (
           renderStationPanel ? (
-            <div className={styles.missionOverlay} data-testid="case-map-mission">
+            <div
+              className={styles.missionOverlay}
+              data-testid="case-map-mission"
+              data-quest-station={focusedStation.stage}
+              data-quest-index={stationIndex(focusedStation.stage) + 1}
+              data-quest-total={STATIONS.length}
+            >
               <div
                 className={styles.missionBackdrop}
                 style={{
@@ -293,7 +314,26 @@ export function CaseMap({
               <div className={styles.missionShade} aria-hidden="true" />
               <div className={styles.missionPanel}>
                 <div className={styles.missionHeader}>
-                  <span className={styles.missionStation}>{focusedStation.label}</span>
+                  <div className={styles.missionIdentity}>
+                    <span className={styles.missionKicker}>
+                      Misión {stationIndex(focusedStation.stage) + 1} de {STATIONS.length} · {focusedStation.place}
+                    </span>
+                    <span className={styles.missionStation}>{focusedStation.label}</span>
+                  </div>
+                  <div
+                    className={styles.missionBeads}
+                    role="img"
+                    aria-label={`Misión ${stationIndex(focusedStation.stage) + 1} de ${STATIONS.length} completadas`}
+                  >
+                    {STATIONS.map((entry, index) => (
+                      <span
+                        key={entry.stage}
+                        className={`${styles.missionBead} ${
+                          index <= stationIndex(focusedStation.stage) ? styles.missionBeadDone : ''
+                        }`}
+                      />
+                    ))}
+                  </div>
                   <button
                     type="button"
                     className={styles.missionClose}
@@ -304,7 +344,7 @@ export function CaseMap({
                   </button>
                 </div>
                 <div className={styles.missionBody}>
-                  {renderStationPanel(focusedStation, () => focus(null))}
+                  {renderStationPanel(focusedStation, () => focus(null), goTo)}
                 </div>
               </div>
             </div>

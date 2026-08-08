@@ -380,3 +380,88 @@ describe('CaseForm — stations open as popups on the map, not as a list below i
     expect(warning).toHaveTextContent('Completa primero la estación Explorar')
   })
 })
+
+describe('CaseForm — the mission quest: celebration and the mission chain', () => {
+  function questFetch() {
+    let respuestas: Array<Record<string, unknown>> = []
+    let estacionActual = 'explorar'
+    const fetchMock = routedFetch({
+      'GET /cases/case-1': () =>
+        jsonResponse(
+          caseWire({
+            respuestas,
+            progreso: { completadas: respuestas.length, total: 2, porcentaje: respuestas.length * 50 },
+            estado_interactivo: { ...caseWire().estado_interactivo, estacion_actual: estacionActual },
+          }),
+        ),
+      'GET /journeys/templates/tmpl-1': () => jsonResponse(TEMPLATE_WIRE),
+      'POST /portal/sessions/case-1': () => jsonResponse({ detail: 'Portal no configurado' }, 503),
+      'PUT /cases/case-1/stations/1/response': () => {
+        respuestas = [
+          { estacion_id: 'explorar', opciones_seleccionadas: ['voz_alumno'], comentario: '', completado: true },
+        ]
+        estacionActual = 'orientar'
+        return jsonResponse(
+          caseWire({
+            respuestas,
+            progreso: { completadas: 1, total: 2, porcentaje: 50 },
+            estado_interactivo: { ...caseWire().estado_interactivo, estacion_actual: 'orientar' },
+          }),
+        )
+      },
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('marks the quest as done and fires the celebration burst when the answer saves', async () => {
+    questFetch()
+
+    const user = userEvent.setup()
+    render(
+      <CaseForm token="tok" caseId="case-1" ownerId="u-1" onBack={() => {}} onDeleted={() => {}} />,
+    )
+
+    await screen.findByTestId('case-form')
+    await user.click(screen.getByRole('button', { name: /explorar en la selva/i }))
+
+    const panel = await screen.findByTestId('station-explorar')
+    await user.click(within(panel).getByLabelText(/escuchar al alumno/i))
+    await user.click(within(panel).getByRole('button', { name: /dar el caso por explorado/i }))
+
+    // §36: the completion state is carried by data, never by a timer.
+    const result = await within(panel).findByRole('status')
+    expect(result).toHaveAttribute('data-quest-state', 'done')
+    expect(within(result).getByText(/Has investigado todo lo que había que ver aquí/)).toBeInTheDocument()
+    expect(within(result).getByTestId('quest-burst')).toBeInTheDocument()
+  })
+
+  it('hands straight over to the next mission instead of closing the map', async () => {
+    questFetch()
+
+    const user = userEvent.setup()
+    render(
+      <CaseForm token="tok" caseId="case-1" ownerId="u-1" onBack={() => {}} onDeleted={() => {}} />,
+    )
+
+    await screen.findByTestId('case-form')
+    await user.click(screen.getByRole('button', { name: /explorar en la selva/i }))
+
+    const panel = await screen.findByTestId('station-explorar')
+    await user.click(within(panel).getByLabelText(/escuchar al alumno/i))
+    await user.click(within(panel).getByRole('button', { name: /dar el caso por explorado/i }))
+
+    const mission = screen.getByTestId('case-map-mission')
+    await within(mission).findByRole('status')
+    await user.click(within(panel).getByRole('button', { name: /continuar/i }))
+
+    // The mission advanced to Orientar — same overlay, fresh station, and
+    // no stale selection carried from the previous mission.
+    await waitFor(() => expect(mission).toHaveAttribute('data-quest-station', 'orientar'))
+    expect(mission).toHaveAttribute('data-quest-index', '2')
+    expect(mission).toHaveAttribute('data-quest-total', '5')
+    const nextPanel = await within(mission).findByTestId('station-orientar')
+    expect(nextPanel).toHaveAttribute('data-step', 'choosing')
+    expect(within(nextPanel).getByLabelText(/necesita más reto/i)).not.toBeChecked()
+  })
+})

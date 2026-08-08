@@ -12,7 +12,7 @@ import { ApiError } from '../../lib/http'
 import { CASE_STATUS_LABELS, useCase } from '../../cases'
 import type { CollaboratorRole, Student } from '../../cases'
 import { useJourneyTemplate } from '../../journeys'
-import { CaseMap, stationIndex, toCaseStage } from '../case-map'
+import { CaseMap, STATIONS, stationIndex, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
 import { CaseChat } from '../../chat'
 import { AvatarPicker, useAvatar } from '../../avatar'
@@ -310,7 +310,11 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   // The map is the only place a station is answered — clicking a hotspot
   // opens that station's real form in the map's own popup, rather than a
   // separate list of cards repeating what the map already shows.
-  function renderStationPanel(mapStation: Station, close: () => void) {
+  function renderStationPanel(
+    mapStation: Station,
+    close: () => void,
+    goTo: (stage: Station['stage']) => void,
+  ) {
     if (!template) return null
     const templateStation = template.estaciones.find((entry) => entry.id === mapStation.stage)
     if (!templateStation) {
@@ -327,12 +331,21 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     }
     return (
       <StationCard
+        // A fresh form per station: advancing along the map must not carry
+        // the previous mission's half-chosen options into the next one.
+        key={mapStation.stage}
         station={templateStation}
         student={current.alumno}
         answer={current.respuestas.find((r) => r.estacionId === templateStation.id) ?? null}
         editable={isEditor}
         onAnswer={answerStation}
-        onContinue={close}
+        onContinue={() => {
+          // The quest chain: completing a mission hands straight over to the
+          // next station on the map instead of dropping back to the canvas.
+          const next = STATIONS[stationIndex(mapStation.stage) + 1]
+          if (next && stationIndex(next.stage) <= stationIndex(stage)) goTo(next.stage)
+          else close()
+        }}
         onFinish={completeCase}
       />
     )

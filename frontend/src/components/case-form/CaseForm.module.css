@@ -733,6 +733,7 @@
 }
 
 .stationResult {
+  position: relative;
   display: grid;
   gap: 8px;
   margin-top: 10px;
@@ -741,6 +742,62 @@
   background: rgb(255 255 255 / 72%);
   border: 1px solid rgb(21 40 53 / 22%);
   border-radius: 8px;
+  /* §9 stays small — the gold ring flashes once and settles. */
+  animation: resultGlow 900ms var(--ease) both;
+}
+
+@keyframes resultGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgb(183 139 45 / 55%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 16px rgb(183 139 45 / 0%);
+  }
+}
+
+/* The particle burst behind the completion text. Positioned over the panel,
+   not the icon, so the fly-out stays inside the card. */
+.questBurst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.burstParticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2);
+  border-radius: 2px;
+  background: rgb(183 139 45 / 85%);
+  animation: burstFly 680ms var(--ease) var(--delay) both;
+}
+
+@keyframes burstFly {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(220deg) scale(0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stationResult {
+    animation: none;
+  }
+
+  .burstParticle {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 .stationResultIcon {

@@ -47,7 +47,22 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     : `${presence.count} ${presence.count === 1 ? 'docente conectado' : 'docentes conectados'}`
 
   const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
-    setPresence(next)
+    setPresence((current) => {
+      // Presence sockets may be suspended while a browser tab is in the
+      // background. A teacher who already joined must remain in this room's
+      // roster instead of vanishing on that temporary 2 -> 1 transition.
+      const participantsById = new Map(current.participants.map((item) => [item.id, item]))
+      for (const participant of next.participants) {
+        participantsById.set(participant.id, participant)
+      }
+      const participants = [...participantsById.values()]
+      return {
+        ...next,
+        count: Math.max(current.count, next.count, participants.length),
+        participants,
+        detailed: current.detailed || next.detailed,
+      }
+    })
   }, [])
 
   useEffect(() => {

@@ -635,6 +635,31 @@
   text-underline-offset: 3px;
 }
 
+.caseStudentDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  max-width: 100%;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.caseStudentDetails span {
+  color: var(--parchment-hi);
+  font: 700 11px/1.35 var(--label);
+}
+
+.caseStudentDetails p {
+  display: -webkit-box;
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  overflow: hidden;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .closeRoom {
   display: grid;
   width: 28px;

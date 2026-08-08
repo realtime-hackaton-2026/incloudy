@@ -16,6 +16,14 @@ import styles from './CaseRoom.module.css'
 const REACTION_DEBOUNCE_MS = 5_000
 const REACTION_COOLDOWN_MS = 45_000
 
+interface PendingRoomMessage {
+  id: string
+  body: string
+  authorUserId?: string
+  authorName?: string
+  timestamp: number
+}
+
 export interface CaseRoomProps {
   token: string
   caseId: string
@@ -141,6 +149,7 @@ function RoomChannel({
   })
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [pendingMessages, setPendingMessages] = useState<PendingRoomMessage[]>([])
   const [starting, setStarting] = useState(false)
   const [closing, setClosing] = useState(false)
   const [askingAi, setAskingAi] = useState(false)
@@ -208,6 +217,11 @@ function RoomChannel({
   const latestControl = latestControlIndex >= 0 ? messages[latestControlIndex] : null
   const sessionActive = latestControl ? isSessionStarted(latestControl.content) : false
   const currentMessages = messages.slice(latestControlIndex + 1).filter((message) => !isSessionControl(message.content))
+  const visiblePendingMessages = pendingMessages.filter((pending) => !currentMessages.some((message) => (
+    typeof message.content !== 'string'
+    && message.content.body === pending.body
+    && message.content.authorUserId === pending.authorUserId
+  )))
   const previousMessages = messages.slice(0, Math.max(0, latestControlIndex)).filter((message) => !isSessionControl(message.content))
   // The bubble mirrors the room: the latest thing Búrix said — an answer to a
   // question or a proactive reaction to the team's comments — or a greeting
@@ -267,16 +281,31 @@ function RoomChannel({
     event.preventDefault()
     const text = draft.trim()
     if (!text || !unlocked || !sessionActive || !canPublish) return
+    const pending: PendingRoomMessage = {
+      id: `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      body: text,
+      authorUserId: me?.id,
+      authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+      timestamp: Date.now(),
+    }
+    setDraft('')
+    setPendingMessages((current) => [...current, pending])
     setSending(true)
     try {
       await send({
         content: {
           body: text,
-          authorUserId: me?.id,
-          authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+          authorUserId: pending.authorUserId,
+          authorName: pending.authorName,
         },
       })
-      setDraft('')
+      setTimeout(() => {
+        setPendingMessages((current) => current.filter((item) => item.id !== pending.id))
+      }, 5_000)
+    } catch {
+      setPendingMessages((current) => current.filter((item) => item.id !== pending.id))
+      setDraft(text)
+      setPortalError('No se pudo enviar el mensaje. Inténtalo nuevamente.')
     } finally {
       setSending(false)
     }
@@ -465,7 +494,7 @@ function RoomChannel({
       {sessionActive && (
         <>
           <ul className={styles.messages} aria-live="polite">
-            {currentMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
+            {currentMessages.length === 0 && visiblePendingMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
             {currentMessages.map((message) => (
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
@@ -475,6 +504,16 @@ function RoomChannel({
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
                 <div className={styles.messageBody}><RichText text={messageBody(message.content)} /></div>
+              </li>
+            ))}
+            {visiblePendingMessages.map((message) => (
+              <li key={message.id} className={`${styles.message} ${styles.messagePending}`}>
+                <div className={styles.messageMeta}>
+                  <span className={styles.messageAuthor}>Docente · {message.authorName ?? 'Tú'}</span>
+                  <time>{formatTime(message.timestamp)}</time>
+                </div>
+                <div className={styles.messageBody}><RichText text={message.body} /></div>
+                <small className={styles.pendingLabel}>Enviando…</small>
               </li>
             ))}
           </ul>
@@ -503,7 +542,7 @@ function RoomChannel({
                     ? 'Comparte una observación del caso…'
                     : 'Esperando al equipo…'
               }
-              disabled={sending || !unlocked || !canPublish}
+              disabled={!unlocked || !canPublish}
               onChange={(event) => handleDraftChange(event.target.value)}
             />
             <button type="submit" className={`btn-primary ${styles.sendButton}`} disabled={sending || !unlocked || !canPublish || !draft.trim()}>

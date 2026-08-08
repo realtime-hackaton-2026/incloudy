@@ -15,10 +15,13 @@ export interface OwlDoorProps {
   caseId: string
   joinCode: string
   studentName: string
+  studentAge?: number | null
+  studentCourse?: string | null
+  studentDescription: string
   stage: CaseStage
 }
 
-export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -174,6 +177,11 @@ export function OwlDoor({ token, caseId, joinCode, studentName, stage }: OwlDoor
                   <span>Caso de {studentName}</span>
                   <small>Código {joinCode}</small>
                 </button>
+                <div className={styles.caseStudentDetails}>
+                  <span>{studentAge ? `${studentAge} años` : 'Edad no indicada'}</span>
+                  <span>{studentCourse || 'Curso no indicado'}</span>
+                  <p>{studentDescription}</p>
+                </div>
                 <strong>{portalReady ? `${visibleCount}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.roomHeaderActions}>

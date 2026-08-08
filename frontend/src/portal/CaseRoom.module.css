@@ -227,6 +227,19 @@
   overflow-wrap: anywhere;
 }
 
+.messagePending {
+  opacity: 0.72;
+}
+
+.pendingLabel {
+  display: block;
+  margin-top: 4px;
+  color: var(--parchment);
+  font: 700 10px/1.2 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .empty {
   padding: 10px;
   font-size: var(--text-sm);

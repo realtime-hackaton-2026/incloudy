@@ -410,6 +410,9 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           caseId={caseId}
           joinCode={current.joinCode}
           studentName={current.alumno.nombre}
+          studentAge={current.alumno.edad}
+          studentCourse={current.alumno.curso}
+          studentDescription={current.alumno.descripcion}
           stage={stage}
         />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}

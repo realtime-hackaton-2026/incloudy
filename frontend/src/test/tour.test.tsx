@@ -141,13 +141,11 @@ describe('TOUR_STEPS content', () => {
     ])
   })
 
-  it('walks the room through its four corners', () => {
+  it('walks the room through the live panel and the private assistant', () => {
     const targets = TOUR_STEPS.chat.map((step) => step.target)
     expect(targets).toEqual([
       '[data-tour="room-dock"]',
-      '[data-tour="room-messages"]',
-      '[data-tour="room-composer"]',
-      '[data-tour="room-burix"]',
+      '[data-tour="room-burix-ai"]',
     ])
   })
 

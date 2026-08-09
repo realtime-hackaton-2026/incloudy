@@ -100,19 +100,9 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
       target: '[data-tour="room-dock"]',
     },
     {
-      title: 'El muro del equipo',
-      body: 'Las observaciones del caso caen aquí al instante, para todos. Cuando Búrix opina sobre el recorrido, también lo deja en este muro.',
-      target: '[data-tour="room-messages"]',
-    },
-    {
-      title: 'Comparte una observación',
-      body: 'Escribe lo que estáis descubriendo y pulsa Enviar. O pregúntale a Búrix: la respuesta llega a toda la sala.',
-      target: '[data-tour="room-composer"]',
-    },
-    {
-      title: 'Búrix, tu guía de la sala',
-      body: 'Búrix sigue la conversación y comenta cada avance del caso. El panel privado te deja preguntarle sin interrumpir al equipo.',
-      target: '[data-tour="room-burix"]',
+      title: 'Búrix · IA',
+      body: 'Búrix conoce al alumno, el recorrido y la conversación. Aquí le preguntas en privado lo que necesites, sin interrumpir al equipo.',
+      target: '[data-tour="room-burix-ai"]',
     },
   ],
 }

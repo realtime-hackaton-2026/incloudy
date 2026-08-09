@@ -4,7 +4,9 @@
 .layer {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* Above every piece of app chrome — the room dock sits at 100, the lobby
+     at 120 — so the card is never trapped underneath the thing it explains. */
+  z-index: 200;
   /* The layer itself catches nothing; the masks and the card do. That is
      what leaves the highlighted element clickable. */
   pointer-events: none;

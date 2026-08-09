@@ -1,10 +1,13 @@
 /*
- * The explorer's notebook.
+ * The gate, rebuilt full-bleed.
  *
- * Rolled back to parchment on purpose: the card reading as an object lying
- * in the world — not a modal floating over it — is what gave the original
- * login its charm. Lighter than the original though, so it sits in the
- * campsite rather than dominating it.
+ * The parchment notebook is gone: the world it floated over was the best
+ * thing on the screen and the card was covering it. Now the form sits
+ * directly on the map behind a scrim, the way a photo-led sign-in does —
+ * brand up top, one column, one obvious button.
+ *
+ * The entrance choreography is unchanged in timing (curtain, firefly, logo,
+ * form); only what rises has changed, from a card to the column itself.
  */
 
 .screen {
@@ -15,7 +18,25 @@
   justify-content: center;
   min-height: 100svh;
   width: 100%;
-  padding: 32px 24px;
+  padding: clamp(24px, 5vh, 56px) 24px;
+}
+
+/*
+ * The scrim. Without a card there is nothing between the text and the
+ * artwork, so contrast has to come from here: darkest behind the column,
+ * clearing towards the edges so the map is still legible around it.
+ */
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 46% 62% at 50% 50%, rgb(8 16 22 / 88%), transparent 78%),
+    linear-gradient(180deg, rgb(8 16 22 / 62%) 0%, rgb(8 16 22 / 34%) 42%, rgb(8 16 22 / 78%) 100%);
+  opacity: 0.86;
+  pointer-events: none;
+  transition: opacity var(--medium) var(--ease);
 }
 
 /* Scene 01 — darkness. One firefly crosses, then the world fades up. */
@@ -75,22 +96,11 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 400px;
-  padding: 30px 30px 26px;
-  border-radius: 10px;
-  background: var(--paper);
-  /* A warm rule down the spine side, like a stitched notebook edge. */
-  border: 1px solid var(--paper-edge);
-  border-left: 5px solid var(--wood-dark);
-  box-shadow:
-    0 26px 60px -22px rgb(0 0 0 / 78%),
-    0 2px 0 0 rgb(255 255 255 / 40%) inset;
-  transition:
-    box-shadow var(--medium) var(--ease),
-    transform var(--medium) var(--ease);
+  max-width: 380px;
+  transition: transform var(--medium) var(--ease);
 }
 
-/* Scene 05 — the notebook rises into place. */
+/* Scene 05 — the column rises into place. */
 @keyframes notebookIn {
   from {
     opacity: 0;
@@ -107,13 +117,14 @@
   animation: notebookIn 640ms var(--ease) 1820ms both;
 }
 
-/* The world leans in while a field is being filled. */
+/* The world recedes while a field is being filled. There is no card left to
+   lift, so the focus state is carried by the scrim instead. */
+.screen[data-focused='true']::before {
+  opacity: 1;
+}
+
 .panelFocused {
-  transform: translateY(-2px);
-  box-shadow:
-    0 32px 70px -22px rgb(0 0 0 / 82%),
-    0 0 44px -8px rgb(255 200 120 / 34%),
-    0 2px 0 0 rgb(255 255 255 / 40%) inset;
+  transform: translateY(-3px);
 }
 
 /* --- Branding ---------------------------------------------------------- */
@@ -122,8 +133,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 22px;
+  gap: 8px;
+  margin-bottom: 26px;
   text-align: center;
 }
 
@@ -145,36 +156,42 @@
 }
 
 .logo {
-  width: 50px;
-  height: 50px;
+  width: 58px;
+  height: 58px;
   image-rendering: pixelated;
+  filter: drop-shadow(0 6px 16px rgb(0 0 0 / 55%));
 }
 
+/* The brand carries the screen now that no card does. */
 .wordmark {
   font-family: var(--display);
-  font-size: 30px;
+  font-size: clamp(38px, 8vw, 52px);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--clay);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-shadow: 0 3px 22px rgb(0 0 0 / 70%);
 }
 
 .tagline {
   font-family: var(--label);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--parchment);
+  text-shadow: 0 1px 10px rgb(0 0 0 / 80%);
 }
 
 /* The invitation, and the reason the form exists. */
 .prompt {
-  margin-top: 12px;
+  margin-top: 16px;
   font-family: var(--display);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink);
+  letter-spacing: 0.01em;
+  color: var(--text);
+  text-shadow: 0 1px 12px rgb(0 0 0 / 80%);
 }
 
 /* --- Form -------------------------------------------------------------- */
@@ -197,7 +214,7 @@
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--text-soft);
   transition: color var(--micro) var(--ease);
 }
 
@@ -212,52 +229,53 @@
   left: 12px;
   width: 17px;
   height: 17px;
-  color: var(--wood-dark);
+  color: var(--text-soft);
   pointer-events: none;
   transition:
     color var(--micro) var(--ease),
     filter var(--micro) var(--ease);
 }
 
+/* Glass, not paper: the field has to sit on artwork and stay readable
+   without a card behind it. 16px so iOS never zooms on focus. */
 .input {
   width: 100%;
-  /* 48px tall: comfortably past the 44px minimum target. */
-  min-height: 48px;
-  padding: 13px 13px 13px 40px;
+  min-height: 52px;
+  padding: 14px 14px 14px 42px;
   font: inherit;
-  font-size: 15px;
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--paper-edge);
-  border-radius: 8px;
-  box-shadow: inset 0 2px 4px rgb(58 50 38 / 8%);
+  font-size: 16px;
+  color: var(--text);
+  background: rgb(10 20 27 / 62%);
+  border: 1px solid rgb(233 240 232 / 22%);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
   transition:
     border-color var(--micro) var(--ease),
+    background var(--micro) var(--ease),
     box-shadow var(--micro) var(--ease);
 }
 
 .input::placeholder {
-  color: #a9a094;
+  color: var(--muted);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--wood-dark);
-  box-shadow:
-    inset 0 2px 4px rgb(58 50 38 / 6%),
-    0 0 0 3px rgb(224 201 163 / 45%);
+  background: rgb(10 20 27 / 78%);
+  border-color: var(--parchment);
+  box-shadow: 0 0 0 3px rgb(232 201 120 / 22%);
 }
 
 .field:focus-within .icon {
-  color: var(--ember);
+  color: var(--parchment);
 }
 
 .field:focus-within .label {
-  color: var(--ink);
+  color: var(--text);
 }
 
 .input:disabled {
-  background: #f4f0e9;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -269,9 +287,9 @@
   gap: 9px;
   padding: 10px 12px;
   font-size: 13px;
-  color: #8f2f2f;
-  background: #fbe9e5;
-  border: 1px solid #e8bfb6;
+  color: var(--danger);
+  background: rgb(240 120 92 / 14%);
+  border: 1px solid rgb(240 120 92 / 42%);
   border-radius: 8px;
   animation: errorIn var(--small) var(--ease) both;
 }
@@ -312,18 +330,20 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 52px;
+  min-height: 54px;
   font-family: var(--display);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #3a2a16;
-  background: linear-gradient(180deg, var(--parchment-hi), var(--wood));
-  border: 1px solid var(--wood-dark);
-  border-radius: 9px;
+  /* --on-warm on --parchment is the 8:1 pairing; plain white here is the
+     1.6:1 failure this palette was fixed to stop repeating. */
+  color: var(--on-warm);
+  background: var(--parchment);
+  border: 1px solid var(--parchment-hi);
+  border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 3px 0 0 var(--wood-dark);
+  box-shadow: 0 10px 30px -12px rgb(232 201 120 / 60%);
   transition:
     transform var(--micro) var(--ease),
     box-shadow var(--micro) var(--ease),
@@ -332,16 +352,13 @@
 
 .submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.04);
-  box-shadow:
-    0 5px 0 0 var(--wood-dark),
-    0 12px 26px -10px rgb(255 157 92 / 55%);
+  background: var(--parchment-hi);
+  box-shadow: 0 16px 38px -12px rgb(232 201 120 / 72%);
 }
 
-/* Pressed: the button compresses onto its own shadow. */
 .submit:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 0 var(--wood-dark);
+  transform: translateY(1px);
+  box-shadow: 0 6px 18px -10px rgb(232 201 120 / 60%);
 }
 
 .submit:disabled {
@@ -387,8 +404,8 @@
   min-height: 44px;
   padding: 0 8px;
   font-family: var(--label);
-  font-size: 11px;
-  color: var(--ink-soft);
+  font-size: 12px;
+  color: var(--text-soft);
   background: none;
   border: none;
   cursor: pointer;
@@ -396,9 +413,19 @@
 }
 
 .help:hover {
-  color: var(--clay);
+  color: var(--parchment-hi);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* A hairline between the account action and the "just show me" one, so the
+   video reads as an alternative rather than a third thing to sign up for. */
+.aside {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid rgb(233 240 232 / 14%);
 }
 
 /* --- Small screens ----------------------------------------------------- */
@@ -409,11 +436,7 @@
   }
 
   .panel {
-    padding: 24px 20px 22px;
-  }
-
-  .wordmark {
-    font-size: 26px;
+    max-width: 100%;
   }
 }
 

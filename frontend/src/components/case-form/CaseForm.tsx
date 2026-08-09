@@ -21,6 +21,7 @@ import { OwlSays, OwlTip, journeyProgress, lockedStation } from '../../guide'
 import type { Guidance } from '../../guide'
 import { XpCounter } from '../../reward'
 import { ConfirmDialog } from '../confirm-dialog'
+import { CodeChip } from '../room-code'
 import { StationCard } from './JourneyStations'
 import styles from './CaseForm.module.css'
 
@@ -501,70 +502,104 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         </span>
       </header>
 
+      {/* The child comes before the sharing controls: this screen is about
+          them, and the identity strip says who at a glance so the fields
+          below read as details rather than a form to fill from scratch. */}
+      <fieldset className={`${styles.section} ${styles.studentCard}`} disabled={!isEditor}>
+        <legend className={styles.sectionTitle}>Alumno</legend>
+
+        <div className={styles.studentIdentity}>
+          <img className={styles.studentAvatar} src={avatar.src} alt="" />
+          <div className={styles.studentSummary}>
+            <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
+            <span>
+              {[
+                current.alumno.edad ? `${current.alumno.edad} años` : null,
+                current.alumno.curso || null,
+              ].filter(Boolean).join(' · ') || 'Sin edad ni curso todavía'}
+            </span>
+          </div>
+        </div>
+
+        {/* Edad and curso are short values; giving each a full row was the
+            main reason this card scrolled. */}
+        <div className={styles.studentGrid}>
+          <label className={`${styles.field} ${styles.fieldWide}`}>
+            Nombre
+            <input
+              className={styles.input}
+              value={current.alumno.nombre}
+              onChange={(event) => updateStudent({ nombre: event.target.value })}
+            />
+          </label>
+          <label className={styles.field}>
+            Edad
+            <input
+              className={styles.input}
+              type="number"
+              min={1}
+              max={120}
+              value={current.alumno.edad ?? ''}
+              onChange={(event) =>
+                updateStudent({ edad: event.target.value ? Number(event.target.value) : null })
+              }
+            />
+          </label>
+          <label className={styles.field}>
+            Curso
+            <input
+              className={styles.input}
+              value={current.alumno.curso ?? ''}
+              onChange={(event) => updateStudent({ curso: event.target.value || null })}
+            />
+          </label>
+          <label className={`${styles.field} ${styles.fieldWide}`}>
+            Descripción
+            <textarea
+              className={styles.textarea}
+              value={current.alumno.descripcion}
+              onChange={(event) => updateStudent({ descripcion: event.target.value })}
+            />
+          </label>
+        </div>
+      </fieldset>
+
       {isOwner && (
-        <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Búrix · colaboración docente</h3>
+        <section className={`${styles.section} ${styles.shareCard}`}>
+          <div className={styles.shareHead}>
+            <h3 className={styles.sectionTitle}>Búrix · colaboración docente</h3>
+            <span className={current.burixShared ? styles.shareOn : styles.shareOff}>
+              {current.burixShared ? 'Compartido' : 'Privado'}
+            </span>
+          </div>
+
           <p className={styles.state}>
             {current.burixShared
-              ? `Este caso aparece en Búrix. Comparte el código ${current.joinCode} para que otros docentes entren.`
+              ? 'Este caso aparece en Búrix. Quien tenga el código puede entrar en la sala.'
               : 'Este caso permanece privado y no aparece en el selector de Búrix.'}
           </p>
-          <button
-            type="button"
-            className={current.burixShared ? 'btn-secondary' : 'btn-primary'}
-            disabled={sharingWithBurix}
-            onClick={() => void handleBurixShare()}
-          >
-            {sharingWithBurix
-              ? 'Actualizando…'
-              : current.burixShared
-                ? 'Dejar de compartir con Búrix'
-                : 'Compartir este caso con Búrix'}
-          </button>
+
+          {/* The code is the thing a teacher actually needs to hand over, so
+              it gets its own control instead of sitting inside a sentence. */}
+          <div className={styles.shareActions}>
+            {current.burixShared && <CodeChip code={current.joinCode} />}
+            <button
+              type="button"
+              className={current.burixShared ? 'btn-secondary' : 'btn-primary'}
+              disabled={sharingWithBurix}
+              onClick={() => void handleBurixShare()}
+            >
+              {sharingWithBurix
+                ? 'Actualizando…'
+                : current.burixShared
+                  ? 'Dejar de compartir'
+                  : 'Compartir con Búrix'}
+            </button>
+          </div>
+
           {burixShareError && <p className={`${styles.state} ${styles.stateError}`} role="alert">{burixShareError}</p>}
         </section>
       )}
-
-      <fieldset className={styles.section} disabled={!isEditor}>
-        <legend className={styles.sectionTitle}>Alumno</legend>
-        <label className={styles.field}>
-          Nombre
-          <input
-            className={styles.input}
-            value={current.alumno.nombre}
-            onChange={(event) => updateStudent({ nombre: event.target.value })}
-          />
-        </label>
-        <label className={styles.field}>
-          Edad
-          <input
-            className={styles.input}
-            type="number"
-            min={1}
-            max={120}
-            value={current.alumno.edad ?? ''}
-            onChange={(event) =>
-              updateStudent({ edad: event.target.value ? Number(event.target.value) : null })
-            }
-          />
-        </label>
-        <label className={styles.field}>
-          Curso
-          <input
-            className={styles.input}
-            value={current.alumno.curso ?? ''}
-            onChange={(event) => updateStudent({ curso: event.target.value || null })}
-          />
-        </label>
-        <label className={styles.field}>
-          Descripción
-          <textarea
-            className={styles.textarea}
-            value={current.alumno.descripcion}
-            onChange={(event) => updateStudent({ descripcion: event.target.value })}
-          />
-        </label>
-      </fieldset>
 
       <section className={styles.section}>
         <div className={styles.progressHeader}>
@@ -576,12 +611,16 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
 
         <OwlTip tipId="map-guide" />
 
-        <CaseMap
-          stage={stage}
-          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
-          markerAvatar={avatar}
-          renderStationPanel={template ? renderStationPanel : undefined}
-        />
+        {/* Wrapped rather than given the attribute directly: CaseMap does not
+            forward unknown props, so it would never reach the DOM. */}
+        <div data-tour="journey">
+          <CaseMap
+            stage={stage}
+            completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
+            markerAvatar={avatar}
+            renderStationPanel={template ? renderStationPanel : undefined}
+          />
+        </div>
 
         {renderUnexpectedEvents()}
 
@@ -755,7 +794,9 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           La conversación privada del caso está disponible desde el búho del mapa. El asistente sigue siendo privado.
         </p>
         <CaseChat token={token} caseId={caseId} />
-        <DebateRoom token={token} caseId={caseId} />
+        <div data-tour="debate">
+          <DebateRoom token={token} caseId={caseId} />
+        </div>
       </section>
 
       {isOwner && (

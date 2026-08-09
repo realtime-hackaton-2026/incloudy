@@ -117,12 +117,13 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
           <p className={styles.lede}>Cada historia empieza en un lugar del mapa.</p>
         </div>
         <div className={styles.introActions}>
-          <button type="button" className="btn-secondary" onClick={() => setJoinOpen((open) => !open)}>
+          <button type="button" className="btn-secondary" data-tour="join-room" onClick={() => setJoinOpen((open) => !open)}>
             {joinOpen ? 'Cancelar' : 'Unirse con código'}
           </button>
           <button
             type="button"
             className={`btn-primary ${styles.newButton}`}
+            data-tour="new-case"
             onClick={() => setCreateOpen((open) => !open)}
             disabled={creating}
           >

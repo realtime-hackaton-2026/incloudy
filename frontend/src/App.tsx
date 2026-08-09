@@ -15,6 +15,7 @@ import { Dashboard } from './dashboard/Dashboard'
 import type { SceneVariant } from './components/scene'
 import { toCaseStage } from './components/case-map'
 import { OwlDoor } from './owl'
+import { TourOverlay, useTour } from './tour'
 
 type AuthScreenName = 'login' | 'registro'
 type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' } | { name: 'dashboard' }
@@ -59,6 +60,10 @@ function App() {
   const [entering, setEntering] = useState(false)
   // A focused field darkens the world behind the panel — see AuthScreen.
   const [authFocused, setAuthFocused] = useState(false)
+  // Up here with the other hooks: the auth screens return early below, and a
+  // hook cannot live on the far side of a return. `null` while signed out
+  // keeps the tour from arming behind the login.
+  const tour = useTour(session ? view.name : null)
 
   useEffect(() => {
     function onHashChange() {
@@ -152,6 +157,19 @@ function App() {
     <>
       <Scene variant={scene} entering={entering} />
       {entering && <CinematicOverlay caption="Tu mundo te espera" />}
+      {/* Held back until the entrance finishes: the tour points at elements
+          the cinematic is still sliding into place. */}
+      {!entering && tour.step !== null && (
+        <TourOverlay
+          screen={view.name}
+          step={tour.step}
+          total={tour.total}
+          onNext={tour.next}
+          onBack={tour.back}
+          onSkip={tour.skip}
+          onSkipAll={tour.skipAll}
+        />
+      )}
 
       <main
         className="app"

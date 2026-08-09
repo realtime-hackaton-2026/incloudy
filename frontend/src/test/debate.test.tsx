@@ -196,7 +196,7 @@ describe('DebateRoom', () => {
     const { default: userEvent } = await import('@testing-library/user-event')
     const user = userEvent.setup()
 
-    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={80} />)
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={600} />)
     await user.click(await screen.findByRole('button', { name: /abrir el debate/i }))
 
     // Búrix lands first and Tero is announced as still writing — the whole

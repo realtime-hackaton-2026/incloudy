@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { AuthScreen, ArrowIcon, KeyIcon, PersonIcon, WarningIcon } from '../auth-screen'
+import { VideoTrigger } from '../video-modal'
 import styles from '../auth-screen/AuthScreen.module.css'
 
 export interface LoginProps {
@@ -106,6 +107,11 @@ export function Login({
           <button className={styles.help} type="button" onClick={onSwitchToRegister}>
             ¿No tienes cuenta? Regístrate
           </button>
+          {/* The one place a newcomer can see what this is before handing
+              over anything. Below the fold of the decision, not above it. */}
+          <div className={styles.aside}>
+            <VideoTrigger />
+          </div>
         </div>
       </form>
     </AuthScreen>

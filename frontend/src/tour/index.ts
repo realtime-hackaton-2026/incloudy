@@ -1,0 +1,6 @@
+export { TourOverlay } from './TourOverlay'
+export type { TourOverlayProps } from './TourOverlay'
+export { useTour } from './useTour'
+export type { TourState } from './useTour'
+export { TOUR_STEPS } from './steps'
+export type { TourScreen, TourStep } from './steps'

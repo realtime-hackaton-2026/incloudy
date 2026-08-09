@@ -6,7 +6,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, renderHook, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { TourOverlay, useTour } from '../tour'
+import { TOUR_STEPS, TourOverlay, useTour } from '../tour'
 
 beforeEach(() => {
   localStorage.clear()
@@ -114,5 +114,43 @@ describe('useTour', () => {
 
     act(() => result.current.next())
     await waitFor(() => expect(result.current.step).toBeNull())
+  })
+})
+
+describe('TOUR_STEPS content', () => {
+  it('calls the cases screen by its own name, not "el mapa"', () => {
+    const [first] = TOUR_STEPS.cases
+    expect(first.title).toMatch(/aventuras/i)
+    expect(first.title).not.toMatch(/mapa/i)
+  })
+
+  it('walks the case screen through its cards before the journey', () => {
+    const titles = TOUR_STEPS.case.map((step) => step.title)
+    const journey = titles.findIndex((title) => /cinco estaciones/i.test(title))
+    // Every card the teacher has to understand first comes first.
+    for (const before of [/alumno/i, /búrix/i, /entrar/i, /conversaciones/i]) {
+      const index = titles.findIndex((title) => before.test(title))
+      expect(index).toBeGreaterThanOrEqual(0)
+      expect(index).toBeLessThan(journey)
+    }
+  })
+
+  it('covers the three cards on the map screen', () => {
+    const targets = TOUR_STEPS['map-demo'].map((step) => step.target)
+    expect(targets).toEqual([
+      '[data-tour="map-cases"]',
+      '[data-tour="map-case-study"]',
+      '[data-tour="journey"]',
+    ])
+  })
+
+  it('points every targeted step at a selector, never an empty string', () => {
+    for (const steps of Object.values(TOUR_STEPS)) {
+      for (const step of steps) {
+        expect(step.title.length).toBeGreaterThan(0)
+        expect(step.body.length).toBeGreaterThan(0)
+        if (step.target !== undefined) expect(step.target).toMatch(/^\[data-tour="[a-z-]+"\]$/)
+      }
+    }
   })
 })

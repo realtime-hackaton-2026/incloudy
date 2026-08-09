@@ -289,7 +289,7 @@ function MapOverview({ token, ownerId }: { token: string; ownerId: string | null
   const selected = cases.find((item) => item.id === selectedCaseId) ?? cases[0]
   return (
     <>
-      <section className="map-case-selector" aria-labelledby="map-case-selector-title" data-avatar-revision={avatarRevision}>
+      <section className="map-case-selector" data-tour="map-cases" aria-labelledby="map-case-selector-title" data-avatar-revision={avatarRevision}>
         <div className="map-case-selector__heading">
           <div>
             <span>Recorridos disponibles</span>

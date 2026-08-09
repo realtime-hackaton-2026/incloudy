@@ -419,7 +419,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   if (mapOnly) {
     return (
       <div className={styles.mapOnly} data-testid="case-map-only">
-        <div className={styles.mapOnlyHeader}>
+        <div className={styles.mapOnlyHeader} data-tour="map-case-study">
           <div className={styles.mapOnlyIdentity}>
             <span className={styles.mapOnlyKicker}>Caso en estudio</span>
             <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
@@ -458,16 +458,18 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <OwlSays guidance={guidance} />
         {/* On its own route the map is the game, so it escapes the shell's
             reading width. Inside a case it stays one section among many. */}
-        <CaseMap
-          stage={stage}
-          wide
-          completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
-          markerAvatar={avatar}
-          onLockedAttempt={(blocked, mustFinishFirst) =>
-            setLockedNotice(lockedStation(blocked.label, mustFinishFirst?.label ?? null))
-          }
-          renderStationPanel={template ? renderStationPanel : undefined}
-        />
+        <div data-tour="journey">
+          <CaseMap
+            stage={stage}
+            wide
+            completedStages={current.respuestas.filter((answer) => answer.completado).map((answer) => answer.estacionId as Station['stage'])}
+            markerAvatar={avatar}
+            onLockedAttempt={(blocked, mustFinishFirst) =>
+              setLockedNotice(lockedStation(blocked.label, mustFinishFirst?.label ?? null))
+            }
+            renderStationPanel={template ? renderStationPanel : undefined}
+          />
+        </div>
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">
@@ -505,7 +507,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       {/* The child comes before the sharing controls: this screen is about
           them, and the identity strip says who at a glance so the fields
           below read as details rather than a form to fill from scratch. */}
-      <fieldset className={`${styles.section} ${styles.studentCard}`} disabled={!isEditor}>
+      <fieldset className={`${styles.section} ${styles.studentCard}`} data-tour="student" disabled={!isEditor}>
         <legend className={styles.sectionTitle}>Alumno</legend>
 
         <div className={styles.studentIdentity}>
@@ -565,7 +567,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       </fieldset>
 
       {isOwner && (
-        <section className={`${styles.section} ${styles.shareCard}`}>
+        <section className={`${styles.section} ${styles.shareCard}`} data-tour="share">
           <div className={styles.shareHead}>
             <h3 className={styles.sectionTitle}>Búrix · colaboración docente</h3>
             <span className={current.burixShared ? styles.shareOn : styles.shareOff}>
@@ -667,7 +669,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       </section>
 
       {showSummary && (
-        <section className={styles.section}>
+        <section className={styles.section} data-tour="summary">
           <h3 className={styles.sectionTitle}>Resumen final</h3>
           {editingSummary ? (
             <>
@@ -726,7 +728,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
       )}
 
       {isOwner && (
-        <section className={styles.section}>
+        <section className={styles.section} data-tour="collaborators">
           <h3 className={styles.sectionTitle}>Colaboradores</h3>
           <ul className={styles.collaborators}>
             <li className={`${styles.collaborator} ${styles.caseOwner}`}>
@@ -788,7 +790,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         </section>
       )}
 
-      <section className={styles.section}>
+      <section className={styles.section} data-tour="conversations">
         <h3 className={styles.sectionTitle}>Conversaciones</h3>
         <p className={styles.state}>
           La conversación privada del caso está disponible desde el búho del mapa. El asistente sigue siendo privado.

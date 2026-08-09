@@ -14,8 +14,18 @@
   animation: fade 180ms var(--ease) both;
 }
 
+/*
+ * As wide as the viewport allows — but the third term caps the width by the
+ * height that is actually left, so a short landscape window shrinks the
+ * player instead of squashing it. Capping height alone kept it on screen but
+ * pushed the box off 16:9, which just moved the black bars to the sides.
+ * The 150px covers the header plus the backdrop's padding.
+ */
 .frame {
-  width: min(920px, 100%);
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%, (100dvh - 150px) * 16 / 9);
+  max-height: 100%;
   overflow: hidden;
   background: var(--surface-deep);
   border: 1px solid var(--hairline-strong);
@@ -24,7 +34,22 @@
   animation: rise 220ms var(--ease) both;
 }
 
+/* Native fullscreen paints its own black backdrop; the rounded card border
+   would just be a seam inside it. */
+.frameFull {
+  width: 100%;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.frameFull .player {
+  flex: 1;
+  aspect-ratio: auto;
+}
+
 .frameHead {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,6 +67,13 @@
   color: var(--parchment);
 }
 
+.frameActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expand,
 .close {
   position: relative;
   display: flex;
@@ -59,12 +91,14 @@
   cursor: pointer;
 }
 
+.expand::after,
 .close::after {
   content: '';
   position: absolute;
   inset: -6px;
 }
 
+.expand:hover,
 .close:hover {
   color: var(--text);
   background: var(--surface-raised);
@@ -74,6 +108,7 @@
 .player {
   aspect-ratio: 16 / 9;
   width: 100%;
+  min-height: 0;
   background: #000;
 }
 

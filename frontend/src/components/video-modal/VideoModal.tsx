@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './VideoModal.module.css'
 
 /** The incloudy pitch. */
@@ -36,11 +37,38 @@ export function VideoModal({
   title = 'Cómo funciona incloudy',
 }: VideoModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [fullscreen, setFullscreen] = useState(false)
+
+  /*
+   * The browser owns fullscreen, not us: it can also be left with F11 or the
+   * platform's own Escape, so the button follows the document rather than a
+   * flag we set when it was clicked.
+   */
+  useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement === frameRef.current)
+    document.addEventListener('fullscreenchange', sync)
+    return () => document.removeEventListener('fullscreenchange', sync)
+  }, [])
+
+  const toggleFullscreen = useCallback(() => {
+    const frame = frameRef.current
+    if (!frame) return
+    if (document.fullscreenElement) {
+      void document.exitFullscreen?.()
+      return
+    }
+    // Older Safari and locked-down embeds simply refuse; the modal is still
+    // usable at its normal size, so a rejection is not worth surfacing.
+    void frame.requestFullscreen?.().catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      // In fullscreen, Escape belongs to the browser: it leaves fullscreen.
+      // Closing the modal too would swallow the video in one keystroke.
+      if (event.key === 'Escape' && !document.fullscreenElement) onClose()
     }
     document.addEventListener('keydown', onKey)
     // The video is loud and full-width; the page behind must not scroll
@@ -56,7 +84,15 @@ export function VideoModal({
 
   if (!open) return null
 
-  return (
+  /*
+   * Portalled to the body on purpose.
+   *
+   * A `position: fixed` element is laid out against its nearest transformed
+   * ancestor, not the viewport — and this modal is opened from the login
+   * panel and the tour card, both of which are animated with transforms.
+   * Rendered in place it sized itself to those small boxes.
+   */
+  return createPortal(
     <div
       className={styles.backdrop}
       role="dialog"
@@ -66,18 +102,34 @@ export function VideoModal({
       onClick={onClose}
     >
       {/* The backdrop closes; the frame must not close when clicked through. */}
-      <div className={styles.frame} onClick={(event) => event.stopPropagation()}>
+      <div
+        ref={frameRef}
+        className={`${styles.frame} ${fullscreen ? styles.frameFull : ''}`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className={styles.frameHead}>
           <span className={styles.frameTitle}>{title}</span>
-          <button
-            ref={closeRef}
-            type="button"
-            className={styles.close}
-            onClick={onClose}
-            aria-label="Cerrar el vídeo"
-          >
-            ×
-          </button>
+          <div className={styles.frameActions}>
+            <button
+              type="button"
+              className={styles.expand}
+              onClick={toggleFullscreen}
+              aria-pressed={fullscreen}
+              aria-label={fullscreen ? 'Salir de pantalla completa' : 'Ver en pantalla completa'}
+              data-testid="video-fullscreen"
+            >
+              {fullscreen ? <ShrinkIcon /> : <ExpandIcon />}
+            </button>
+            <button
+              ref={closeRef}
+              type="button"
+              className={styles.close}
+              onClick={onClose}
+              aria-label="Cerrar el vídeo"
+            >
+              ×
+            </button>
+          </div>
         </div>
         <div className={styles.player}>
           <iframe
@@ -89,7 +141,8 @@ export function VideoModal({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -121,6 +174,26 @@ export function VideoTrigger({
       </button>
       <VideoModal open={open} onClose={close} videoId={videoId} />
     </>
+  )
+}
+
+function ExpandIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path d="M6 2.6H2.6V6M10 2.6h3.4V6M10 13.4h3.4V10M6 13.4H2.6V10"
+        fill="none" stroke="currentColor" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ShrinkIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path d="M2.6 6H6V2.6M13.4 6H10V2.6M13.4 10H10v3.4M2.6 10H6v3.4"
+        fill="none" stroke="currentColor" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 

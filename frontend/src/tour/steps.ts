@@ -19,12 +19,12 @@ export interface TourStep {
 export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
   cases: [
     {
-      title: 'Este es el mapa',
-      body: 'Cada caso vive en un lugar del mapa. Al pasar por encima de un caso se ilumina su sitio, y al revés.',
+      title: 'Estas son tus aventuras',
+      body: 'Cada alumno tiene su propia aventura, y cada una guarda el recorrido que habéis hecho con él. Aquí están todas las tuyas y las que te han compartido.',
     },
     {
       title: 'Empieza por un alumno',
-      body: 'Un caso arranca con un nombre y una descripción. No hace falta tenerlo todo claro: el recorrido está para eso.',
+      body: 'Una aventura arranca con un nombre y una descripción. No hace falta tenerlo todo claro: el recorrido está para eso.',
       target: '[data-tour="new-case"]',
     },
     {
@@ -35,8 +35,28 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
   ],
   case: [
     {
+      title: 'El alumno',
+      body: 'Quién es y qué habéis observado. Es lo único que Búrix y Tero conocen del caso, así que cuanto más concreta sea la descripción, más útil será todo lo demás.',
+      target: '[data-tour="student"]',
+    },
+    {
+      title: 'Compartir con Búrix',
+      body: 'Mientras el caso sea privado, nadie más lo ve. Al compartirlo aparece en Búrix y el código de seis caracteres abre la sala: cópialo y pásaselo a quien tenga que entrar.',
+      target: '[data-tour="share"]',
+    },
+    {
+      title: 'Quién puede entrar',
+      body: 'Aquí decides quién acompaña el caso y con qué permiso: editar o solo leer. Puedes retirar a alguien en cualquier momento.',
+      target: '[data-tour="collaborators"]',
+    },
+    {
+      title: 'Las conversaciones',
+      body: 'Todo lo que se habla sobre el caso vive aquí: el debate de los dos guías y la mesa de docentes en vivo.',
+      target: '[data-tour="conversations"]',
+    },
+    {
       title: 'Cinco estaciones, un camino',
-      body: 'Explorar, Orientar, Actuar, Acompañar y Compartir. El mapa marca dónde estás; no hay que ir en orden perfecto.',
+      body: 'Explorar, Orientar, Actuar, Acompañar y Compartir. El mapa marca dónde estáis; no hay que ir en orden perfecto.',
       target: '[data-tour="journey"]',
     },
     {
@@ -45,9 +65,9 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
       target: '[data-tour="debate"]',
     },
     {
-      title: 'La mesa de docentes',
-      body: 'El chat es en vivo: quien esté en la sala ve lo que escribes al momento. Búrix también responde preguntas sobre este caso.',
-      target: '[data-tour="room"]',
+      title: 'El resumen final',
+      body: 'Cuando el recorrido está completo, aquí queda lo acordado. Es editable: la última palabra es vuestra, no de la IA.',
+      target: '[data-tour="summary"]',
     },
   ],
   dashboard: [
@@ -58,8 +78,19 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
   ],
   'map-demo': [
     {
-      title: 'El mapa, a solas',
-      body: 'Una vista del mundo sin casos encima, para enseñarlo o para mirarlo con calma.',
+      title: 'Recorridos disponibles',
+      body: 'Todos tus casos, en una sola tira. Elige uno y el mapa de abajo pasa a contar su historia.',
+      target: '[data-tour="map-cases"]',
+    },
+    {
+      title: 'El caso en estudio',
+      body: 'La cabecera resume el caso elegido: quién es, cuándo empezó y cuánto lleva recorrido. Cambia al cambiar de caso arriba.',
+      target: '[data-tour="map-case-study"]',
+    },
+    {
+      title: 'Moverse por el mapa',
+      body: 'Cada estación del camino es un punto del mundo. Pulsa una para abrir lo que se trabajó allí; las que aún no tocan aparecen apagadas hasta que llegue su turno.',
+      target: '[data-tour="journey"]',
     },
   ],
 }

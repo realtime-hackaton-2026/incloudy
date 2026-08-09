@@ -80,6 +80,13 @@ class CaseJoinRequest(BaseModel):
     code: str = Field(min_length=6, max_length=6, pattern=r"^[A-Za-z0-9]{6}$")
 
 
+class CaseParticipantResponse(BaseModel):
+    user_id: str
+    nombre: str
+    email: EmailStr
+    role: str
+
+
 class ForixShareRequest(BaseModel):
     shared: bool
 

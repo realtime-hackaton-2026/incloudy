@@ -10,6 +10,17 @@ from ..models import Case, JourneyTemplate, PortalComment
 logger = logging.getLogger(__name__)
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+FALLBACK_STATUS_CODES = {404, 408, 429, 500, 502, 503, 504}
+
+
+def _gemini_models() -> list[str]:
+    configured = [settings.gemini_model, *settings.gemini_fallback_models.split(",")]
+    models: list[str] = []
+    for value in configured:
+        model = value.strip().strip("\"'")
+        if model and model not in models:
+            models.append(model)
+    return models
 
 
 def build_case_context(case: Case, template: Optional[JourneyTemplate] = None) -> str:
@@ -75,22 +86,41 @@ async def _generate(prompt: str) -> str:
             detail="Gemini no está configurado en el servidor",
         )
 
-    try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post(
-                f"{GEMINI_URL}/{settings.gemini_model}:generateContent",
-                params={"key": settings.gemini_api_key},
-                json={"contents": [{"parts": [{"text": prompt}]}]},
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-    except (httpx.HTTPError, KeyError, IndexError, TypeError) as error:
-        logger.exception("Falló la solicitud a Gemini: %s", error)
-        raise HTTPException(
-            status_code=502,
-            detail="No se pudo contactar con el servicio de IA",
-        ) from error
+    last_error: Exception | None = None
+    models = _gemini_models()
+    async with httpx.AsyncClient(timeout=30) as client:
+        for model in models:
+            try:
+                response = await client.post(
+                    f"{GEMINI_URL}/{model}:generateContent",
+                    params={"key": settings.gemini_api_key},
+                    json={"contents": [{"parts": [{"text": prompt}]}]},
+                )
+                response.raise_for_status()
+                data = response.json()
+                answer = data["candidates"][0]["content"]["parts"][0]["text"]
+                if model != models[0]:
+                    logger.warning("Gemini respondió usando el modelo de respaldo %s", model)
+                return answer
+            except httpx.HTTPStatusError as error:
+                last_error = error
+                status = error.response.status_code
+                if status not in FALLBACK_STATUS_CODES:
+                    logger.exception("Gemini rechazó la solicitud con %s", status)
+                    raise HTTPException(
+                        status_code=status,
+                        detail="Gemini rechazó la configuración o la solicitud",
+                    ) from error
+                logger.warning("Gemini %s no está disponible (%s); probando respaldo", model, status)
+            except (httpx.RequestError, KeyError, IndexError, TypeError) as error:
+                last_error = error
+                logger.warning("Falló Gemini %s; probando respaldo: %s", model, error)
+
+    logger.error("Fallaron todos los modelos Gemini configurados: %s", last_error)
+    raise HTTPException(
+        status_code=502,
+        detail="No se pudo contactar con ningún modelo de IA configurado",
+    ) from last_error
 
 
 async def ask_gemini(
@@ -99,27 +129,44 @@ async def ask_gemini(
     template: Optional[JourneyTemplate] = None,
 ) -> str:
     if not settings.gemini_api_key:
-        if case is None:
-            return (
-                "El asistente local está disponible. Selecciona un caso para recibir "
-                "orientación basada en el recorrido guardado."
-            )
-        state = case.estado_interactivo
-        return (
-            f"Estado actual de {case.alumno.nombre}: progreso "
-            f"{case.progreso.porcentaje}%, {state.dias_restantes} días restantes y "
-            f"{state.confianza_equipo}% de confianza. Hipótesis: "
-            f"{state.hipotesis_sostenida or 'todavía sin definir'}. "
-            "Revisa las evidencias y completa la siguiente estación antes de cerrar "
-            "el análisis."
-        )
+        return _local_chat_response(case)
     prompt = (
         "Eres un asistente pedagógico. Analiza únicamente el caso ficticio o "
         "anonimizado proporcionado. Responde en español, evita diagnósticos médicos "
         "y ofrece recomendaciones educativas prudentes.\n\n"
         + build_prompt(message, case, template)
     )
-    return await _generate(prompt)
+    try:
+        return await _generate(prompt)
+    except HTTPException as error:
+        if error.status_code != 502:
+            raise
+        logger.warning("Gemini no está disponible; se usará la orientación local")
+        return _local_chat_response(case, provider_unavailable=True)
+
+
+def _local_chat_response(
+    case: Optional[Case], *, provider_unavailable: bool = False
+) -> str:
+    notice = (
+        "Búrix está usando temporalmente la orientación local. "
+        if provider_unavailable
+        else ""
+    )
+    if case is None:
+        return notice + (
+            "Selecciona un caso para recibir orientación basada en el recorrido guardado."
+        )
+    state = case.estado_interactivo
+    return (
+        notice
+        + f"Estado actual de {case.alumno.nombre}: progreso "
+        f"{case.progreso.porcentaje}%, {state.dias_restantes} días restantes y "
+        f"{state.confianza_equipo}% de confianza. Hipótesis: "
+        f"{state.hipotesis_sostenida or 'todavía sin definir'}. "
+        "Revisa las evidencias y completa la siguiente estación antes de cerrar "
+        "el análisis."
+    )
 
 
 def build_comments_context(comments: list[PortalComment]) -> str:

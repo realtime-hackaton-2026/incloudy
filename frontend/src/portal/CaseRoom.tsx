@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import type { PortalError } from '@portalsdk/core'
 import { getPortalClient } from './client'
@@ -16,10 +17,21 @@ import styles from './CaseRoom.module.css'
 const REACTION_DEBOUNCE_MS = 5_000
 const REACTION_COOLDOWN_MS = 45_000
 
+interface PendingRoomMessage {
+  id: string
+  body: string
+  authorUserId?: string
+  authorName?: string
+  timestamp: number
+}
+
 export interface CaseRoomProps {
   token: string
   caseId: string
   minimumParticipants?: number
+  /** Last confirmed room count, retained while a background tab reconnects. */
+  persistentPresenceCount?: number
+  participantNames?: Record<string, string>
   onPresenceChange?: (presence: CaseRoomPresenceState) => void
   /** Keeps the Portal channel mounted while the visual room/lobby is elsewhere. */
   hideUi?: boolean
@@ -42,6 +54,8 @@ export function CaseRoom({
   token,
   caseId,
   minimumParticipants = 2,
+  persistentPresenceCount = 0,
+  participantNames = {},
   hideUi = false,
   startSessionNonce = 0,
   closeSessionNonce = 0,
@@ -88,6 +102,8 @@ export function CaseRoom({
         caseId={caseId}
         channelId={session.channelId}
         minimumParticipants={minimumParticipants}
+        persistentPresenceCount={persistentPresenceCount}
+        participantNames={participantNames}
         hideUi={hideUi}
         startSessionNonce={startSessionNonce}
         closeSessionNonce={closeSessionNonce}
@@ -103,6 +119,8 @@ function RoomChannel({
   caseId,
   channelId,
   minimumParticipants,
+  persistentPresenceCount,
+  participantNames,
   hideUi,
   startSessionNonce,
   closeSessionNonce,
@@ -113,6 +131,8 @@ function RoomChannel({
   caseId: string
   channelId: string
   minimumParticipants: number
+  persistentPresenceCount: number
+  participantNames: Record<string, string>
   hideUi: boolean
   startSessionNonce: number
   closeSessionNonce: number
@@ -130,17 +150,28 @@ function RoomChannel({
   })
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [pendingMessages, setPendingMessages] = useState<PendingRoomMessage[]>([])
   const [starting, setStarting] = useState(false)
   const [closing, setClosing] = useState(false)
   const [askingAi, setAskingAi] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [burixOpen, setBurixOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   // A guard, not display state: it only decides whether this particular
   // nonce has already been acted on. Keeping it in state made the effect
   // write state synchronously on every bump, which is the cascading-render
   // pattern the lint rule flags.
   const lastStartNonce = useRef(0)
   const lastCloseNonce = useRef(0)
+
+  useEffect(() => {
+    if (!historyOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setHistoryOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [historyOpen])
   // Memoized on its own: rebuilt inline it was a fresh array every render,
   // which made `presenceState` below re-memo every time and fire the
   // `onPresenceChange` effect on every render instead of on real changes.
@@ -149,16 +180,28 @@ function RoomChannel({
   // updates (frame `meta` → `not_permitted`), so names can only arrive in the
   // handshake metadata of a peer; until then the UI falls back to "Docente · id".
   const participants = useMemo(
-    () =>
-      presence?.kind === 'detailed'
+    () => {
+      const connected = presence?.kind === 'detailed'
         ? presence.participants.map((participant) => ({
             id: participant.id,
             username: participant.username
               ?? (typeof participant.metadata?.username === 'string' ? participant.metadata.username : undefined),
             anon: participant.anon,
           }))
-        : [],
-    [presence],
+        : []
+      // Some Portal presence snapshots omit the current socket. Add the
+      // verified local identity explicitly so the owner and every joining
+      // teacher can always see themselves in the realtime roster.
+      if (me?.id && !connected.some((participant) => participant.id === me.id)) {
+        connected.push({
+          id: me.id,
+          username: typeof me.claims?.username === 'string' ? me.claims.username : undefined,
+          anon: false,
+        })
+      }
+      return connected
+    },
+    [me, presence],
   )
   // Mirrors the backend's own `publish` grant (see `services/portal.py`):
   // a lector, or anyone in a closed case, never has it. Gates the composer
@@ -168,11 +211,12 @@ function RoomChannel({
   // never pushed through presence metadata — the roster falls back to
   // "Docente · id" until names are joined app-side.
   const canPublish = me?.claims?.canPublish === true
-  const onlineCount = presence?.kind === 'detailed' ? participants.length : presence?.count ?? 0
+  const realtimeCount = Math.max(participants.length, presence?.count ?? 0)
+  const onlineCount = Math.max(realtimeCount, persistentPresenceCount)
   const presenceState = useMemo<CaseRoomPresenceState>(() => ({
     count: onlineCount,
     participants,
-    detailed: presence?.kind === 'detailed',
+    detailed: participants.length > 0 || presence?.kind === 'detailed',
     status,
     error: portalError,
   }), [onlineCount, participants, presence?.kind, portalError, status])
@@ -183,16 +227,26 @@ function RoomChannel({
   )
   const latestControl = latestControlIndex >= 0 ? messages[latestControlIndex] : null
   const sessionActive = latestControl ? isSessionStarted(latestControl.content) : false
-  const currentMessages = messages.slice(latestControlIndex + 1).filter((message) => !isSessionControl(message.content))
-  const previousMessages = messages.slice(0, Math.max(0, latestControlIndex)).filter((message) => !isSessionControl(message.content))
+  const currentMessages = messages
+    .slice(latestControlIndex + 1)
+    .filter((message) => !isSessionControl(message.content) && messageBody(message.content).trim().length > 0)
+  const visiblePendingMessages = pendingMessages.filter((pending) => !currentMessages.some((message) => (
+    messageBody(message.content) === pending.body
+    && message.content
+    && typeof message.content !== 'string'
+    && message.content.authorUserId === pending.authorUserId
+  )))
+  const previousMessages = messages
+    .slice(0, Math.max(0, latestControlIndex))
+    .filter((message) => !isSessionControl(message.content) && messageBody(message.content).trim().length > 0)
   // The bubble mirrors the room: the latest thing Búrix said — an answer to a
   // question or a proactive reaction to the team's comments — or a greeting
   // while he has nothing to say yet.
   const burixLine = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const content = messages[index].content
-      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction')) {
-        return content.body
+      if (content && typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction')) {
+        return messageBody(content) || null
       }
     }
     return null
@@ -243,10 +297,31 @@ function RoomChannel({
     event.preventDefault()
     const text = draft.trim()
     if (!text || !unlocked || !sessionActive || !canPublish) return
+    const pending: PendingRoomMessage = {
+      id: `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      body: text,
+      authorUserId: me?.id,
+      authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+      timestamp: Date.now(),
+    }
+    setDraft('')
+    setPendingMessages((current) => [...current, pending])
     setSending(true)
     try {
-      await send({ content: { body: text } })
-      setDraft('')
+      await send({
+        content: {
+          body: text,
+          authorUserId: pending.authorUserId,
+          authorName: pending.authorName,
+        },
+      })
+      setTimeout(() => {
+        setPendingMessages((current) => current.filter((item) => item.id !== pending.id))
+      }, 5_000)
+    } catch {
+      setPendingMessages((current) => current.filter((item) => item.id !== pending.id))
+      setDraft(text)
+      setPortalError('No se pudo enviar el mensaje. Inténtalo nuevamente.')
     } finally {
       setSending(false)
     }
@@ -283,7 +358,7 @@ function RoomChannel({
   useEffect(() => {
     const othersChat = messages.filter(
       (message) =>
-        typeof message.content !== 'string' &&
+        Boolean(message.content) && typeof message.content !== 'string' &&
         !message.content.type &&
         message.sender.id !== me?.id,
     )
@@ -294,7 +369,7 @@ function RoomChannel({
     let lastAiIndex = -1
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const content = messages[index].content
-      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction' || content.type === 'ai_question')) {
+      if (content && typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction' || content.type === 'ai_question')) {
         lastAiIndex = index
         break
       }
@@ -308,12 +383,13 @@ function RoomChannel({
       .slice(lastAiIndex + 1)
       .filter(
         (message) =>
-          typeof message.content !== 'string' &&
+          Boolean(message.content) && typeof message.content !== 'string' &&
           !message.content.type &&
           message.sender.id !== me?.id,
       )
       .slice(-3)
-      .map((message) => (typeof message.content !== 'string' ? message.content.body : ''))
+      .map((message) => messageBody(message.content))
+      .filter((body) => body.trim().length > 0)
     if (comments.length === 0) return
     const timer = window.setTimeout(() => {
       void reactToComments(comments)
@@ -328,7 +404,14 @@ function RoomChannel({
     setAskingAi(true)
     setAiError(null)
     try {
-      await send({ content: { type: 'ai_question', body: question } })
+      await send({
+        content: {
+          type: 'ai_question',
+          body: question,
+          authorUserId: me?.id,
+          authorName: typeof me?.claims?.username === 'string' ? me.claims.username : undefined,
+        },
+      })
       const answer = await askAssistant(token, question, caseId)
       await send({ content: { type: 'ai_answer', body: answer } })
     } catch (cause) {
@@ -354,6 +437,7 @@ function RoomChannel({
   }
 
   return (
+    <>
     <div className={styles.roomBody} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'}>
       {/* A dropped socket used to be recorded only in `data-state`, which made
           a stalled room look like a quiet one. */}
@@ -411,39 +495,42 @@ function RoomChannel({
       )}
 
       {previousMessages.length > 0 && (
-        <details className={styles.history} open={!sessionActive}>
-          <summary>Historial anterior del caso · {previousMessages.length} aportes</summary>
-          <ul className={styles.historyMessages}>
-            {previousMessages.map((message) => (
-              <li key={message.id}>
-                <strong>{messageAuthorLabel(message, me?.id)}</strong>
-                {isAiMessage(message.content)
-                  ? <RichText text={messageBody(message.content)} />
-                  : <span>{messageBody(message.content)}</span>}
-                <time>{formatTime(message.timestamp)}</time>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <button type="button" className={styles.historyButton} onClick={() => setHistoryOpen(true)}>
+          <span>Historial anterior del caso</span>
+          <small>{previousMessages.length} aportes · abrir</small>
+        </button>
       )}
 
       {sessionActive && (
         <>
           <ul className={styles.messages} aria-live="polite">
-            {currentMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
+            {currentMessages.length === 0 && visiblePendingMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
             {currentMessages.map((message) => (
               <li key={message.id} className={styles.message}>
                 <div className={styles.messageMeta}>
                 <span className={styles.messageAuthor}>
-                  {messageAuthorLabel(message, me?.id)}
+                  {messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}
                 </span>
                   <time>{formatTime(message.timestamp)}</time>
                 </div>
                 {/* Búrix's own contributions arrive as Markdown: headings,
-                    bold and lists must render, not show as literal stars. */}
+                    bold and lists must render, not show as literal stars.
+                    A teacher's comment is plain text, so it stays plain — a
+                    stray * or # in it is punctuation, not formatting. */}
                 {isAiMessage(message.content)
-                  ? <div className={styles.messageRich}><RichText text={messageBody(message.content)} /></div>
-                  : <p>{messageBody(message.content)}</p>}
+                  ? <div className={styles.messageBody}><RichText text={messageBody(message.content)} /></div>
+                  : <p className={styles.messageBody}>{messageBody(message.content)}</p>}
+              </li>
+            ))}
+            {visiblePendingMessages.map((message) => (
+              <li key={message.id} className={`${styles.message} ${styles.messagePending}`}>
+                <div className={styles.messageMeta}>
+                  <span className={styles.messageAuthor}>Docente · {message.authorName ?? 'Tú'}</span>
+                  <time>{formatTime(message.timestamp)}</time>
+                </div>
+                {/* Always a teacher's own draft, never Búrix. */}
+                <p className={styles.messageBody}>{message.body}</p>
+                <small className={styles.pendingLabel}>Enviando…</small>
               </li>
             ))}
           </ul>
@@ -472,13 +559,13 @@ function RoomChannel({
                     ? 'Comparte una observación del caso…'
                     : 'Esperando al equipo…'
               }
-              disabled={sending || !unlocked || !canPublish}
+              disabled={!unlocked || !canPublish}
               onChange={(event) => handleDraftChange(event.target.value)}
             />
-            <button type="submit" className="btn-primary" disabled={sending || !unlocked || !canPublish || !draft.trim()}>
+            <button type="submit" className={`btn-primary ${styles.sendButton}`} disabled={sending || !unlocked || !canPublish || !draft.trim()}>
               {sending ? '…' : 'Enviar'}
             </button>
-            <button type="button" className="btn-secondary" disabled={askingAi || !unlocked || !canPublish || !draft.trim()} onClick={() => void handleAskBurix()}>
+            <button type="button" className={`btn-secondary ${styles.askButton}`} disabled={askingAi || !unlocked || !canPublish || !draft.trim()} onClick={() => void handleAskBurix()}>
               {askingAi ? 'Pensando…' : 'Preguntar a Búrix'}
             </button>
           </form>
@@ -497,11 +584,42 @@ function RoomChannel({
         onShare={handleShareAnalysis}
       />
     </div>
+    {historyOpen && createPortal(
+      <div className={styles.historyOverlay} role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setHistoryOpen(false)
+      }}>
+        <section className={styles.historyModal} role="dialog" aria-modal="true" aria-labelledby="case-history-title">
+          <header className={styles.historyModalHeader}>
+            <div>
+              <span>Conversación de la sala</span>
+              <h3 id="case-history-title">Historial anterior del caso</h3>
+              <small>{previousMessages.length} aportes</small>
+            </div>
+            <button type="button" onClick={() => setHistoryOpen(false)} aria-label="Cerrar historial">×</button>
+          </header>
+          <ul className={styles.historyMessages}>
+            {previousMessages.map((message) => (
+              <li key={message.id}>
+                <div className={styles.historyMessageMeta}>
+                  <strong>{messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}</strong>
+                  <time>{formatTime(message.timestamp)}</time>
+                </div>
+                <div className={styles.historyMessageBody}>
+                  <RichText text={messageBody(message.content)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>,
+      document.body,
+    )}
+    </>
   )
 }
 
 function isSessionStarted(content: ChatMessage | string) {
-  return typeof content !== 'string' && content.type === 'session_started'
+  return Boolean(content && typeof content !== 'string' && content.type === 'session_started')
 }
 
 // Búrix's own messages carry Markdown the model writes; team comments are
@@ -512,21 +630,46 @@ function isAiMessage(content: ChatMessage | string) {
 }
 
 function isSessionControl(content: ChatMessage | string) {
-  return typeof content !== 'string' && (content.type === 'session_started' || content.type === 'session_closed')
+  return Boolean(content && typeof content !== 'string' && (content.type === 'session_started' || content.type === 'session_closed'))
 }
 
-function messageBody(content: ChatMessage | string) {
+function messageBody(content: unknown): string {
   if (typeof content === 'string') return content
-  return content.body
+  if (!content || typeof content !== 'object') return ''
+  if ('body' in content && typeof content.body === 'string') return content.body
+  // Earlier Portal payloads may retain the published object under `content`.
+  if ('content' in content) return messageBody(content.content)
+  return ''
 }
 
-function messageAuthorLabel(message: { content: ChatMessage | string; sender: { id: string; username?: string } }, meId?: string) {
+function messageAuthorLabel(
+  message: { content: ChatMessage | string; sender: { id: string; username?: string } },
+  participantNames: Record<string, string>,
+  meId?: string,
+  meName?: unknown,
+) {
   const content = message.content
-  if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
-  if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
-  if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
-  if (meId && message.sender.id === meId) return 'Tú'
-  return message.sender.username ?? `Docente · ${message.sender.id.slice(-4)}`
+  if (content && typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
+  if (content && typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
+  if (content && typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
+  if (content && typeof content !== 'string' && content.authorName) return `Docente · ${content.authorName}`
+  const verifiedMeName = typeof meName === 'string' ? meName : undefined
+  const appAuthorId = content && typeof content !== 'string' ? content.authorUserId : undefined
+  const teacherName = resolveParticipantName(participantNames, appAuthorId ?? message.sender.id) ?? (meId && message.sender.id === meId
+    ? verifiedMeName ?? message.sender.username
+    : message.sender.username)
+  return teacherName ? `Docente · ${teacherName}` : `Docente · ${message.sender.id.slice(-4)}`
+}
+
+function resolveParticipantName(participantNames: Record<string, string>, portalId: string | undefined) {
+  if (!portalId) return undefined
+  if (participantNames[portalId]) return participantNames[portalId]
+  // Older Portal history may expose only an abbreviated/stale form of the
+  // app user id. A unique suffix among this room's (maximum five) teachers is
+  // safe to resolve and turns e.g. `175d` back into `Ana`.
+  const suffix = portalId.slice(-4).toLowerCase()
+  const matches = Object.entries(participantNames).filter(([userId]) => userId.toLowerCase().endsWith(suffix))
+  return matches.length === 1 ? matches[0][1] : undefined
 }
 
 function formatTime(timestamp: number) {

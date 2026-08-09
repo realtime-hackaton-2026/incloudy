@@ -28,6 +28,7 @@ from ..schemas import (
     CaseAnalysisResponse,
     CaseCreate,
     CaseJoinRequest,
+    CaseParticipantResponse,
     CaseUpdate,
     CollaboratorRequest,
     CollaboratorResponse,
@@ -53,6 +54,7 @@ from ..services.cases import (
     ensure_station_is_unlocked,
     notify_case_participants,
     record_event,
+    user_role,
 )
 from ..services.portal import is_portal_configured, remove_case_member
 from ..services.reports import build_case_pdf
@@ -266,6 +268,34 @@ async def get_case(
     case = await get_accessible_case(case_id, current_user)
     await ensure_join_code(case)
     return case
+
+
+@router.get("/{case_id}/participants", response_model=list[CaseParticipantResponse])
+async def list_case_participants(
+    case_id: str,
+    current_user: User = Depends(get_current_user),
+) -> list[CaseParticipantResponse]:
+    """Resolve stable room identities from app users, not Portal fallbacks."""
+    case = await get_accessible_case(case_id, current_user)
+    participant_ids = [case.profesor_id]
+    participant_ids.extend(item.user_id for item in case.colaboradores)
+    participant_ids.extend(case.colaboradores_ids)
+    participants: list[CaseParticipantResponse] = []
+    for user_id in dict.fromkeys(participant_ids):
+        if not ObjectId.is_valid(user_id):
+            continue
+        user = await User.get(user_id)
+        if user is None:
+            continue
+        participants.append(
+            CaseParticipantResponse(
+                user_id=user_id,
+                nombre=user.nombre,
+                email=user.email,
+                role=user_role(case, user_id) or "docente",
+            )
+        )
+    return participants
 
 
 @router.put("/{case_id}")

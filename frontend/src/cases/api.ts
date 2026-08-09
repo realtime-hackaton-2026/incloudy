@@ -100,6 +100,13 @@ export interface CollaboratorRecord {
   role: CollaboratorRole
 }
 
+export interface CaseParticipant {
+  userId: string
+  nombre: string
+  email: string
+  role: string
+}
+
 interface CaseWire {
   _id?: string
   id?: string
@@ -209,6 +216,14 @@ export async function createCase(token: string, draft: CaseDraft): Promise<Case>
 export async function getCase(token: string, caseId: string): Promise<Case> {
   const response = await apiFetch(`/cases/${caseId}`, { headers: authHeaders(token) })
   return normalizeCase((await response.json()) as CaseWire)
+}
+
+export async function listCaseParticipants(token: string, caseId: string): Promise<CaseParticipant[]> {
+  const response = await apiFetch(`/cases/${encodeURIComponent(caseId)}/participants`, {
+    headers: authHeaders(token),
+  })
+  const wire = (await response.json()) as Array<{ user_id: string; nombre: string; email: string; role: string }>
+  return wire.map((item) => ({ userId: item.user_id, nombre: item.nombre, email: item.email, role: item.role }))
 }
 
 export async function joinCase(token: string, code: string): Promise<Case> {

@@ -18,6 +18,7 @@
   <img alt="React" src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=111827">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-8.2-646CFF?logo=vite&logoColor=white">
+  <img alt="Portal" src="https://img.shields.io/badge/Portal-Realtime-35C7D4">
   <a href="https://github.com/realtime-hackaton-2026/incloudy/commits/main"><img alt="Último commit" src="https://img.shields.io/github/last-commit/realtime-hackaton-2026/incloudy?display_timestamp=committer&label=last%20commit"></a>
   <a href="https://github.com/realtime-hackaton-2026/incloudy/graphs/contributors"><img alt="Contribuidores" src="https://img.shields.io/github/contributors/realtime-hackaton-2026/incloudy"></a>
 </p>
@@ -47,6 +48,42 @@ Cada caso avanza por cinco estaciones y ocupa una sola estación a la vez:
 
 Los profesionales autorizados pueden registrar y actualizar casos, invitar colaboradores con distintos roles, comentar en salas privadas, consultar el historial y generar un resumen pedagógico asistido por IA sin inventar información ausente.
 
+## Portal: el corazón realtime de la hackatón
+
+**incloudy fue construido para la Realtime Hackathon 2026 y Portal es la capa
+que convierte un expediente estático en una mesa docente viva.** Cada caso
+obtiene un canal privado y estable donde hasta cinco profesionales pueden:
+
+- verse conectados en tiempo real con su identidad docente;
+- entrar mediante un código de seis caracteres;
+- mantener presencia aunque la pestaña quede en segundo plano;
+- abrir y cerrar una sesión colaborativa para todo el equipo;
+- publicar observaciones, preguntas para Búrix y respuestas de IA;
+- recibir indicadores de escritura y mensajes sin refrescar la página;
+- conservar y consultar el historial en un modal con desplazamiento propio.
+
+La sala permanece montada mientras el docente navega por el mapa, la lista o
+el detalle del caso —solo se oculta en el dashboard—. FastAPI emite credenciales
+Portal de alcance mínimo para `case-{case_id}`; el frontend se conecta con
+`@portalsdk/react`, y los webhooks firmados replican eventos relevantes en
+MongoDB para auditoría, reportes y continuidad.
+
+```text
+Docente A ─┐                         ┌─ presencia y typing
+Docente B ─┼─ React + Portal SDK ────┼─ mensajes de sala
+Docente C ─┘          │              └─ eventos de sesión
+                      │ canal privado case-{id}
+                      ▼
+               Portal Realtime
+                      │ webhook firmado
+                      ▼
+              FastAPI → MongoDB
+```
+
+Esta separación permite que Portal gestione la baja latencia y la presencia,
+mientras incloudy conserva permisos, identidad, contexto pedagógico y una copia
+verificada de los comentarios que necesita el dominio.
+
 ## Stack tecnológico
 
 | Capa | Tecnologías | Responsabilidad |
@@ -54,7 +91,7 @@ Los profesionales autorizados pueden registrar y actualizar casos, invitar colab
 | **Frontend** | React 19.2, TypeScript 6.0, Vite 8.2 | Interfaz, mapa pedagógico y experiencia de usuario. |
 | **Backend** | Python, FastAPI, Pydantic | API REST, WebSockets, validación y reglas del dominio. |
 | **Persistencia** | MongoDB, Motor 3.6.1, Beanie 1.29.0 | Casos, recorridos, eventos, notas y notificaciones. |
-| **Tiempo real** | Portal SDK, WebSockets | Salas privadas, comentarios y actualizaciones por caso. |
+| **Tiempo real** | Portal SDK (`@portalsdk/react`) | Canales privados, presencia, typing, mensajes, control de sesión y webhooks. |
 | **Inteligencia artificial** | Google Gemini | Orientación y resúmenes basados en el contexto del caso. |
 | **Seguridad** | JWT, bcrypt, HMAC-SHA256 | Sesiones, contraseñas, permisos y validación de webhooks. |
 | **Calidad** | Pytest, Vitest, Testing Library, ESLint | Pruebas del dominio, integración e interfaz. |
@@ -67,12 +104,12 @@ Los profesionales autorizados pueden registrar y actualizar casos, invitar colab
 └──────────────┬───────────────┘
                │ HTTPS / WebSocket
 ┌──────────────▼───────────────┐
-│ FastAPI                      │
-│ Auth · Casos · Chat · Portal │
+│ FastAPI                             │
+│ Auth · Casos · Identidad · Webhooks │
 └───────┬──────────┬───────────┘
         │          │
-┌───────▼──────┐   ├──────────▶ Portal
-│ MongoDB      │   └──────────▶ Google Gemini
+┌───────▼──────┐   ├──────────▶ Portal Realtime
+│ MongoDB      │   └──────────▶ Google Gemini + fallback
 │ Motor/Beanie │
 └──────────────┘
 ```
@@ -138,6 +175,21 @@ npm run build
 ```
 
 El contenido generado en `frontend/dist` puede publicarse en una plataforma de alojamiento estático. La variable `VITE_API_URL` debe apuntar a la URL HTTPS de la API desplegada.
+
+### Variables relevantes
+
+```env
+# Backend / Railway
+PORTAL_SECRET_KEY=sk_...
+PORTAL_PUBLISHABLE_KEY=pk_...
+PORTAL_WEBHOOK_SECRET=whsec_...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.1-flash-lite
+
+# Frontend
+VITE_API_URL=https://tu-api.up.railway.app
+```
 
 ## Verificación
 

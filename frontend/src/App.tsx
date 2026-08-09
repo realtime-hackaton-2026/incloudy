@@ -13,6 +13,8 @@ import { Registro } from './components/registro'
 import { Scene } from './components/scene'
 import { Dashboard } from './dashboard/Dashboard'
 import type { SceneVariant } from './components/scene'
+import { toCaseStage } from './components/case-map'
+import { OwlDoor } from './owl'
 
 type AuthScreenName = 'login' | 'registro'
 type View = { name: 'cases' } | { name: 'case'; caseId: string } | { name: 'map-demo' } | { name: 'dashboard' }
@@ -199,7 +201,53 @@ function App() {
         {view.name === 'map-demo' && <MapOverview token={session.token} ownerId={session.userId} />}
         {view.name === 'dashboard' && <Dashboard token={session.token} />}
       </main>
+
+      {view.name !== 'dashboard' && (
+        <PersistentRoomAccess
+          token={session.token}
+          currentCaseId={view.name === 'case' ? view.caseId : null}
+        />
+      )}
     </>
+  )
+}
+
+function PersistentRoomAccess({ token, currentCaseId }: { token: string; currentCaseId: string | null }) {
+  const { cases, status } = useCases(token)
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() =>
+    currentCaseId ?? localStorage.getItem('burix-active-room-case'),
+  )
+  const [routeCaseId, setRouteCaseId] = useState(currentCaseId)
+
+  if (routeCaseId !== currentCaseId) {
+    setRouteCaseId(currentCaseId)
+    if (currentCaseId) setSelectedCaseId(currentCaseId)
+  }
+
+  if (status === 'loading' || cases.length === 0) return null
+
+  const selected = cases.find((item) => item.id === selectedCaseId)
+  const current = cases.find((item) => item.id === currentCaseId)
+  const roomCase = selected ?? current ?? cases.find((item) => item.burixShared) ?? cases[0]
+
+  function selectRoomCase(caseId: string) {
+    if (!cases.some((item) => item.id === caseId)) return
+    setSelectedCaseId(caseId)
+    localStorage.setItem('burix-active-room-case', caseId)
+  }
+
+  return (
+    <OwlDoor
+      token={token}
+      caseId={roomCase.id}
+      joinCode={roomCase.joinCode}
+      studentName={roomCase.alumno.nombre || 'Alumno sin nombre'}
+      studentAge={roomCase.alumno.edad}
+      studentCourse={roomCase.alumno.curso}
+      studentDescription={roomCase.alumno.descripcion}
+      stage={toCaseStage(roomCase.estadoInteractivo.estacionActual)}
+      onSelectCase={selectRoomCase}
+    />
   )
 }
 

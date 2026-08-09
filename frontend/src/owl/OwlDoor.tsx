@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { joinCase, listCases } from '../cases/api'
-import type { Case } from '../cases/api'
+import { joinCase, listCaseParticipants, listCases } from '../cases/api'
+import type { Case, CaseParticipant } from '../cases/api'
 import { ApiError } from '../lib/http'
 import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
@@ -14,10 +14,15 @@ export interface OwlDoorProps {
   token: string
   caseId: string
   joinCode: string
+  studentName: string
+  studentAge?: number | null
+  studentCourse?: string | null
+  studentDescription: string
   stage: CaseStage
+  onSelectCase?: (caseId: string) => void
 }
 
-export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage, onSelectCase }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -36,26 +41,65 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
   const [startSessionNonce, setStartSessionNonce] = useState(0)
   const [closeSessionNonce, setCloseSessionNonce] = useState(0)
   const [burixCases, setBurixCases] = useState<Case[]>([])
+  const [roomMembers, setRoomMembers] = useState<CaseParticipant[]>([])
+  const [presenceCaseId, setPresenceCaseId] = useState(caseId)
+
+  if (presenceCaseId !== caseId) {
+    setPresenceCaseId(caseId)
+    setPresence({ count: 0, participants: [], detailed: false, status: 'loading', error: null })
+    setRoomMembers([])
+    setSessionActive(false)
+    setRosterOpen(false)
+  }
+  const memberNames = Object.fromEntries(roomMembers.map((member) => [member.userId, member.nombre]))
+  const visibleParticipantsById = new Map(
+    roomMembers.map((member) => [member.userId, { id: member.userId, username: member.nombre }]),
+  )
+  for (const participant of presence.participants) {
+    visibleParticipantsById.set(participant.id, {
+      ...participant,
+      username: memberNames[participant.id] ?? participant.username,
+    })
+  }
+  const visibleParticipants = [...visibleParticipantsById.values()]
+  const visibleCount = Math.max(presence.count, visibleParticipants.length)
   const station = stationFor(stage)
   const portalReady = presence.status === 'ready'
   const portalBlocked = presence.status === 'blocked' || presence.status === 'error' || Boolean(presence.error)
-  const canOpen = portalReady && presence.count >= 2
+  const canOpen = portalReady && visibleCount >= 2
   const presenceLabel = !portalReady
     ? portalBlocked
       ? presence.error ?? 'Portal no ha podido conectar'
       : 'Conectando con Portal…'
-    : `${presence.count} ${presence.count === 1 ? 'docente conectado' : 'docentes conectados'}`
+    : `${visibleCount} ${visibleCount === 1 ? 'docente conectado' : 'docentes conectados'}`
 
   const handlePresenceChange = useCallback((next: CaseRoomPresenceState) => {
-    setPresence(next)
+    setPresence((current) => {
+      // Presence sockets may be suspended while a browser tab is in the
+      // background. A teacher who already joined must remain in this room's
+      // roster instead of vanishing on that temporary 2 -> 1 transition.
+      const participantsById = new Map(current.participants.map((item) => [item.id, item]))
+      for (const participant of next.participants) {
+        participantsById.set(participant.id, participant)
+      }
+      const participants = [...participantsById.values()]
+      return {
+        ...next,
+        count: Math.max(current.count, next.count, participants.length),
+        participants,
+        detailed: current.detailed || next.detailed,
+      }
+    })
   }, [])
 
   useEffect(() => {
     let active = true
     let timer: ReturnType<typeof setInterval> | null = null
     const refresh = () => {
-      void listCases(token).then((cases) => {
-        if (active) setBurixCases(cases.filter((item) => item.burixShared))
+      void Promise.all([listCases(token), listCaseParticipants(token, caseId)]).then(([cases, members]) => {
+        if (!active) return
+        setBurixCases(cases.filter((item) => item.burixShared))
+        setRoomMembers(members)
       }).catch(() => {})
     }
     refresh()
@@ -64,11 +108,11 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
       active = false
       if (timer) clearInterval(timer)
     }
-  }, [token])
+  }, [caseId, token])
 
   function openBurixCase(selectedCaseId: string) {
     if (!selectedCaseId || selectedCaseId === caseId) return
-    location.hash = `#/caso/${selectedCaseId}`
+    onSelectCase?.(selectedCaseId)
   }
 
   /*
@@ -119,6 +163,10 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
     setRosterOpen(false)
   }
 
+  function viewCurrentCase() {
+    location.hash = `#/caso/${caseId}`
+  }
+
   return (
     <>
       {/* Portal presence and the session-control channel remain mounted even
@@ -130,7 +178,21 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
             <div className={styles.roomDockHeader}>
               <div>
                 <span className="eyebrow">Búrix · guía de la sala</span>
-                <strong>{portalReady ? `${presence.count}/5 docentes` : 'Portal · conexión'}</strong>
+                <button
+                  type="button"
+                  className={styles.caseLink}
+                  onClick={viewCurrentCase}
+                  aria-label={`Ver el caso de ${studentName}, código ${joinCode}`}
+                >
+                  <span>Caso de {studentName}</span>
+                  <small>Código {joinCode}</small>
+                </button>
+                <div className={styles.caseStudentDetails}>
+                  <span>{studentAge ? `${studentAge} años` : 'Edad no indicada'}</span>
+                  <span>{studentCourse || 'Curso no indicado'}</span>
+                  <p>{studentDescription}</p>
+                </div>
+                <strong>{portalReady ? `${visibleCount}/5 docentes` : 'Portal · conexión'}</strong>
               </div>
               <div className={styles.roomHeaderActions}>
                 {sessionActive && (
@@ -138,7 +200,7 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
                     <span aria-hidden="true">■</span> Cerrar mesa
                   </button>
                 )}
-                <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Ocultar sala">✕</button>
+                <button type="button" className={styles.closeRoom} onClick={() => setRoomOpen(false)} aria-label="Contraer chat">›</button>
               </div>
             </div>
 
@@ -152,9 +214,9 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
 
             {rosterOpen && (
               <div className={styles.inlineRoster}>
-                {presence.detailed && presence.participants.length > 0 ? (
+                {visibleParticipants.length > 0 ? (
                   <ul className={styles.participants}>
-                    {presence.participants.map((participant) => (
+                    {visibleParticipants.map((participant) => (
                       <li key={participant.id}>
                         <span className={styles.participantDot} />
                         <span>{participant.username ?? `Docente · ${participant.id.slice(-4)}`}</span>
@@ -170,9 +232,12 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
         )}
 
         <CaseRoom
+          key={caseId}
           token={token}
           caseId={caseId}
           minimumParticipants={2}
+          persistentPresenceCount={visibleCount}
+          participantNames={memberNames}
           hideUi={!roomOpen}
           startSessionNonce={startSessionNonce}
           closeSessionNonce={closeSessionNonce}
@@ -183,16 +248,14 @@ export function OwlDoor({ token, caseId, joinCode, stage }: OwlDoorProps) {
       </aside>
 
       {sessionActive && !roomOpen && (
-        <div className={styles.activeBanner} role="status">
+        <button type="button" className={styles.collapsedRoomTab} onClick={() => setRoomOpen(true)} aria-label="Expandir chat de la sala">
+          <span className={styles.collapsedArrow} aria-hidden="true">‹</span>
           <span className={styles.activeBannerDot} />
           <div className={styles.activeBannerCopy}>
-            <strong>Sala de trabajo activa</strong>
-            <span>{portalReady ? `${presence.count}/5 docentes · Búrix facilita la conversación en tiempo real` : presenceLabel}</span>
+            <strong>Caso de {studentName}</strong>
+            <span>{joinCode} · {portalReady ? `${visibleCount}/5 docentes` : presenceLabel}</span>
           </div>
-          <button type="button" className={styles.bannerButton} onClick={() => setRoomOpen(true)}>
-            Ver sala
-          </button>
-        </div>
+        </button>
       )}
 
       {!lobbyOpen && !roomOpen && (

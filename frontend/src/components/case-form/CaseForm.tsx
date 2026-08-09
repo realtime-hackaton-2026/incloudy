@@ -6,11 +6,11 @@
  * client-side notion of "done" independent of it.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError } from '../../lib/http'
-import { CASE_STATUS_LABELS, useCase } from '../../cases'
-import type { CollaboratorRole, Student } from '../../cases'
+import { CASE_STATUS_LABELS, listCaseParticipants, useCase } from '../../cases'
+import type { CaseParticipant, CollaboratorRole, Student } from '../../cases'
 import { useJourneyTemplate } from '../../journeys'
 import { CaseMap, STATIONS, stationIndex, toCaseStage } from '../case-map'
 import type { Station } from '../case-map'
@@ -19,7 +19,6 @@ import { DebateRoom } from '../../debate'
 import { AvatarPicker, useAvatar } from '../../avatar'
 import { OwlSays, OwlTip, journeyProgress, lockedStation } from '../../guide'
 import type { Guidance } from '../../guide'
-import { OwlDoor } from '../../owl'
 import { XpCounter } from '../../reward'
 import { ConfirmDialog } from '../confirm-dialog'
 import { StationCard } from './JourneyStations'
@@ -42,7 +41,37 @@ const ROLE_LABELS: Record<CollaboratorRole, string> = {
   lector: 'Lector',
 }
 
+function isBusinessDay(date: Date): boolean {
+  const day = date.getDay()
+  return day !== 0 && day !== 6
+}
+
+function addBusinessDays(start: Date, amount: number): Date {
+  const deadline = new Date(start)
+  let added = 0
+  while (added < amount) {
+    deadline.setDate(deadline.getDate() + 1)
+    if (isBusinessDay(deadline)) added += 1
+  }
+  return deadline
+}
+
+function businessDaysRemaining(now: Date, deadline: Date): number {
+  const cursor = new Date(now)
+  const end = new Date(deadline)
+  cursor.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  if (cursor >= end) return 0
+  let remaining = 0
+  while (cursor < end) {
+    cursor.setDate(cursor.getDate() + 1)
+    if (isBusinessDay(cursor)) remaining += 1
+  }
+  return remaining
+}
+
 export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = false, onAvatarChange }: CaseFormProps) {
+  const [currentTime, setCurrentTime] = useState(() => Date.now())
   const {
     item,
     loadStatus,
@@ -79,6 +108,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [collaboratorError, setCollaboratorError] = useState<string | null>(null)
   const [invitePending, setInvitePending] = useState(false)
   const [pendingRemoveCollaborator, setPendingRemoveCollaborator] = useState<string | null>(null)
+  const [caseParticipants, setCaseParticipants] = useState<CaseParticipant[]>([])
 
   const [completing, setCompleting] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
@@ -99,6 +129,29 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   // standing "how far is left" message until it expires.
   const [lockedNotice, setLockedNotice] = useState<Guidance | null>(null)
 
+  useEffect(() => {
+    if (!mapOnly) return
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [mapOnly])
+
+  useEffect(() => {
+    let active = true
+    const refresh = () => {
+      void listCaseParticipants(token, caseId)
+        .then((participants) => {
+          if (active) setCaseParticipants(participants)
+        })
+        .catch(() => {})
+    }
+    refresh()
+    const timer = setInterval(refresh, 5_000)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [caseId, token])
+
   if (loadStatus === 'loading') return <p className={styles.state}>Cargando caso…</p>
 
   if (loadStatus === 'error' || !item) {
@@ -117,6 +170,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   // Narrowed once, here, so every handler below can reference `current`
   // instead of asserting `item!` is non-null everywhere it's used.
   const current = item
+  const participantById = new Map(caseParticipants.map((participant) => [participant.userId, participant]))
   const isOwner = ownerId !== null && current.profesorId === ownerId
   const isEditor =
     isOwner || current.colaboradores.some((c) => c.userId === ownerId && c.role === 'editor')
@@ -136,6 +190,14 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     current.progreso.total - current.progreso.completadas,
   )
   const guidance: Guidance | null = lockedNotice ?? journeyProgress(stationsLeft)
+  const journeyTotal = current.progreso.total || 5
+  const journeyCompleted = Math.min(current.progreso.completadas, journeyTotal)
+  const journeyLife = Math.round((journeyCompleted / journeyTotal) * 100)
+  const createdAt = new Date(current.createdAt)
+  const deadline = addBusinessDays(createdAt, 5)
+  const deadlineDays = businessDaysRemaining(new Date(currentTime), deadline)
+  const journeyFinished = journeyCompleted >= journeyTotal
+  const shortDate = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' })
 
   const showSummary =
     current.status === 'completado' ||
@@ -357,16 +419,35 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     return (
       <div className={styles.mapOnly} data-testid="case-map-only">
         <div className={styles.mapOnlyHeader}>
-          <div>
+          <div className={styles.mapOnlyIdentity}>
             <span className={styles.mapOnlyKicker}>Caso en estudio</span>
             <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
+            <span className={styles.caseCreated}>
+              Caso creado {shortDate.format(createdAt)} · límite hábil {shortDate.format(deadline)}
+            </span>
           </div>
           <div className={styles.mapOnlyStats}>
-            <span>⏳ {current.estadoInteractivo.diasRestantes} días</span>
-            <span>🤝 {current.estadoInteractivo.confianzaEquipo}%</span>
+            <span className={`${styles.caseMetric} ${journeyFinished ? styles.caseMetricComplete : ''}`}>
+              <b>{journeyFinished ? '✓' : '⏳'}</b>
+              <span><small>Plazo hábil</small>{journeyFinished ? 'Finalizado' : deadlineDays === 0 ? 'Vence hoy' : `${deadlineDays} días`}</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>◆</b>
+              <span><small>Estaciones</small>{journeyCompleted}/{journeyTotal}</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>♥</b>
+              <span><small>Vida</small>{journeyLife}%</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>🤝</b>
+              <span><small>Confianza</small>{current.estadoInteractivo.confianzaEquipo}%</span>
+            </span>
             {/* Answering a station returns a new total; the counter turns that
                 into a gain the child can see arrive. */}
-            <XpCounter value={current.estadoInteractivo.xpTotal} />
+            <span className={styles.caseMetric}>
+              <XpCounter value={current.estadoInteractivo.xpTotal} />
+            </span>
           </div>
         </div>
         <OwlTip tipId="map-guide" />
@@ -386,7 +467,6 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
           }
           renderStationPanel={template ? renderStationPanel : undefined}
         />
-        <OwlDoor token={token} caseId={caseId} joinCode={current.joinCode} stage={stage} />
         {templateStatus === 'loading' && <p className={styles.state}>Cargando el recorrido…</p>}
         {templateStatus === 'error' && (
           <p className={`${styles.state} ${styles.stateError}`} role="alert">
@@ -610,11 +690,20 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Colaboradores</h3>
           <ul className={styles.collaborators}>
+            <li className={`${styles.collaborator} ${styles.caseOwner}`}>
+              <div className={styles.collaboratorIdentity}>
+                <strong>Docente · {participantById.get(current.profesorId)?.nombre ?? 'Propietario'}</strong>
+                <span>{participantById.get(current.profesorId)?.email ?? 'Correo no disponible'}</span>
+                <small>Creó este caso · Propietario</small>
+              </div>
+            </li>
             {current.colaboradores.map((collaborator) => (
               <li key={collaborator.userId} className={styles.collaborator}>
-                <span>
-                  {collaborator.userId} · {ROLE_LABELS[collaborator.role]}
-                </span>
+                <div className={styles.collaboratorIdentity}>
+                  <strong>Docente · {participantById.get(collaborator.userId)?.nombre ?? 'Sin nombre'}</strong>
+                  <span>{participantById.get(collaborator.userId)?.email ?? 'Correo no disponible'}</span>
+                  <small>Rol · {ROLE_LABELS[collaborator.role]}</small>
+                </div>
                 <button
                   type="button"
                   onClick={() => setPendingRemoveCollaborator(collaborator.userId)}
@@ -623,9 +712,6 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
                 </button>
               </li>
             ))}
-            {current.colaboradores.length === 0 && (
-              <li className={styles.state}>Nadie más tiene acceso todavía.</li>
-            )}
           </ul>
           <form className={styles.inviteForm} onSubmit={handleInvite}>
             <input

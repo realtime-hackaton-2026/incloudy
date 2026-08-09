@@ -3,7 +3,7 @@
  * open, with every turn broadcast to the room over the case's Portal channel.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import { getPortalClient } from '../portal/client'
 import { ConnectionStatus } from '../portal/ConnectionStatus'
@@ -236,6 +236,37 @@ function DebateBody({
     return stances.find((agent) => agent.id !== spoke) ?? null
   }, [pendingAgent, status, visibleTurns, stances])
 
+  /*
+   * Follow the debate the way a chat follows a conversation — but only while
+   * the reader is already at the bottom. Someone scrolled up re-reading
+   * Búrix's opening should not be yanked away when Tero answers, so whether
+   * we were pinned is measured before the new turn paints, and acted on
+   * after.
+   */
+  const turnsRef = useRef<HTMLOListElement>(null)
+  const pinned = useRef(true)
+
+  useLayoutEffect(() => {
+    const list = turnsRef.current
+    if (!list) return
+    // 48px of slack: "close enough to the bottom" has to survive sub-pixel
+    // rounding and the gap under the last turn.
+    pinned.current = list.scrollHeight - list.scrollTop - list.clientHeight < 48
+  })
+
+  useEffect(() => {
+    const list = turnsRef.current
+    if (!list || !pinned.current) return
+    // Both guards are load-bearing: jsdom implements neither `scrollTo` on
+    // elements nor `matchMedia`, and assigning scrollTop works everywhere.
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    if (typeof list.scrollTo === 'function') {
+      list.scrollTo({ top: list.scrollHeight, behavior: calm ? 'auto' : 'smooth' })
+    } else {
+      list.scrollTop = list.scrollHeight
+    }
+  }, [visibleTurns.length, replying])
+
   async function restart() {
     setRestarting(true)
     try {
@@ -287,7 +318,7 @@ function DebateBody({
       )}
 
       {visibleTurns.length > 0 && (
-        <ol className={styles.turns}>
+        <ol className={styles.turns} ref={turnsRef}>
           {visibleTurns.map((turn) => (
             <li
               key={`${turn.ronda}-${turn.agente}`}

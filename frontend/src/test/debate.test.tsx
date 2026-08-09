@@ -186,6 +186,52 @@ describe('DebateRoom', () => {
     expect(screen.getByText('El apoyo puede llegar tarde')).toBeInTheDocument()
   })
 
+  it('follows new turns to the bottom, but not past a reader who scrolled up', async () => {
+    // Answers for the round actually asked for: a fixed round-1 reply would
+    // dedupe against itself and never grow the transcript.
+    mockFetch((input, init) => {
+      if (!String(input).includes('/debate')) {
+        return jsonResponse({ detail: 'Portal no configurado' }, 503)
+      }
+      const { ronda } = JSON.parse((init as RequestInit).body as string)
+      return jsonResponse({
+        ...ROUND_WIRE,
+        turnos: ROUND_WIRE.turnos.map((turn) => ({ ...turn, ronda })),
+      })
+    })
+    const { DebateRoom } = await import('../debate')
+    const { default: userEvent } = await import('@testing-library/user-event')
+    const user = userEvent.setup()
+
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={0} />)
+    await user.click(await screen.findByRole('button', { name: /abrir el debate/i }))
+    await waitFor(() => expect(screen.getByTestId('debate-turn-1-tero')).toBeInTheDocument())
+
+    const list = screen.getByTestId('debate-turn-1-burix').closest('ol') as HTMLOListElement
+    // jsdom neither lays out nor really scrolls, so the geometry is stated
+    // and the scroll request is observed rather than its effect.
+    Object.defineProperty(list, 'clientHeight', { value: 200, configurable: true })
+    Object.defineProperty(list, 'scrollHeight', { value: 900, configurable: true })
+    // scrollTop needs redefining too: jsdom's setter is a no-op without
+    // layout, so a plain assignment would keep reading back 0.
+    Object.defineProperty(list, 'scrollTop', { value: 700, writable: true, configurable: true })
+    const scrollTo = vi.fn()
+    list.scrollTo = scrollTo as unknown as HTMLOListElement['scrollTo']
+
+    // Parked at the bottom: the next turn should pull the view down.
+    await user.click(screen.getByRole('button', { name: /siguiente ronda/i }))
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: 900 }),
+    ))
+
+    // Scrolled up to re-read: a new turn must not yank them away.
+    scrollTo.mockClear()
+    list.scrollTop = 0
+    await user.click(screen.getByRole('button', { name: /siguiente ronda/i }))
+    await waitFor(() => expect(screen.getByTestId('debate-turn-3-tero')).toBeInTheDocument())
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
   it('holds the second agent back and names who is answering', async () => {
     vi.stubGlobal('fetch', (input: RequestInfo | URL) =>
       String(input).includes('/debate')

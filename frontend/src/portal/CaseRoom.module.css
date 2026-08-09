@@ -131,6 +131,57 @@
   white-space: pre-wrap;
 }
 
+/*
+ * The bubble scrolls on its own.
+ *
+ * A full Búrix analysis is far taller than the dock, and without a bound
+ * here it stretched the bubble and handed the scrolling to the whole panel
+ * — so reaching the composer meant scrolling past the entire analysis.
+ */
+.burixBody {
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(230 201 149 / 48%) rgb(255 255 255 / 4%);
+}
+
+.burixBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.burixBody::-webkit-scrollbar-thumb { background: rgb(230 201 149 / 48%); border-radius: 999px; }
+.burixBody::-webkit-scrollbar-track { background: rgb(255 255 255 / 4%); }
+
+/* Markdown inside the bubble keeps the bubble's own measure. */
+.burixBody :global(h1),
+.burixBody :global(h2),
+.burixBody :global(h3),
+.burixBody :global(h4) {
+  margin: 8px 0 4px;
+  font-family: var(--label);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--river-hi);
+}
+
+.burixBody :global(ul),
+.burixBody :global(ol) {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.burixBody :global(li) {
+  margin-bottom: 3px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.burixBody :global(strong) { color: var(--parchment-hi); }
+.burixBody :global(*) { max-width: 100%; overflow-wrap: anywhere; }
+
 .waiting,
 .liveStrip {
   display: flex;
@@ -222,13 +273,6 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-soft);
-}
-
-.messageBody {
-  font-size: var(--text-md);
-  line-height: 1.42;
-  color: var(--text);
-  overflow-wrap: anywhere;
 }
 
 .messageBody {

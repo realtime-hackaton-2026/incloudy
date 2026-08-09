@@ -472,7 +472,13 @@ function RoomChannel({
         <img className={styles.burixOwl} src={logo} alt="Búrix" />
         <div className={styles.burixBubble}>
           <span className={styles.burixName}>Búrix · guía de la sala</span>
-          <p>{burixBubbleText}</p>
+          {/* Búrix answers in Markdown. `burixLine` is its own output, so it
+              renders; the two fallbacks are our copy and are plain either
+              way. Scrolls inside itself — a long analysis used to stretch
+              the bubble and push the whole dock into scrolling. */}
+          <div className={styles.burixBody}>
+            {burixLine ? <RichText text={burixBubbleText} /> : <p>{burixBubbleText}</p>}
+          </div>
         </div>
       </div>
 

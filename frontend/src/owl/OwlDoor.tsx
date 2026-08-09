@@ -179,15 +179,19 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
             <div className={styles.roomDockHeader}>
               <div>
                 <span className="eyebrow">Búrix · guía de la sala</span>
-                <button
-                  type="button"
-                  className={styles.caseLink}
-                  onClick={viewCurrentCase}
-                  aria-label={`Ver el caso de ${studentName}, código ${joinCode}`}
-                >
-                  <span>Caso de {studentName}</span>
-                  <small>Código {joinCode}</small>
-                </button>
+                {/* The code moved out of the link: it needs its own copy
+                    button, and a button cannot be nested inside a button. */}
+                <div className={styles.caseLinkRow}>
+                  <button
+                    type="button"
+                    className={styles.caseLink}
+                    onClick={viewCurrentCase}
+                    aria-label={`Ver el caso de ${studentName}`}
+                  >
+                    <span>Caso de {studentName}</span>
+                  </button>
+                  <CodeChip code={joinCode} />
+                </div>
                 <div className={styles.caseStudentDetails}>
                   <span>{studentAge ? `${studentAge} años` : 'Edad no indicada'}</span>
                   <span>{studentCourse || 'Curso no indicado'}</span>

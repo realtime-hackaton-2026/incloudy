@@ -603,6 +603,17 @@
   font-size: clamp(16px, 0.35vw + 14px, 19px);
 }
 
+/* The case link and its copyable code sit on one line, wrapping together
+   before either of them is allowed to overflow the dock. */
+.caseLinkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .caseLink {
   display: flex;
   flex-wrap: wrap;

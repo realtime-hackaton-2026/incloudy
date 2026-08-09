@@ -60,14 +60,14 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
       target: '[data-tour="conversations"]',
     },
     {
-      title: 'El resumen final',
-      body: 'Cuando el recorrido está completo, aquí queda lo acordado. Es editable: la última palabra es vuestra, no de la IA.',
-      target: '[data-tour="summary"]',
-    },
-    {
       title: 'Búrix y Tero debaten',
       body: 'Dos guías con posturas opuestas discuten el caso: uno pide evidencia, el otro apoyo ya. Ninguno decide — decide el equipo, y podéis votar.',
       target: '[data-tour="debate"]',
+    },
+    {
+      title: 'El resumen final',
+      body: 'Cuando el recorrido está completo, aquí queda lo acordado. Es editable: la última palabra es vuestra, no de la IA.',
+      target: '[data-tour="summary"]',
     },
   ],
   dashboard: [

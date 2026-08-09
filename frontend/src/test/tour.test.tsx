@@ -126,7 +126,7 @@ describe('TOUR_STEPS content', () => {
 
   it('walks the case screen in the order the demo screens define', () => {
     const titles = TOUR_STEPS.case.map((step) => step.title)
-    const order = [/alumno/i, /compartir/i, /cinco estaciones/i, /entrar/i, /conversaciones/i, /resumen/i, /debaten/i]
+    const order = [/alumno/i, /compartir/i, /cinco estaciones/i, /entrar/i, /conversaciones/i, /debaten/i, /resumen/i]
     for (const [index, pattern] of order.entries()) {
       expect(titles.findIndex((title) => pattern.test(title))).toBe(index)
     }

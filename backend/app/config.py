@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.6-flash"
+    gemini_fallback_models: str = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"
     portal_secret_key: str = ""
     portal_publishable_key: str = ""
     portal_api_url: str = "https://api.useportal.co"

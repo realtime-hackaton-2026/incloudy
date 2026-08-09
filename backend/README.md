@@ -160,7 +160,10 @@ imprevistos y notas privadas.
 envía sus respuestas a Gemini y guarda el resultado en `resumen_final`.
 Si `GEMINI_API_KEY` está vacía, genera un resumen pedagógico local para que el
 recorrido pueda completarse sin depender de un servicio externo. El modelo se
-configura con `GEMINI_MODEL` y por defecto utiliza `gemini-3.6-flash`.
+configura con `GEMINI_MODEL` y por defecto utiliza `gemini-3.6-flash`. Puedes
+definir modelos alternativos, separados por comas, mediante
+`GEMINI_FALLBACK_MODELS`. Ante cuota agotada, modelo no disponible o un fallo
+temporal, el backend los prueba en orden usando la misma `GEMINI_API_KEY`.
 El chat también devuelve una orientación local basada en el progreso mientras
 Gemini no esté configurado.
 

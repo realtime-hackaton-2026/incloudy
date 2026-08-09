@@ -41,7 +41,37 @@ const ROLE_LABELS: Record<CollaboratorRole, string> = {
   lector: 'Lector',
 }
 
+function isBusinessDay(date: Date): boolean {
+  const day = date.getDay()
+  return day !== 0 && day !== 6
+}
+
+function addBusinessDays(start: Date, amount: number): Date {
+  const deadline = new Date(start)
+  let added = 0
+  while (added < amount) {
+    deadline.setDate(deadline.getDate() + 1)
+    if (isBusinessDay(deadline)) added += 1
+  }
+  return deadline
+}
+
+function businessDaysRemaining(now: Date, deadline: Date): number {
+  const cursor = new Date(now)
+  const end = new Date(deadline)
+  cursor.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  if (cursor >= end) return 0
+  let remaining = 0
+  while (cursor < end) {
+    cursor.setDate(cursor.getDate() + 1)
+    if (isBusinessDay(cursor)) remaining += 1
+  }
+  return remaining
+}
+
 export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = false, onAvatarChange }: CaseFormProps) {
+  const [currentTime, setCurrentTime] = useState(() => Date.now())
   const {
     item,
     loadStatus,
@@ -100,6 +130,12 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
   const [lockedNotice, setLockedNotice] = useState<Guidance | null>(null)
 
   useEffect(() => {
+    if (!mapOnly) return
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [mapOnly])
+
+  useEffect(() => {
     let active = true
     const refresh = () => {
       void listCaseParticipants(token, caseId)
@@ -154,6 +190,14 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     current.progreso.total - current.progreso.completadas,
   )
   const guidance: Guidance | null = lockedNotice ?? journeyProgress(stationsLeft)
+  const journeyTotal = current.progreso.total || 5
+  const journeyCompleted = Math.min(current.progreso.completadas, journeyTotal)
+  const journeyLife = Math.round((journeyCompleted / journeyTotal) * 100)
+  const createdAt = new Date(current.createdAt)
+  const deadline = addBusinessDays(createdAt, 5)
+  const deadlineDays = businessDaysRemaining(new Date(currentTime), deadline)
+  const journeyFinished = journeyCompleted >= journeyTotal
+  const shortDate = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' })
 
   const showSummary =
     current.status === 'completado' ||
@@ -375,16 +419,35 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
     return (
       <div className={styles.mapOnly} data-testid="case-map-only">
         <div className={styles.mapOnlyHeader}>
-          <div>
+          <div className={styles.mapOnlyIdentity}>
             <span className={styles.mapOnlyKicker}>Caso en estudio</span>
             <strong>{current.alumno.nombre || 'Alumno sin nombre'}</strong>
+            <span className={styles.caseCreated}>
+              Caso creado {shortDate.format(createdAt)} · límite hábil {shortDate.format(deadline)}
+            </span>
           </div>
           <div className={styles.mapOnlyStats}>
-            <span>⏳ {current.estadoInteractivo.diasRestantes} días</span>
-            <span>🤝 {current.estadoInteractivo.confianzaEquipo}%</span>
+            <span className={`${styles.caseMetric} ${journeyFinished ? styles.caseMetricComplete : ''}`}>
+              <b>{journeyFinished ? '✓' : '⏳'}</b>
+              <span><small>Plazo hábil</small>{journeyFinished ? 'Finalizado' : deadlineDays === 0 ? 'Vence hoy' : `${deadlineDays} días`}</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>◆</b>
+              <span><small>Estaciones</small>{journeyCompleted}/{journeyTotal}</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>♥</b>
+              <span><small>Vida</small>{journeyLife}%</span>
+            </span>
+            <span className={styles.caseMetric}>
+              <b>🤝</b>
+              <span><small>Confianza</small>{current.estadoInteractivo.confianzaEquipo}%</span>
+            </span>
             {/* Answering a station returns a new total; the counter turns that
                 into a gain the child can see arrive. */}
-            <XpCounter value={current.estadoInteractivo.xpTotal} />
+            <span className={styles.caseMetric}>
+              <XpCounter value={current.estadoInteractivo.xpTotal} />
+            </span>
           </div>
         </div>
         <OwlTip tipId="map-guide" />

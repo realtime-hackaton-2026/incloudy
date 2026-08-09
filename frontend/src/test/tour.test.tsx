@@ -124,14 +124,11 @@ describe('TOUR_STEPS content', () => {
     expect(first.title).not.toMatch(/mapa/i)
   })
 
-  it('walks the case screen through its cards before the journey', () => {
+  it('walks the case screen in the order the demo screens define', () => {
     const titles = TOUR_STEPS.case.map((step) => step.title)
-    const journey = titles.findIndex((title) => /cinco estaciones/i.test(title))
-    // Every card the teacher has to understand first comes first.
-    for (const before of [/alumno/i, /búrix/i, /entrar/i, /conversaciones/i]) {
-      const index = titles.findIndex((title) => before.test(title))
-      expect(index).toBeGreaterThanOrEqual(0)
-      expect(index).toBeLessThan(journey)
+    const order = [/alumno/i, /compartir/i, /cinco estaciones/i, /entrar/i, /conversaciones/i, /resumen/i, /debaten/i]
+    for (const [index, pattern] of order.entries()) {
+      expect(titles.findIndex((title) => pattern.test(title))).toBe(index)
     }
   })
 
@@ -140,7 +137,17 @@ describe('TOUR_STEPS content', () => {
     expect(targets).toEqual([
       '[data-tour="map-cases"]',
       '[data-tour="map-case-study"]',
-      '[data-tour="journey"]',
+      '[data-tour="map"]',
+    ])
+  })
+
+  it('walks the room through its four corners', () => {
+    const targets = TOUR_STEPS.chat.map((step) => step.target)
+    expect(targets).toEqual([
+      '[data-tour="room-dock"]',
+      '[data-tour="room-messages"]',
+      '[data-tour="room-composer"]',
+      '[data-tour="room-burix"]',
     ])
   })
 

@@ -3,7 +3,7 @@
  * points at when the target happens to be there.
  */
 
-export type TourScreen = 'cases' | 'case' | 'dashboard' | 'map-demo'
+export type TourScreen = 'cases' | 'case' | 'dashboard' | 'map-demo' | 'chat'
 
 export interface TourStep {
   title: string
@@ -45,6 +45,11 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
       target: '[data-tour="share"]',
     },
     {
+      title: 'Cinco estaciones, un camino',
+      body: 'Explorar, Orientar, Actuar, Acompañar y Compartir. El mapa marca dónde estáis; no hay que ir en orden perfecto.',
+      target: '[data-tour="journey"]',
+    },
+    {
       title: 'Quién puede entrar',
       body: 'Aquí decides quién acompaña el caso y con qué permiso: editar o solo leer. Puedes retirar a alguien en cualquier momento.',
       target: '[data-tour="collaborators"]',
@@ -55,19 +60,14 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
       target: '[data-tour="conversations"]',
     },
     {
-      title: 'Cinco estaciones, un camino',
-      body: 'Explorar, Orientar, Actuar, Acompañar y Compartir. El mapa marca dónde estáis; no hay que ir en orden perfecto.',
-      target: '[data-tour="journey"]',
+      title: 'El resumen final',
+      body: 'Cuando el recorrido está completo, aquí queda lo acordado. Es editable: la última palabra es vuestra, no de la IA.',
+      target: '[data-tour="summary"]',
     },
     {
       title: 'Búrix y Tero debaten',
       body: 'Dos guías con posturas opuestas discuten el caso: uno pide evidencia, el otro apoyo ya. Ninguno decide — decide el equipo, y podéis votar.',
       target: '[data-tour="debate"]',
-    },
-    {
-      title: 'El resumen final',
-      body: 'Cuando el recorrido está completo, aquí queda lo acordado. Es editable: la última palabra es vuestra, no de la IA.',
-      target: '[data-tour="summary"]',
     },
   ],
   dashboard: [
@@ -90,7 +90,29 @@ export const TOUR_STEPS: Record<TourScreen, readonly TourStep[]> = {
     {
       title: 'Moverse por el mapa',
       body: 'Cada estación del camino es un punto del mundo. Pulsa una para abrir lo que se trabajó allí; las que aún no tocan aparecen apagadas hasta que llegue su turno.',
-      target: '[data-tour="journey"]',
+      target: '[data-tour="map"]',
+    },
+  ],
+  chat: [
+    {
+      title: 'La sala en vivo',
+      body: 'Todo lo que ocurre aquí es tiempo real: quién se conecta, quién escribe y quién responde. El código de seis letras es la invitación para un colega.',
+      target: '[data-tour="room-dock"]',
+    },
+    {
+      title: 'El muro del equipo',
+      body: 'Las observaciones del caso caen aquí al instante, para todos. Cuando Búrix opina sobre el recorrido, también lo deja en este muro.',
+      target: '[data-tour="room-messages"]',
+    },
+    {
+      title: 'Comparte una observación',
+      body: 'Escribe lo que estáis descubriendo y pulsa Enviar. O pregúntale a Búrix: la respuesta llega a toda la sala.',
+      target: '[data-tour="room-composer"]',
+    },
+    {
+      title: 'Búrix, tu guía de la sala',
+      body: 'Búrix sigue la conversación y comenta cada avance del caso. El panel privado te deja preguntarle sin interrumpir al equipo.',
+      target: '[data-tour="room-burix"]',
     },
   ],
 }

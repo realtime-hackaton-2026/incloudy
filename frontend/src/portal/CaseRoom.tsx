@@ -468,7 +468,7 @@ function RoomChannel({
         </div>
       </div>
 
-      <div className={styles.burixStrip} data-testid="burix-bubble">
+      <div className={styles.burixStrip} data-testid="burix-bubble" data-tour="room-burix">
         <img className={styles.burixOwl} src={logo} alt="Búrix" />
         <div className={styles.burixBubble}>
           <span className={styles.burixName}>Búrix · guía de la sala</span>
@@ -509,7 +509,7 @@ function RoomChannel({
 
       {sessionActive && (
         <>
-          <ul className={styles.messages} aria-live="polite">
+          <ul className={styles.messages} aria-live="polite" data-tour="room-messages">
             {currentMessages.length === 0 && visiblePendingMessages.length === 0 && <li className={styles.empty}>Aún no hay aportes. Comparte la primera observación del caso.</li>}
             {currentMessages.map((message) => (
               <li key={message.id} className={styles.message}>
@@ -553,7 +553,7 @@ function RoomChannel({
               Puedes leer la sala, pero no tienes permiso para escribir en ella.
             </p>
           )}
-          <form className={styles.composer} onSubmit={handleSend}>
+          <form className={styles.composer} onSubmit={handleSend} data-tour="room-composer">
             <input
               type="text"
               value={draft}

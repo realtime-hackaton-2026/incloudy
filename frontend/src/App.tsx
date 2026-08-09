@@ -64,6 +64,7 @@ function App() {
   // hook cannot live on the far side of a return. `null` while signed out
   // keeps the tour from arming behind the login.
   const tour = useTour(session ? view.name : null)
+  const [chatRoomOpen, setChatRoomOpen] = useState(false)
 
   useEffect(() => {
     function onHashChange() {
@@ -158,8 +159,9 @@ function App() {
       <Scene variant={scene} entering={entering} />
       {entering && <CinematicOverlay caption="Tu mundo te espera" />}
       {/* Held back until the entrance finishes: the tour points at elements
-          the cinematic is still sliding into place. */}
-      {!entering && tour.step !== null && (
+          the cinematic is still sliding into place. The room's own tour
+          takes over while the chat is open, so the route tour waits. */}
+      {!entering && tour.step !== null && !chatRoomOpen && (
         <TourOverlay
           screen={view.name}
           step={tour.step}
@@ -224,13 +226,14 @@ function App() {
         <PersistentRoomAccess
           token={session.token}
           currentCaseId={view.name === 'case' ? view.caseId : null}
+          onRoomOpenChange={setChatRoomOpen}
         />
       )}
     </>
   )
 }
 
-function PersistentRoomAccess({ token, currentCaseId }: { token: string; currentCaseId: string | null }) {
+function PersistentRoomAccess({ token, currentCaseId, onRoomOpenChange }: { token: string; currentCaseId: string | null; onRoomOpenChange?: (open: boolean) => void }) {
   const { cases, status } = useCases(token)
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() =>
     currentCaseId ?? localStorage.getItem('burix-active-room-case'),
@@ -265,6 +268,7 @@ function PersistentRoomAccess({ token, currentCaseId }: { token: string; current
       studentDescription={roomCase.alumno.descripcion}
       stage={toCaseStage(roomCase.estadoInteractivo.estacionActual)}
       onSelectCase={selectRoomCase}
+      onRoomOpenChange={onRoomOpenChange}
     />
   )
 }

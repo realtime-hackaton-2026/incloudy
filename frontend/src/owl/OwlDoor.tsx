@@ -9,6 +9,7 @@ import { CaseRoom } from '../portal'
 import type { CaseRoomPresenceState } from '../portal'
 import { CodeChip, CodeInput } from '../components/room-code'
 import { OwlSprite } from './OwlSprite'
+import { TourOverlay, useTour } from '../tour'
 import styles from './OwlDoor.module.css'
 
 export interface OwlDoorProps {
@@ -21,9 +22,11 @@ export interface OwlDoorProps {
   studentDescription: string
   stage: CaseStage
   onSelectCase?: (caseId: string) => void
+  /** Lets App hold back the route tour while the room's own tour plays. */
+  onRoomOpenChange?: (open: boolean) => void
 }
 
-export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage, onSelectCase }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage, onSelectCase, onRoomOpenChange }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -44,6 +47,11 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
   const [burixCases, setBurixCases] = useState<Case[]>([])
   const [roomMembers, setRoomMembers] = useState<CaseParticipant[]>([])
   const [presenceCaseId, setPresenceCaseId] = useState(caseId)
+  const chatTour = useTour(roomOpen ? 'chat' : null)
+
+  useEffect(() => {
+    onRoomOpenChange?.(roomOpen)
+  }, [onRoomOpenChange, roomOpen])
 
   if (presenceCaseId !== caseId) {
     setPresenceCaseId(caseId)
@@ -173,7 +181,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
       {/* Portal presence and the session-control channel remain mounted even
           when no panel is visible. That is what makes 1 → 2 realtime and lets
           a colleague start the experience for everyone. */}
-      <aside className={`${styles.roomDock} ${roomOpen ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room">
+      <aside className={`${styles.roomDock} ${roomOpen ? styles.roomDockOpen : styles.roomDockClosed}`} data-testid="owl-door-room" data-tour="room-dock">
         {roomOpen && (
           <>
             <div className={styles.roomDockHeader}>
@@ -261,6 +269,18 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
             <span>{joinCode} · {portalReady ? `${visibleCount}/5 docentes` : presenceLabel}</span>
           </div>
         </button>
+      )}
+
+      {chatTour.step !== null && (
+        <TourOverlay
+          screen="chat"
+          step={chatTour.step}
+          total={chatTour.total}
+          onNext={chatTour.next}
+          onBack={chatTour.back}
+          onSkip={chatTour.skip}
+          onSkipAll={chatTour.skipAll}
+        />
       )}
 
       {!lobbyOpen && !roomOpen && (

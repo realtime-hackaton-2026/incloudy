@@ -68,54 +68,57 @@
 }
 
 .mapOnlyHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px 28px;
+  display: grid;
+  gap: 16px;
+  width: 100%;
   padding: 8px 4px 2px;
+  text-align: center;
 }
 
 .mapOnlyIdentity {
   display: grid;
-  gap: 5px;
+  justify-items: center;
+  gap: 7px;
 }
 
 .mapOnlyHeader strong {
   font-family: var(--display);
-  font-size: clamp(22px, 3vw, 34px);
+  font-size: clamp(26px, 3vw, 36px);
   line-height: 1.05;
   color: var(--text);
 }
 
 .mapOnlyKicker {
   font-family: var(--label);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: var(--parchment);
 }
 
 .mapOnlyStats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+  width: 100%;
   color: var(--text-soft);
 }
 
 .caseCreated {
   color: var(--text-soft);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: clamp(14px, 0.25vw + 13px, 16px);
+  line-height: 1.5;
 }
 
 .caseMetric {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  min-height: 44px;
-  padding: 6px 10px;
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 12px;
+  text-align: center;
   color: var(--text);
   background: color-mix(in srgb, var(--text) 5%, transparent);
   border: 1px solid var(--hairline);
@@ -124,22 +127,28 @@
 
 .caseMetric > b {
   color: var(--parchment);
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .caseMetric > span:not([data-testid='xp-counter']) {
   display: grid;
   gap: 1px;
-  font-size: 13px;
-  line-height: 1.15;
+  font-size: clamp(15px, 0.25vw + 14px, 17px);
+  font-weight: 700;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
 .caseMetric small {
   color: var(--muted);
-  font: 700 9px/1.2 var(--label);
+  font: 700 clamp(10px, 0.15vw + 9px, 12px)/1.25 var(--label);
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.caseMetric [data-testid='xp-counter'] {
+  font-size: clamp(16px, 0.3vw + 15px, 19px);
+  font-weight: 700;
 }
 
 .caseMetricComplete {
@@ -150,9 +159,9 @@
 
 @media (max-width: 700px) {
   .mapOnlyHeader {
-    display: grid;
-    align-items: stretch;
-    gap: 12px;
+    gap: 14px;
+    width: 100%;
+    padding-inline: 0;
   }
 
   .mapOnlyStats {
@@ -163,10 +172,8 @@
   }
 
   .caseMetric {
-    justify-content: center;
-    min-width: 0;
-    min-height: 48px;
-    text-align: center;
+    min-height: 62px;
+    padding: 10px 8px;
   }
 
   .caseMetric:last-child {
@@ -175,9 +182,9 @@
   }
 }
 
-@media (max-width: 390px) {
-  .mapOnlyStats { grid-template-columns: 1fr; }
-  .caseMetric:last-child { grid-column: auto; }
+@media (max-width: 350px) {
+  .mapOnlyStats { gap: 7px; }
+  .caseMetric { padding-inline: 5px; }
 }
 
 .header {

@@ -52,6 +52,40 @@ def _turn_schema_hint() -> str:
     )
 
 
+def _first_json_object(text: str) -> str | None:
+    """Slice out the first balanced ``{...}``, ignoring braces inside strings.
+
+    Models wrap the object in prose or leave a stray closing brace behind, and
+    ``json.loads`` needs the *whole* string to be valid — so one extra ``}``
+    used to dump the raw JSON on screen as if it were the argument.
+    """
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    return None
+
+
 def _parse_turn(raw: str) -> dict[str, Any]:
     """Parse a turn, degrading to argument-only rather than raising.
 
@@ -61,17 +95,34 @@ def _parse_turn(raw: str) -> dict[str, Any]:
     if text.startswith("```"):
         text = text.split("```")[1] if "```" in text[3:] else text.strip("`")
         text = text.removeprefix("json").strip()
-    try:
-        data = json.loads(text)
-    except (json.JSONDecodeError, ValueError):
-        return {"argumento": raw.strip(), "fortalezas": [], "riesgos": []}
+
+    data: Any = None
+    for candidate in (text, _first_json_object(text)):
+        if not candidate:
+            continue
+        try:
+            data = json.loads(candidate)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        break
+
     if not isinstance(data, dict):
         return {"argumento": raw.strip(), "fortalezas": [], "riesgos": []}
     return {
         "argumento": str(data.get("argumento", "")).strip() or raw.strip(),
-        "fortalezas": [str(item) for item in data.get("fortalezas", [])][:3],
-        "riesgos": [str(item) for item in data.get("riesgos", [])][:3],
+        "fortalezas": _string_list(data.get("fortalezas")),
+        "riesgos": _string_list(data.get("riesgos")),
     }
+
+
+def _string_list(value: Any) -> list[str]:
+    """Up to three non-empty strings. A bare string is one item, not a list
+    of characters, which is what iterating it directly would produce."""
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item).strip()][:3]
 
 
 def _history_text(history: list[dict[str, Any]]) -> str:

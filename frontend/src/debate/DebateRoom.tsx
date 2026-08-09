@@ -3,7 +3,7 @@
  * open, with every turn broadcast to the room over the case's Portal channel.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import { getPortalClient } from '../portal/client'
 import { ConnectionStatus } from '../portal/ConnectionStatus'
@@ -246,13 +246,22 @@ function DebateBody({
   const turnsRef = useRef<HTMLOListElement>(null)
   const pinned = useRef(true)
 
-  useLayoutEffect(() => {
+  /*
+   * Tracked as the reader scrolls, not measured when a turn arrives.
+   *
+   * Effects run *after* React has already put the new turn in the DOM, so
+   * measuring there always found a screenful of unread content below and
+   * concluded the reader had scrolled away — the scroll never fired. The
+   * scroll event is the only moment that reports where they actually were.
+   *
+   * 48px of slack: "close enough to the bottom" has to survive sub-pixel
+   * rounding and the gap under the last turn.
+   */
+  const trackPinned = useCallback(() => {
     const list = turnsRef.current
     if (!list) return
-    // 48px of slack: "close enough to the bottom" has to survive sub-pixel
-    // rounding and the gap under the last turn.
     pinned.current = list.scrollHeight - list.scrollTop - list.clientHeight < 48
-  })
+  }, [])
 
   useEffect(() => {
     const list = turnsRef.current
@@ -318,7 +327,7 @@ function DebateBody({
       )}
 
       {visibleTurns.length > 0 && (
-        <ol className={styles.turns} ref={turnsRef}>
+        <ol className={styles.turns} ref={turnsRef} onScroll={trackPinned}>
           {visibleTurns.map((turn) => (
             <li
               key={`${turn.ronda}-${turn.agente}`}

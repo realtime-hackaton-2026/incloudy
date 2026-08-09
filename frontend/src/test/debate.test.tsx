@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor, renderHook, act } from '@testing-library/react'
+import { render, screen, waitFor, renderHook, act, fireEvent } from '@testing-library/react'
 import { requestDebateRound } from '../debate'
 import type { DebateTurn } from '../debate'
 import { useDebate } from '../debate'
@@ -208,25 +208,34 @@ describe('DebateRoom', () => {
     await waitFor(() => expect(screen.getByTestId('debate-turn-1-tero')).toBeInTheDocument())
 
     const list = screen.getByTestId('debate-turn-1-burix').closest('ol') as HTMLOListElement
-    // jsdom neither lays out nor really scrolls, so the geometry is stated
-    // and the scroll request is observed rather than its effect.
+    /*
+     * jsdom neither lays out nor really scrolls, so the geometry is stated
+     * and the scroll request observed rather than its effect. The position
+     * is announced with a real scroll event, because that is the only thing
+     * the component listens to — measuring after a turn lands would always
+     * report a screenful of unread content, which is the bug this covers.
+     */
     Object.defineProperty(list, 'clientHeight', { value: 200, configurable: true })
-    Object.defineProperty(list, 'scrollHeight', { value: 900, configurable: true })
-    // scrollTop needs redefining too: jsdom's setter is a no-op without
-    // layout, so a plain assignment would keep reading back 0.
-    Object.defineProperty(list, 'scrollTop', { value: 700, writable: true, configurable: true })
+    // Grows with the transcript, which is the whole point: a fixed height
+    // would let a version that measures *after* the turn lands pass too.
+    Object.defineProperty(list, 'scrollHeight', {
+      get: () => list.children.length * 300,
+      configurable: true,
+    })
+    Object.defineProperty(list, 'scrollTop', { value: 400, writable: true, configurable: true })
     const scrollTo = vi.fn()
     list.scrollTo = scrollTo as unknown as HTMLOListElement['scrollTo']
 
-    // Parked at the bottom: the next turn should pull the view down.
+    // Parked at the bottom of two turns (600 - 400 - 200 = 0).
+    fireEvent.scroll(list)
     await user.click(screen.getByRole('button', { name: /siguiente ronda/i }))
-    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith(
-      expect.objectContaining({ top: 900 }),
-    ))
+    await waitFor(() => expect(scrollTo).toHaveBeenCalled())
+    expect(scrollTo.mock.lastCall?.[0]).toMatchObject({ top: list.scrollHeight })
 
     // Scrolled up to re-read: a new turn must not yank them away.
     scrollTo.mockClear()
     list.scrollTop = 0
+    fireEvent.scroll(list)
     await user.click(screen.getByRole('button', { name: /siguiente ronda/i }))
     await waitFor(() => expect(screen.getByTestId('debate-turn-3-tero')).toBeInTheDocument())
     expect(scrollTo).not.toHaveBeenCalled()

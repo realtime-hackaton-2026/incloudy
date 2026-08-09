@@ -29,22 +29,24 @@ const STANCES: ReadonlyArray<DebateAgent> = [
 export interface DebateRoomProps {
   token: string
   caseId: string
+  /** The pause between the two agents. Overridable for tests and demos. */
+  replyDelayMs?: number
 }
 
-export function DebateRoom({ token, caseId }: DebateRoomProps) {
+export function DebateRoom({ token, caseId, replyDelayMs }: DebateRoomProps) {
   const { session, status } = usePortalSession(token, caseId)
 
   // No Portal (or not configured yet) is not a reason to hide the debate:
   // it still runs, it just does not reach the rest of the room live.
   if (status !== 'ready' || !session) {
-    return <OfflineDebate token={token} caseId={caseId} />
+    return <OfflineDebate token={token} caseId={caseId} replyDelayMs={replyDelayMs} />
   }
 
   const client = getPortalClient(session.publishableKey, caseId)
 
   return (
     <PortalProvider client={client} token={session.token}>
-      <LiveDebate token={token} caseId={caseId} channelId={session.channelId} />
+      <LiveDebate token={token} caseId={caseId} channelId={session.channelId} replyDelayMs={replyDelayMs} />
     </PortalProvider>
   )
 }
@@ -54,7 +56,7 @@ export function DebateRoom({ token, caseId }: DebateRoomProps) {
  * job: making the teacher commit to a reading before moving on. It counts
  * only them, and says so.
  */
-function OfflineDebate({ token, caseId }: { token: string; caseId: string }) {
+function OfflineDebate({ token, caseId, replyDelayMs }: { token: string; caseId: string; replyDelayMs?: number }) {
   const [mine, setMine] = useState<AgentId | null>(null)
 
   // `at` only orders one voter's ballots against each other; with a single
@@ -69,7 +71,7 @@ function OfflineDebate({ token, caseId }: { token: string; caseId: string }) {
   }, [])
 
   return (
-    <DebateBody token={token} caseId={caseId} live={false} tally={tally} onVote={onVote} />
+    <DebateBody token={token} caseId={caseId} live={false} tally={tally} onVote={onVote} replyDelayMs={replyDelayMs} />
   )
 }
 
@@ -77,10 +79,12 @@ function LiveDebate({
   token,
   caseId,
   channelId,
+  replyDelayMs,
 }: {
   token: string
   caseId: string
   channelId: string
+  replyDelayMs?: number
 }) {
   const { messages, send, me, status } = useChannel<Record<string, unknown>>({ channelId })
 
@@ -150,6 +154,7 @@ function LiveDebate({
       channelTurns={channelTurns}
       tally={tallyVotes(ballots, me?.id)}
       onVote={castVote}
+      replyDelayMs={replyDelayMs}
     />
   )
 }
@@ -166,6 +171,7 @@ function DebateBody({
   channelTurns = [],
   tally,
   onVote,
+  replyDelayMs,
 }: {
   token: string
   caseId: string
@@ -178,11 +184,13 @@ function DebateBody({
   channelTurns?: readonly DebateTurn[]
   tally?: Tally
   onVote?: (agente: AgentId) => Promise<unknown>
+  replyDelayMs?: number
 }) {
-  const { turns, agents, status, error, maxRounds, commentsRead, runRound, reset } = useDebate({
+  const { turns, agents, status, error, maxRounds, commentsRead, pendingAgent, runRound, reset } = useDebate({
     token,
     caseId,
     publish,
+    replyDelayMs,
   })
   const [confirmingRestart, setConfirmingRestart] = useState(false)
   const [restarting, setRestarting] = useState(false)
@@ -212,7 +220,21 @@ function DebateBody({
   const round = Math.floor(visibleTurns.length / 2)
 
   const finished = round >= maxRounds
-  const busy = status === 'thinking'
+  const busy = status === 'thinking' || status === 'replying'
+
+  /*
+   * Who the room is waiting on. An odd turn count means one stance has been
+   * heard and its counterpart has not, which is true for spectators too —
+   * they receive the held-back turn late because it is published late, so
+   * the same parity tells them the same thing without any extra message.
+   * Skipped on error, where the missing turn is never coming.
+   */
+  const replying = useMemo(() => {
+    if (pendingAgent) return pendingAgent
+    if (status === 'error' || visibleTurns.length % 2 === 0) return null
+    const spoke = visibleTurns[visibleTurns.length - 1].agente
+    return stances.find((agent) => agent.id !== spoke) ?? null
+  }, [pendingAgent, status, visibleTurns, stances])
 
   async function restart() {
     setRestarting(true)
@@ -302,6 +324,28 @@ function DebateBody({
               )}
             </li>
           ))}
+
+          {replying && (
+            <li
+              className={`${styles.turn} ${styles.replying} ${
+                replying.id === 'burix' ? styles.turnBurix : styles.turnTero
+              }`}
+              data-testid="debate-replying"
+              aria-live="polite"
+            >
+              <div className={styles.turnHead}>
+                <span className={styles.turnName}>{replying.nombre}</span>
+              </div>
+              <p className={styles.argument}>
+                {replying.nombre} está preparando su respuesta
+                <span className={styles.dots} aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </p>
+            </li>
+          )}
         </ol>
       )}
 
@@ -340,7 +384,9 @@ function DebateBody({
                   ? 'Abrir el debate'
                   : `Siguiente ronda (${round + 1}/${maxRounds})`}
             </button>
-            {busy && <span className={styles.thinking}>Búrix y Tero preparan su turno…</span>}
+            {status === 'thinking' && (
+              <span className={styles.thinking}>Búrix y Tero preparan su turno…</span>
+            )}
           </>
         )}
 

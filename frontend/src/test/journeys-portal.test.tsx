@@ -176,7 +176,11 @@ describe('CaseRoom', () => {
     await user.type(screen.getByPlaceholderText(/comparte una observación/i), 'Ánimo!')
     expect(sendTyping).toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: /enviar/i }))
-    expect(send).toHaveBeenCalledWith({ content: { body: 'Ánimo!' } })
+    // The payload carries who wrote it: Portal does not ship usernames on
+    // standard channels, so the author travels with the message itself.
+    expect(send).toHaveBeenCalledWith({
+      content: { body: 'Ánimo!', authorUserId: expect.anything(), authorName: undefined },
+    })
   })
 
   it('keeps the conversation locked until two teachers are online', async () => {
@@ -335,8 +339,15 @@ describe('CaseRoom', () => {
     await waitFor(() => expect(send).toHaveBeenCalledWith({
       content: { type: 'ai_answer', body: 'Revisen juntos el progreso de Alex.' },
     }))
+    // The question is attributed (a teacher asked it); the answer is Búrix's
+    // and carries no author.
     expect(send).toHaveBeenCalledWith({
-      content: { type: 'ai_question', body: '¿Qué hacemos ahora?' },
+      content: {
+        type: 'ai_question',
+        body: '¿Qué hacemos ahora?',
+        authorUserId: 'u-1',
+        authorName: undefined,
+      },
     })
   })
 

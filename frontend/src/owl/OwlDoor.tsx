@@ -7,6 +7,7 @@ import { stationFor } from '../components/case-map/stations'
 import type { CaseStage } from '../components/case-map/stations'
 import { CaseRoom } from '../portal'
 import type { CaseRoomPresenceState } from '../portal'
+import { CodeChip, CodeInput } from '../components/room-code'
 import { OwlSprite } from './OwlSprite'
 import styles from './OwlDoor.module.css'
 
@@ -308,7 +309,12 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
           <div className={styles.lobbyCard}>
             <div className={styles.lobbyKicker}>BRÚIX · COLABORACIÓN</div>
             <h2 id="owl-lobby-title">Sala de trabajo de Búrix</h2>
-            <p className={styles.lobbyCode}>Comparte este caso con tus colegas · código {joinCode}</p>
+            {/* This line exists to be shared, so the code is copyable here
+                rather than read out character by character. */}
+            <p className={styles.lobbyCode}>
+              <span>Comparte este caso con tus colegas</span>
+              <CodeChip code={joinCode} />
+            </p>
 
             <label className={styles.forixCasePicker}>
               Caso compartido con Búrix
@@ -366,13 +372,11 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
                 <span>Introduce el código de 6 caracteres compartido por el profesor.</span>
               </div>
               <div className={styles.lobbyJoinRow}>
-                <input
+                <CodeInput
+                  id="lobby-room-code"
                   value={roomCode}
-                  onChange={(event) => setRoomCode(event.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase())}
-                  placeholder="ABC123"
-                  aria-label="Código para unirse a la sala"
-                  autoComplete="off"
-                  maxLength={6}
+                  onChange={setRoomCode}
+                  label="Código para unirse a la sala"
                 />
                 <button type="submit" className="btn-secondary" disabled={joining || roomCode.length !== 6}>
                   {joining ? 'Uniéndose…' : 'Unirse'}

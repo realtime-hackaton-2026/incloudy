@@ -151,6 +151,46 @@
   color: var(--text);
 }
 
+/* The held-back turn. Dimmed and dashed so it reads as not-yet-said rather
+   than as a short argument, and keeps its agent's colour so the room can see
+   who is about to answer. */
+.replying {
+  border-style: dashed;
+  opacity: 0.72;
+}
+
+.replying .argument {
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 5px;
+  vertical-align: baseline;
+}
+
+.dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentcolor;
+  animation: dot 1.25s ease-in-out infinite;
+}
+
+.dots i:nth-child(2) { animation-delay: 0.18s; }
+.dots i:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes dot {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i { animation: none; opacity: 0.6; }
+}
+
 /* Gains and risks side by side: a stance never shows without its cost. */
 .ledger {
   display: grid;

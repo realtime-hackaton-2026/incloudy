@@ -14,6 +14,7 @@ import { ApiError } from '../../lib/http'
 import type { Case } from '../../cases'
 import { STATIONS, toCaseStage } from '../case-map'
 import { ConfirmDialog } from '../confirm-dialog'
+import { CodeInput } from '../room-code'
 import styles from './CaseList.module.css'
 
 export interface CaseListProps {
@@ -199,14 +200,7 @@ export function CaseList({ token, ownerId, onOpen }: CaseListProps) {
             <strong>Entrar en una sala docente</strong>
             <span>Pide al propietario el código de seis caracteres.</span>
           </div>
-          <input
-            value={joinCode}
-            onChange={(event) => setJoinCode(event.target.value.replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase())}
-            placeholder="ABC123"
-            aria-label="Código de la sala"
-            autoComplete="off"
-            maxLength={6}
-          />
+          <CodeInput id="join-code" value={joinCode} onChange={setJoinCode} />
           <button type="submit" className="btn-primary" disabled={joining || joinCode.length !== 6}>
             {joining ? 'Entrando…' : 'Entrar'}
           </button>

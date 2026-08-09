@@ -78,7 +78,7 @@ describe('a debate turn reaches the channel', () => {
     })
 
     const { result } = renderHook(() =>
-      useDebate({ token: 'tok', caseId: 'case-1', publish }),
+      useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish }),
     )
     await act(async () => {
       await result.current.runRound()
@@ -92,7 +92,7 @@ describe('a debate turn reaches the channel', () => {
 
   it('keeps the runner\'s own turns in round then agent order', async () => {
     stubRound([BURIX_T1, TERO_T1])
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
     await act(async () => {
       await result.current.runRound()
     })
@@ -108,7 +108,7 @@ describe('a debate turn reaches the channel', () => {
 describe('the sender never sees its own turn twice', () => {
   it('drops a turn echoed back off the channel', async () => {
     stubRound([BURIX_T1, TERO_T1])
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     await act(async () => {
       await result.current.runRound()
@@ -125,7 +125,7 @@ describe('the sender never sees its own turn twice', () => {
 
   it('still accepts a genuinely new turn from another teacher', async () => {
     stubRound([BURIX_T1, TERO_T1])
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
     await act(async () => {
       await result.current.runRound()
     })
@@ -145,7 +145,7 @@ describe('a failed publish does not lose the turn', () => {
     const publish = vi.fn(() => Promise.reject(new Error('socket down')))
 
     const { result } = renderHook(() =>
-      useDebate({ token: 'tok', caseId: 'case-1', publish }),
+      useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish }),
     )
     await act(async () => {
       await result.current.runRound()
@@ -170,7 +170,7 @@ describe('a failed publish does not lose the turn', () => {
         ),
       ),
     )
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
     await act(async () => {
       await result.current.runRound()
     })
@@ -268,9 +268,9 @@ describe('two subscribers on one case channel', () => {
     const bus = makeChannelBus()
 
     const runner = renderHook(() =>
-      useDebate({ token: 'tok', caseId: 'case-1', publish: bus.publish }),
+      useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish: bus.publish }),
     )
-    const spectator = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const spectator = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     // The spectator is only ever fed by the channel.
     const unsubscribe = bus.subscribe(({ turn }) => {
@@ -295,7 +295,7 @@ describe('two subscribers on one case channel', () => {
     const bus = makeChannelBus()
 
     const runner = renderHook(() =>
-      useDebate({ token: 'tok', caseId: 'case-1', publish: bus.publish }),
+      useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish: bus.publish }),
     )
     // The runner also subscribes — exactly what a real client does.
     const unsubscribe = bus.subscribe(({ turn }) => {
@@ -316,7 +316,7 @@ describe('two subscribers on one case channel', () => {
 describe('restarting the debate', () => {
   it('clears the local round so the next one is round 1 again', async () => {
     stubRound([BURIX_T1, TERO_T1])
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     await act(async () => {
       await result.current.runRound()
@@ -335,7 +335,7 @@ describe('restarting the debate', () => {
 
   it('asks the server for round 1 after a restart, not round 2', async () => {
     const fetchMock = stubRound([BURIX_T1, TERO_T1])
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     await act(async () => {
       await result.current.runRound()
@@ -414,7 +414,7 @@ describe('existing accessibility is preserved', () => {
     const { DebateRoom } = await import('../debate')
     const user = userEvent.setup()
 
-    render(<DebateRoom token="tok" caseId="case-1" />)
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={0} />)
 
     await user.click(await screen.findByRole('button', { name: /abrir el debate/i }))
     const vote = await screen.findByTestId('debate-vote')
@@ -428,7 +428,7 @@ describe('existing accessibility is preserved', () => {
     const { DebateRoom } = await import('../debate')
     const user = userEvent.setup()
 
-    render(<DebateRoom token="tok" caseId="case-1" />)
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={0} />)
 
     // Nothing argued yet: nothing to restart.
     expect(screen.queryByRole('button', { name: /reiniciar debate/i })).toBeNull()

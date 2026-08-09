@@ -1,0 +1,112 @@
+/* frontend/src/components/room-code/RoomCode.module.css // the shared room
+   code chip and its paste-aware input. */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 5px 4px 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+}
+
+.chipLabel {
+  font-family: var(--label);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chipCode {
+  font-family: var(--mono, monospace);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--parchment-hi);
+}
+
+/* 28px of ink, 44px of target: the pseudo-element carries the touch area so
+   the chip does not have to grow around it. */
+.copyButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--text-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.copyButton::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.copyButton:hover {
+  color: var(--parchment-hi);
+  background: color-mix(in srgb, var(--parchment) 14%, transparent);
+  border-color: var(--hairline-strong);
+}
+
+.copyButton:focus-visible {
+  outline: 2px solid var(--parchment);
+  outline-offset: 2px;
+}
+
+.copyHint {
+  font-size: var(--text-xs);
+  color: var(--warning);
+}
+
+.srStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.inputWrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inputWrap input {
+  min-height: 44px;
+  font-family: var(--mono, monospace);
+  font-size: 16px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.pasteTip,
+.pasteHint {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+
+.pasteTip {
+  color: var(--muted);
+}
+
+.pasteHint {
+  color: var(--warning);
+}
+
+/* The tip describes a mouse action, so it is noise where there is no mouse. */
+@media (hover: none) {
+  .pasteTip { display: none; }
+}

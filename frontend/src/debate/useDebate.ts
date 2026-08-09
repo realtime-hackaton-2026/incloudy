@@ -3,7 +3,7 @@
  * turn to the case channel, so the whole room watches it unfold live.
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '../lib/http'
 import { requestDebateRound } from './api'
 import type { DebateAgent, DebateTurn } from './api'
@@ -22,7 +22,17 @@ export const DEBATE_TURN_EVENT = 'debate.turn'
  */
 export const DEBATE_RESET_EVENT = 'debate.reset'
 
-export type DebateStatus = 'idle' | 'thinking' | 'error'
+export type DebateStatus = 'idle' | 'thinking' | 'replying' | 'error'
+
+/**
+ * How long the room waits between the two agents of a round.
+ *
+ * The backend answers a whole round at once, so without this both stances
+ * land in the same frame and read as one block rather than a reply. The
+ * pause is presentation, not latency: it is applied on publish too, so
+ * spectators see the same beat instead of a burst.
+ */
+export const REPLY_DELAY_MS = 2_600
 
 export interface DebateState {
   turns: readonly DebateTurn[]
@@ -32,6 +42,8 @@ export interface DebateState {
   round: number
   maxRounds: number
   commentsRead: number
+  /** The agent whose turn is composed but still held back. */
+  pendingAgent: DebateAgent | null
   /** Accepts a turn that arrived over Portal rather than from our request. */
   receiveTurn: (turn: DebateTurn) => void
   /** Pass the merged view in a live room; defaults to this hook's own turns. */
@@ -49,19 +61,36 @@ export interface UseDebateOptions {
     * Portal in front of it.
     */
   publish?: (turn: DebateTurn) => Promise<unknown>
+  /** Overridable so tests do not wait out the real pause. */
+  replyDelayMs?: number
 }
 
 function turnKey(turn: DebateTurn): string {
   return `${turn.ronda}:${turn.agente}`
 }
 
-export function useDebate({ token, caseId, publish }: UseDebateOptions): DebateState {
+function wait(ms: number): Promise<void> {
+  return ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve()
+}
+
+export function useDebate({
+  token,
+  caseId,
+  publish,
+  replyDelayMs = REPLY_DELAY_MS,
+}: UseDebateOptions): DebateState {
   const [turns, setTurns] = useState<DebateTurn[]>([])
   const [agents, setAgents] = useState<DebateAgent[]>([])
   const [status, setStatus] = useState<DebateStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [maxRounds, setMaxRounds] = useState(3)
   const [commentsRead, setCommentsRead] = useState(0)
+  const [pendingAgent, setPendingAgent] = useState<DebateAgent | null>(null)
+
+  // A round resolves across several awaits, so it can outlive the component.
+  // Every setState after an await checks this first.
+  const alive = useRef(true)
+  useEffect(() => () => { alive.current = false }, [])
 
   /*
    * A turn can arrive twice: once as our own response, once echoed back off
@@ -89,23 +118,39 @@ export function useDebate({ token, caseId, publish }: UseDebateOptions): DebateS
       setAgents(result.agentes)
       setMaxRounds(result.rondasMaximas)
       setCommentsRead(result.comentariosAnalizados)
-      for (const turn of result.turnos) {
+
+      for (const [index, turn] of result.turnos.entries()) {
+        if (index > 0) {
+          // Announce who is answering before holding the turn back, so the
+          // wait reads as a reply being written rather than a stall.
+          const speaker = result.agentes.find((agent) => agent.id === turn.agente) ?? null
+          if (!alive.current) return
+          setPendingAgent(speaker)
+          setStatus('replying')
+          await wait(replyDelayMs)
+          if (!alive.current) return
+          setPendingAgent(null)
+        }
         receiveTurn(turn)
         // If publishing fails the turn is already on screen for whoever
         // started the round; the room must not stall the debate.
         await publish?.(turn).catch(() => undefined)
       }
+      if (!alive.current) return
       setStatus('idle')
     } catch (cause) {
+      if (!alive.current) return
+      setPendingAgent(null)
       setStatus('error')
       setError(cause instanceof ApiError ? cause.message : 'No se pudo abrir el debate.')
     }
-  }, [token, caseId, turns, publish, receiveTurn])
+  }, [token, caseId, turns, publish, receiveTurn, replyDelayMs])
 
   const reset = useCallback(() => {
     setTurns([])
     setStatus('idle')
     setError(null)
+    setPendingAgent(null)
     // Describes the round that was just discarded, so it goes with it.
     // `agents` and `maxRounds` are template configuration, not round state:
     // keeping them avoids the stances flickering back to the defaults.
@@ -122,6 +167,7 @@ export function useDebate({ token, caseId, publish }: UseDebateOptions): DebateS
     round,
     maxRounds,
     commentsRead,
+    pendingAgent,
     receiveTurn,
     runRound,
     reset,

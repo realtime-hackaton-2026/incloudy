@@ -300,6 +300,10 @@
 }
 
 .lobbyCode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
   margin: 0 0 14px;
   font-family: var(--label);
   font-size: var(--text-xs);

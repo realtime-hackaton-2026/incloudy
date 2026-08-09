@@ -71,7 +71,7 @@ describe('useDebate', () => {
   it('gives both sides a turn, and publishes each one to the room', async () => {
     mockFetch(() => jsonResponse(ROUND_WIRE))
     const publish = vi.fn(() => Promise.resolve())
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', publish }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish }))
 
     await act(async () => {
       await result.current.runRound()
@@ -82,9 +82,30 @@ describe('useDebate', () => {
     expect(result.current.round).toBe(1)
   })
 
+  it('holds the second turn back on publish, so the room sees the same beat', async () => {
+    mockFetch(() => jsonResponse(ROUND_WIRE))
+    const publishedAt: number[] = []
+    const publish = vi.fn(() => {
+      publishedAt.push(Date.now())
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() =>
+      useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 120, publish }),
+    )
+
+    await act(async () => {
+      await result.current.runRound()
+    })
+
+    // Spectators derive the debate from the channel, so staggering only the
+    // local render would leave them seeing both turns at once.
+    expect(publishedAt).toHaveLength(2)
+    expect(publishedAt[1] - publishedAt[0]).toBeGreaterThanOrEqual(100)
+  })
+
   it('ignores a turn echoed back off the channel instead of showing it twice', async () => {
     mockFetch(() => jsonResponse(ROUND_WIRE))
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     await act(async () => {
       await result.current.runRound()
@@ -101,7 +122,7 @@ describe('useDebate', () => {
   it('a failed publish still leaves the turn on screen for whoever ran the round', async () => {
     mockFetch(() => jsonResponse(ROUND_WIRE))
     const publish = vi.fn(() => Promise.reject(new Error('canal caído')))
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', publish }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0, publish }))
 
     await act(async () => {
       await result.current.runRound()
@@ -113,7 +134,7 @@ describe('useDebate', () => {
 
   it('surfaces a backend failure as an error state rather than an empty debate', async () => {
     mockFetch(() => jsonResponse({ detail: 'El caso no tiene una plantilla válida' }, 409))
-    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1' }))
+    const { result } = renderHook(() => useDebate({ token: 'tok', caseId: 'case-1', replyDelayMs: 0 }))
 
     await act(async () => {
       await result.current.runRound()
@@ -155,13 +176,36 @@ describe('DebateRoom', () => {
     const { default: userEvent } = await import('@testing-library/user-event')
     const user = userEvent.setup()
 
-    render(<DebateRoom token="tok" caseId="case-1" />)
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={0} />)
     await user.click(await screen.findByRole('button', { name: /abrir el debate/i }))
 
     await waitFor(() => expect(screen.getByTestId('debate-turn-1-burix')).toBeInTheDocument())
-    expect(screen.getByTestId('debate-turn-1-tero')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByTestId('debate-turn-1-tero')).toBeInTheDocument())
     // Every turn states what it risks, so no position reads as the answer.
     expect(screen.getAllByText('Riesgo')).toHaveLength(2)
     expect(screen.getByText('El apoyo puede llegar tarde')).toBeInTheDocument()
+  })
+
+  it('holds the second agent back and names who is answering', async () => {
+    vi.stubGlobal('fetch', (input: RequestInfo | URL) =>
+      String(input).includes('/debate')
+        ? jsonResponse(ROUND_WIRE)
+        : jsonResponse({ detail: 'Portal no configurado' }, 503),
+    )
+    const { DebateRoom } = await import('../debate')
+    const { default: userEvent } = await import('@testing-library/user-event')
+    const user = userEvent.setup()
+
+    render(<DebateRoom token="tok" caseId="case-1" replyDelayMs={80} />)
+    await user.click(await screen.findByRole('button', { name: /abrir el debate/i }))
+
+    // Búrix lands first and Tero is announced as still writing — the whole
+    // point of the pause is that the round reads as a reply, not a block.
+    await waitFor(() => expect(screen.getByTestId('debate-turn-1-burix')).toBeInTheDocument())
+    expect(screen.getByTestId('debate-replying')).toHaveTextContent(/Tero está preparando/i)
+    expect(screen.queryByTestId('debate-turn-1-tero')).not.toBeInTheDocument()
+
+    await waitFor(() => expect(screen.getByTestId('debate-turn-1-tero')).toBeInTheDocument())
+    expect(screen.queryByTestId('debate-replying')).not.toBeInTheDocument()
   })
 })

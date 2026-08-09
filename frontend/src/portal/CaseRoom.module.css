@@ -189,13 +189,17 @@
   padding: 0;
   margin: 0;
   overflow-y: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(230 201 149 / 48%) rgb(255 255 255 / 4%);
   list-style: none;
 }
 
 .messages::-webkit-scrollbar {
-  display: none;
+  width: 8px;
 }
+
+.messages::-webkit-scrollbar-thumb { background: rgb(230 201 149 / 48%); border-radius: 999px; }
+.messages::-webkit-scrollbar-track { background: rgb(255 255 255 / 4%); }
 
 .message {
   padding: 9px 10px;
@@ -409,13 +413,17 @@
   margin: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(230 201 149 / 48%) rgb(255 255 255 / 4%);
   list-style: none;
 }
 
 .historyMessages::-webkit-scrollbar {
-  display: none;
+  width: 8px;
 }
+
+.historyMessages::-webkit-scrollbar-thumb { background: rgb(230 201 149 / 48%); border-radius: 999px; }
+.historyMessages::-webkit-scrollbar-track { background: rgb(255 255 255 / 4%); }
 
 .historyMessages li {
   display: block;
@@ -463,11 +471,9 @@
     min-height: 0;
     padding: 14px;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden;
     overscroll-behavior: contain;
-    scrollbar-width: none;
   }
-  .roomBody::-webkit-scrollbar { display: none; }
   .roomHeader { flex-direction: column; align-items: stretch; }
   .headerActions { width: 100%; justify-content: flex-start; }
   .headerActions > * { flex: 1 1 auto; text-align: center; }
@@ -475,6 +481,13 @@
   .waiting { padding: 14px; }
   .burixStrip { gap: 8px; }
   .burixOwl { width: 42px; height: 42px; }
+  .messages {
+    flex: 1;
+    min-height: 140px;
+    max-height: none;
+    padding-right: 5px;
+    overscroll-behavior: contain;
+  }
   .composer {
     position: sticky;
     bottom: 0;

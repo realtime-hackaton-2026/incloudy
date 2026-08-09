@@ -214,22 +214,30 @@ function App() {
 
 function PersistentRoomAccess({ token, currentCaseId }: { token: string; currentCaseId: string | null }) {
   const { cases, status } = useCases(token)
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(() =>
+    currentCaseId ?? localStorage.getItem('burix-active-room-case'),
+  )
+  const [routeCaseId, setRouteCaseId] = useState(currentCaseId)
 
-  useEffect(() => {
-    if (!currentCaseId) return
-    localStorage.setItem('burix-active-room-case', currentCaseId)
-  }, [currentCaseId])
+  if (routeCaseId !== currentCaseId) {
+    setRouteCaseId(currentCaseId)
+    if (currentCaseId) setSelectedCaseId(currentCaseId)
+  }
 
   if (status === 'loading' || cases.length === 0) return null
 
-  const activeCaseId = currentCaseId ?? localStorage.getItem('burix-active-room-case')
+  const selected = cases.find((item) => item.id === selectedCaseId)
   const current = cases.find((item) => item.id === currentCaseId)
-  const remembered = cases.find((item) => item.id === activeCaseId)
-  const roomCase = current ?? remembered ?? cases.find((item) => item.burixShared) ?? cases[0]
+  const roomCase = selected ?? current ?? cases.find((item) => item.burixShared) ?? cases[0]
+
+  function selectRoomCase(caseId: string) {
+    if (!cases.some((item) => item.id === caseId)) return
+    setSelectedCaseId(caseId)
+    localStorage.setItem('burix-active-room-case', caseId)
+  }
 
   return (
     <OwlDoor
-      key={roomCase.id}
       token={token}
       caseId={roomCase.id}
       joinCode={roomCase.joinCode}
@@ -238,6 +246,7 @@ function PersistentRoomAccess({ token, currentCaseId }: { token: string; current
       studentCourse={roomCase.alumno.curso}
       studentDescription={roomCase.alumno.descripcion}
       stage={toCaseStage(roomCase.estadoInteractivo.estacionActual)}
+      onSelectCase={selectRoomCase}
     />
   )
 }

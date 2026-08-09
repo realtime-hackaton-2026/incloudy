@@ -37,8 +37,12 @@ const RULE = /^\s*-{3,}\s*$/
  * A single pass, line by line. Consecutive list lines are gathered into one
  * `<ul>`/`<ol>` so a list reads as a list rather than as loose paragraphs.
  */
-export function RichText({ text }: { text: string }) {
-  const lines = text.split('\n')
+export function RichText({ text }: { text: unknown }) {
+  // Portal history can contain legacy or partially retracted records. The
+  // caller normally supplies a string, but malformed realtime data must never
+  // crash the whole case screen just because Markdown needs to split lines.
+  const safeText = typeof text === 'string' ? text : ''
+  const lines = safeText.split('\n')
   const blocks: ReactNode[] = []
   let list: { ordered: boolean; items: string[] } | null = null
   let paragraph: string[] = []

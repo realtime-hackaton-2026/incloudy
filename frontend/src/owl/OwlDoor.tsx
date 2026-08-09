@@ -19,9 +19,10 @@ export interface OwlDoorProps {
   studentCourse?: string | null
   studentDescription: string
   stage: CaseStage
+  onSelectCase?: (caseId: string) => void
 }
 
-export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage }: OwlDoorProps) {
+export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, studentCourse, studentDescription, stage, onSelectCase }: OwlDoorProps) {
   const [lobbyOpen, setLobbyOpen] = useState(false)
   const [roomOpen, setRoomOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
@@ -41,6 +42,15 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
   const [closeSessionNonce, setCloseSessionNonce] = useState(0)
   const [burixCases, setBurixCases] = useState<Case[]>([])
   const [roomMembers, setRoomMembers] = useState<CaseParticipant[]>([])
+  const [presenceCaseId, setPresenceCaseId] = useState(caseId)
+
+  if (presenceCaseId !== caseId) {
+    setPresenceCaseId(caseId)
+    setPresence({ count: 0, participants: [], detailed: false, status: 'loading', error: null })
+    setRoomMembers([])
+    setSessionActive(false)
+    setRosterOpen(false)
+  }
   const memberNames = Object.fromEntries(roomMembers.map((member) => [member.userId, member.nombre]))
   const visibleParticipantsById = new Map(
     roomMembers.map((member) => [member.userId, { id: member.userId, username: member.nombre }]),
@@ -102,7 +112,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
 
   function openBurixCase(selectedCaseId: string) {
     if (!selectedCaseId || selectedCaseId === caseId) return
-    location.hash = `#/caso/${selectedCaseId}`
+    onSelectCase?.(selectedCaseId)
   }
 
   /*
@@ -222,6 +232,7 @@ export function OwlDoor({ token, caseId, joinCode, studentName, studentAge, stud
         )}
 
         <CaseRoom
+          key={caseId}
           token={token}
           caseId={caseId}
           minimumParticipants={2}

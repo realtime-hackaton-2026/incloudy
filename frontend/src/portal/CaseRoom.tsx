@@ -227,21 +227,26 @@ function RoomChannel({
   )
   const latestControl = latestControlIndex >= 0 ? messages[latestControlIndex] : null
   const sessionActive = latestControl ? isSessionStarted(latestControl.content) : false
-  const currentMessages = messages.slice(latestControlIndex + 1).filter((message) => !isSessionControl(message.content))
+  const currentMessages = messages
+    .slice(latestControlIndex + 1)
+    .filter((message) => !isSessionControl(message.content) && messageBody(message.content).trim().length > 0)
   const visiblePendingMessages = pendingMessages.filter((pending) => !currentMessages.some((message) => (
-    typeof message.content !== 'string'
-    && message.content.body === pending.body
+    messageBody(message.content) === pending.body
+    && message.content
+    && typeof message.content !== 'string'
     && message.content.authorUserId === pending.authorUserId
   )))
-  const previousMessages = messages.slice(0, Math.max(0, latestControlIndex)).filter((message) => !isSessionControl(message.content))
+  const previousMessages = messages
+    .slice(0, Math.max(0, latestControlIndex))
+    .filter((message) => !isSessionControl(message.content) && messageBody(message.content).trim().length > 0)
   // The bubble mirrors the room: the latest thing Búrix said — an answer to a
   // question or a proactive reaction to the team's comments — or a greeting
   // while he has nothing to say yet.
   const burixLine = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const content = messages[index].content
-      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction')) {
-        return content.body
+      if (content && typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction')) {
+        return messageBody(content) || null
       }
     }
     return null
@@ -353,7 +358,7 @@ function RoomChannel({
   useEffect(() => {
     const othersChat = messages.filter(
       (message) =>
-        typeof message.content !== 'string' &&
+        Boolean(message.content) && typeof message.content !== 'string' &&
         !message.content.type &&
         message.sender.id !== me?.id,
     )
@@ -364,7 +369,7 @@ function RoomChannel({
     let lastAiIndex = -1
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const content = messages[index].content
-      if (typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction' || content.type === 'ai_question')) {
+      if (content && typeof content !== 'string' && (content.type === 'ai_answer' || content.type === 'burix_reaction' || content.type === 'ai_question')) {
         lastAiIndex = index
         break
       }
@@ -378,12 +383,13 @@ function RoomChannel({
       .slice(lastAiIndex + 1)
       .filter(
         (message) =>
-          typeof message.content !== 'string' &&
+          Boolean(message.content) && typeof message.content !== 'string' &&
           !message.content.type &&
           message.sender.id !== me?.id,
       )
       .slice(-3)
-      .map((message) => (typeof message.content !== 'string' ? message.content.body : ''))
+      .map((message) => messageBody(message.content))
+      .filter((body) => body.trim().length > 0)
     if (comments.length === 0) return
     const timer = window.setTimeout(() => {
       void reactToComments(comments)
@@ -606,16 +612,20 @@ function RoomChannel({
 }
 
 function isSessionStarted(content: ChatMessage | string) {
-  return typeof content !== 'string' && content.type === 'session_started'
+  return Boolean(content && typeof content !== 'string' && content.type === 'session_started')
 }
 
 function isSessionControl(content: ChatMessage | string) {
-  return typeof content !== 'string' && (content.type === 'session_started' || content.type === 'session_closed')
+  return Boolean(content && typeof content !== 'string' && (content.type === 'session_started' || content.type === 'session_closed'))
 }
 
-function messageBody(content: ChatMessage | string) {
+function messageBody(content: unknown): string {
   if (typeof content === 'string') return content
-  return content.body
+  if (!content || typeof content !== 'object') return ''
+  if ('body' in content && typeof content.body === 'string') return content.body
+  // Earlier Portal payloads may retain the published object under `content`.
+  if ('content' in content) return messageBody(content.content)
+  return ''
 }
 
 function messageAuthorLabel(
@@ -625,12 +635,12 @@ function messageAuthorLabel(
   meName?: unknown,
 ) {
   const content = message.content
-  if (typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
-  if (typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
-  if (typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
-  if (typeof content !== 'string' && content.authorName) return `Docente · ${content.authorName}`
+  if (content && typeof content !== 'string' && content.type === 'burix_analysis') return 'Búrix · análisis'
+  if (content && typeof content !== 'string' && content.type === 'burix_reaction') return 'Búrix'
+  if (content && typeof content !== 'string' && content.type === 'ai_answer') return 'Búrix · IA'
+  if (content && typeof content !== 'string' && content.authorName) return `Docente · ${content.authorName}`
   const verifiedMeName = typeof meName === 'string' ? meName : undefined
-  const appAuthorId = typeof content !== 'string' ? content.authorUserId : undefined
+  const appAuthorId = content && typeof content !== 'string' ? content.authorUserId : undefined
   const teacherName = resolveParticipantName(participantNames, appAuthorId ?? message.sender.id) ?? (meId && message.sender.id === meId
     ? verifiedMeName ?? message.sender.username
     : message.sender.username)

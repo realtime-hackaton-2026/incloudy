@@ -104,7 +104,10 @@ misma cuenta.
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET, POST | `/cases` | Listar casos accesibles o crear uno |
+| POST | `/cases/join` | Unirse a un caso mediante código de sala |
 | GET, PUT, DELETE | `/cases/{id}` | Consultar, editar datos del alumno o eliminar |
+| GET | `/cases/{id}/participants` | Resolver propietario y colaboradores con nombre, correo y rol |
+| PUT | `/cases/{id}/forix-share` | Habilitar o retirar el caso de Búrix/sala docente |
 | PUT | `/cases/{id}/stations/{order}/response` | Guardar respuesta de una estación |
 | PUT | `/cases/{id}/unexpected-events/{event_id}/response` | Resolver un imprevisto |
 | GET, POST | `/cases/{id}/notes` | Consultar o crear notas privadas |
@@ -121,6 +124,21 @@ misma cuenta.
 | GET | `/cases/{id}/events` | Consultar historial y seguimiento |
 | POST | `/cases/{id}/follow-ups` | Agregar una observación de seguimiento |
 | GET | `/cases/{id}/comments` | Consultar comentarios sincronizados desde Portal |
+| POST | `/cases/{id}/analysis` | Analizar el caso junto con los aportes de la sala |
+| POST | `/cases/{id}/collaborators` | Agregar un docente registrado por correo y rol |
+| DELETE | `/cases/{id}/collaborators/{user_id}` | Retirar un colaborador |
+| POST | `/cases/{id}/leave` | Abandonar un caso compartido |
+
+### Chat de Búrix
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/chat` | Responder con contexto del caso mediante Gemini o fallback local |
+
+El backend intenta `GEMINI_MODEL` y luego cada valor de
+`GEMINI_FALLBACK_MODELS` ante `429`, modelo no disponible, timeout o fallo
+temporal. La misma API key se reutiliza; si todos fallan, la orientación local
+evita que el flujo pedagógico quede bloqueado.
 
 Crear caso:
 
@@ -226,6 +244,27 @@ agregar seguimiento.
 
 ## Portal
 
+Portal es la infraestructura central de tiempo real de incloudy para la
+Realtime Hackathon 2026. No se usa como un chat aislado: coordina presencia,
+typing, mensajes, preguntas/respuestas de Búrix y eventos de apertura o cierre
+de la mesa docente dentro de un canal privado por caso.
+
+### Flujo realtime
+
+```text
+POST /portal/sessions/{case_id}
+  → FastAPI verifica acceso y rol
+  → emite token Portal limitado a case-{case_id}
+  → React conecta mediante @portalsdk/react
+  → Portal distribuye presencia, typing y mensajes
+  → webhook firmado replica comentarios en PortalComment
+```
+
+La identidad no depende del alias que entregue el transporte. El endpoint
+`GET /cases/{case_id}/participants` resuelve propietario y colaboradores desde
+los usuarios de incloudy, con nombre, correo y rol. Así todos los participantes
+ven la misma lista y el historial conserva atribución docente estable.
+
 Variables:
 
 ```env
@@ -244,6 +283,11 @@ POST /portal/sessions/{case_id}
 
 El JWT resultante está restringido a `case-{case_id}`. Lectores reciben solo
 `connect`; propietario, editor y comentarista reciben `connect` y `publish`.
+
+El frontend conserva la conexión mientras el usuario navega por las vistas
+operativas. La presencia se reconcilia con el directorio de participantes para
+evitar que una suspensión temporal del socket en segundo plano haga desaparecer
+al docente de la lista.
 
 ### Configuración privada
 
@@ -266,6 +310,19 @@ Authorization: Bearer sk_...
 el cuerpo original, rechaza firmas con más de cinco minutos y deduplica por el
 ID del evento. Los mensajes publicados se guardan en `PortalComment`; las
 retracciones también se reflejan.
+
+### Tipos de mensajes de la sala
+
+| Tipo | Uso |
+|---|---|
+| `chat` | Observación escrita por un docente |
+| `session_started` / `session_closed` | Control compartido de la mesa |
+| `ai_question` / `ai_answer` | Pregunta y respuesta de Búrix visibles para el equipo |
+| `burix_analysis` | Análisis colaborativo compartido desde el panel privado |
+| `burix_reaction` | Intervención contextual breve de la guía |
+
+Los eventos de control no se presentan como mensajes humanos. El historial se
+separa por sesiones y se consulta con scroll desde un modal responsive.
 
 ## Privacidad
 

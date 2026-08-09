@@ -175,6 +175,7 @@ export function CaseMap({
         className={styles.frame}
         style={{ aspectRatio: MAP_ASPECT_RATIO }}
         data-testid="case-map"
+        data-tour="map"
         data-state={focusedStation ? 'focused' : 'wide'}
         data-focused-station={focusedStation?.stage ?? ''}
         data-active-station={stage}

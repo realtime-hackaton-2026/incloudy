@@ -418,7 +418,7 @@ export function CaseForm({ token, caseId, ownerId, onDeleted, onBack, mapOnly = 
 
   if (mapOnly) {
     return (
-      <div className={styles.mapOnly} data-testid="case-map-only" data-tour="map">
+      <div className={styles.mapOnly} data-testid="case-map-only">
         <div className={styles.mapOnlyHeader} data-tour="map-case-study">
           <div className={styles.mapOnlyIdentity}>
             <span className={styles.mapOnlyKicker}>Caso en estudio</span>

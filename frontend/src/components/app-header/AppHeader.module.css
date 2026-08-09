@@ -168,14 +168,20 @@
 .teacher strong { color: var(--text); font-weight: 700; }
 
 .settingsButton {
+  display: grid;
+  place-items: center;
   width: 38px;
   height: 38px;
   color: var(--parchment-hi);
-  font-size: 17px;
   background: rgb(230 201 149 / 8%);
   border: 1px solid rgb(230 201 149 / 24%);
   border-radius: 9px;
   cursor: pointer;
+}
+
+.settingsButton:hover {
+  color: var(--text);
+  border-color: var(--river);
 }
 
 .bell {
@@ -456,7 +462,7 @@
   .navItem::after { left: 9px; right: 9px; bottom: 4px; }
   .dashboardLink { min-height: 34px; padding: 6px 8px; font-size: 0; border-radius: 999px; }
   .dashboardLink::before { content: 'Dashboard'; font-size: 9px; }
-  .settingsButton { width: 32px; height: 32px; border-radius: 50%; font-size: 14px; }
+  .settingsButton { width: 32px; height: 32px; border-radius: 50%; }
   .bell { width: 32px; height: 32px; border-radius: 50%; }
   .signOut { width: 32px; height: 32px; padding: 0; overflow: hidden; font-size: 0; border-radius: 50%; }
   .signOut::before { content: '↪'; font-size: 17px; }

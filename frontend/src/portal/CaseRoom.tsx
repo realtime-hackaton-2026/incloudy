@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { PortalProvider, useChannel } from '@portalsdk/react'
 import type { PortalError } from '@portalsdk/core'
 import { getPortalClient } from './client'
@@ -155,12 +156,22 @@ function RoomChannel({
   const [askingAi, setAskingAi] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [burixOpen, setBurixOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   // A guard, not display state: it only decides whether this particular
   // nonce has already been acted on. Keeping it in state made the effect
   // write state synchronously on every bump, which is the cascading-render
   // pattern the lint rule flags.
   const lastStartNonce = useRef(0)
   const lastCloseNonce = useRef(0)
+
+  useEffect(() => {
+    if (!historyOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setHistoryOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [historyOpen])
   // Memoized on its own: rebuilt inline it was a fresh array every render,
   // which made `presenceState` below re-memo every time and fire the
   // `onPresenceChange` effect on every render instead of on real changes.
@@ -420,6 +431,7 @@ function RoomChannel({
   }
 
   return (
+    <>
     <div className={styles.roomBody} data-testid="case-room" data-state={status} data-session-active={sessionActive ? 'true' : 'false'}>
       {/* A dropped socket used to be recorded only in `data-state`, which made
           a stalled room look like a quiet one. */}
@@ -477,18 +489,10 @@ function RoomChannel({
       )}
 
       {previousMessages.length > 0 && (
-        <details className={styles.history} open={!sessionActive}>
-          <summary>Historial anterior del caso · {previousMessages.length} aportes</summary>
-          <ul className={styles.historyMessages}>
-            {previousMessages.map((message) => (
-              <li key={message.id}>
-                <strong>{messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}</strong>
-                <RichText text={messageBody(message.content)} />
-                <time>{formatTime(message.timestamp)}</time>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <button type="button" className={styles.historyButton} onClick={() => setHistoryOpen(true)}>
+          <span>Historial anterior del caso</span>
+          <small>{previousMessages.length} aportes · abrir</small>
+        </button>
       )}
 
       {sessionActive && (
@@ -567,6 +571,37 @@ function RoomChannel({
         onShare={handleShareAnalysis}
       />
     </div>
+    {historyOpen && createPortal(
+      <div className={styles.historyOverlay} role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setHistoryOpen(false)
+      }}>
+        <section className={styles.historyModal} role="dialog" aria-modal="true" aria-labelledby="case-history-title">
+          <header className={styles.historyModalHeader}>
+            <div>
+              <span>Conversación de la sala</span>
+              <h3 id="case-history-title">Historial anterior del caso</h3>
+              <small>{previousMessages.length} aportes</small>
+            </div>
+            <button type="button" onClick={() => setHistoryOpen(false)} aria-label="Cerrar historial">×</button>
+          </header>
+          <ul className={styles.historyMessages}>
+            {previousMessages.map((message) => (
+              <li key={message.id}>
+                <div className={styles.historyMessageMeta}>
+                  <strong>{messageAuthorLabel(message, participantNames, me?.id, me?.claims?.username)}</strong>
+                  <time>{formatTime(message.timestamp)}</time>
+                </div>
+                <div className={styles.historyMessageBody}>
+                  <RichText text={messageBody(message.content)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>,
+      document.body,
+    )}
+    </>
   )
 }
 
